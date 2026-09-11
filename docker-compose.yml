@@ -1,0 +1,61 @@
+# Not used for local dev — matches file-service's/auth-service's convention.
+#
+# Shared infrastructure (Postgres, Kafka, Milvus, OpenSearch, and
+# file-service's dedicated `file-minio` instance) lives in the ROOT
+# docker-compose.yml and is started via `make infra` from this directory.
+# The app itself runs locally with `uv run uvicorn` (see `make run`/
+# `make run-worker`), not containerized, for fast reload and to stay
+# consistent with every other GraphGPT service in this repo.
+#
+# The Dockerfile is still built for actual deployment (see
+# docs/IMPLEMENTATION_PLAN.md Phase 13). If a one-off containerized run is
+# ever needed locally, uncomment below and run `docker compose up` from this
+# directory after `make infra`.
+#
+# services:
+#   retrieval-api:
+#     build:
+#       context: .
+#       dockerfile: Dockerfile
+#     container_name: graphgpt-retrieval-api
+#     ports:
+#       - "50060:50060"
+#       - "8060:8060"
+#     env_file:
+#       - .env
+#     environment:
+#       - DEPLOYMENT_MODE=api
+#       - DATABASE_URL=postgresql+asyncpg://postgres:1234@postgres:5432/retrieval_service_db
+#       - MINIO_ENDPOINT=file-minio:9000
+#       - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+#       - MILVUS_HOST=milvus-standalone
+#       - OPENSEARCH_HOSTS=opensearch:9200
+#     restart: unless-stopped
+#     networks:
+#       - graphgpt-net
+#
+#   retrieval-worker:
+#     build:
+#       context: .
+#       dockerfile: Dockerfile
+#     container_name: graphgpt-retrieval-worker
+#     command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8061"]
+#     ports:
+#       - "8061:8061"
+#     env_file:
+#       - .env
+#     environment:
+#       - DEPLOYMENT_MODE=worker
+#       - DATABASE_URL=postgresql+asyncpg://postgres:1234@postgres:5432/retrieval_service_db
+#       - MINIO_ENDPOINT=file-minio:9000
+#       - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+#       - MILVUS_HOST=milvus-standalone
+#       - OPENSEARCH_HOSTS=opensearch:9200
+#     restart: unless-stopped
+#     networks:
+#       - graphgpt-net
+#
+# networks:
+#   graphgpt-net:
+#     name: graphgpt-net
+#     external: true

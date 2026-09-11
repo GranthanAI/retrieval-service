@@ -1,0 +1,41 @@
+syntax = "proto3";
+
+package retrieval;
+
+service RetrievalService {
+  // Retrieve top-k relevant document chunks
+  rpc GetRelevantChunks(GetRelevantChunksRequest) returns (GetRelevantChunksResponse);
+}
+
+enum RetrievalScope {
+  FILES = 0;
+  KNOWLEDGE_BASE = 1;
+  ALL = 2;
+}
+
+message GetRelevantChunksRequest {
+  string user_id = 1;
+  string conversation_id = 2;
+  string query = 3;
+  int32 top_k = 4;
+  RetrievalScope scope = 5;       // FILES | KNOWLEDGE_BASE | ALL
+  repeated string file_ids = 6;   // for Ask Files mode
+  float min_relevance_score = 7;
+  int32 max_tokens = 8;
+  string trace_id = 9;
+}
+
+message DocumentChunk {
+  string chunk_id = 1;
+  string content = 2;
+  string source_file_id = 3;
+  string source_name = 4;
+  float relevance_score = 5;
+  map<string, string> metadata = 6;
+}
+
+message GetRelevantChunksResponse {
+  repeated DocumentChunk chunks = 1;
+  int32 total_tokens = 2;
+  string request_id = 3;
+}
