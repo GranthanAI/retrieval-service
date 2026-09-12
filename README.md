@@ -41,6 +41,10 @@ make run-worker
 
 The `Dockerfile` is still built and used for actual deployment (see `docs/IMPLEMENTATION_PLAN.md` Phase 13) — it's just not part of the everyday local dev loop.
 
+### Troubleshooting: `alembic`/`make db-migrate` says the database doesn't exist, even though `make db-create` succeeded
+
+Same root cause as file-service's own note: something other than the `graphgpt-postgres` container is answering on `localhost:5432` — most commonly a native/locally-installed PostgreSQL service on the host winning over Docker's port forward. Rather than stopping or reconfiguring that native install, `.env.example`'s `DATABASE_URL` already points at `localhost:5433` instead — the **same** `graphgpt-postgres` container and `retrieval_service_db` database, just published on a second host port (root `docker-compose.yml`'s `postgres` service maps both `5432:5432` and `5433:5432`) so retrieval-service's tooling reaches the right Postgres regardless of what else is on 5432. If nothing else is bound to 5432 on your machine, `localhost:5432` works identically.
+
 ### Milvus collection / OpenSearch index provisioning
 
 `scripts/provision_milvus_collection.py` and `scripts/provision_opensearch_index.py` are one-time infra steps, run manually per environment — **never** imported by `app/` or run as part of pod startup (LLD §13.2). Their schemas land in Phase 2.
@@ -51,7 +55,7 @@ The `Dockerfile` is still built and used for actual deployment (see `docs/IMPLEM
 |---|---|
 | retrieval-service gRPC (api mode) | `50060` |
 | retrieval-service HTTP health/metrics | `8060` |
-| PostgreSQL (shared) | `5432` |
+| PostgreSQL (shared) | `5432`, also `5433` |
 | Kafka (shared) | `9092` |
 | Milvus (shared) | `19530` |
 | OpenSearch (shared) | `9200` |

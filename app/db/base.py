@@ -7,5 +7,4 @@ class Base(DeclarativeBase):
 
 # Imported here (not in app/models/__init__.py) so Alembic's env.py only
 # needs `from app.db.base import Base` to see every table via Base.metadata.
-# No models exist yet — Phase 1 adds ingestion_job/processed_event/
-# outbox_event/document_current_version (LLD §3) and imports them here.
+from app.models import document_current_version, ingestion_job, outbox_event, processed_event  # noqa: E402,F401
