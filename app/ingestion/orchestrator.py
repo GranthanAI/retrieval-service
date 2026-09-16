@@ -207,3 +207,123 @@ async def run(
         # must not be treated as fully searchable until both indexes agree.
 
         await db.commit()
+
+
+async def recover_partially_indexed_job(
+    session_factory: async_sessionmaker,
+    document_id: UUID,
+    content_version: int,
+    embedding_client: EmbeddingClient,
+) -> None:
+    """LLD §6.3 — reconstructs the indexing payload from the original MinIO
+    object, since chunks/embeddings do not survive between the original
+    attempt and a later retry (no durable store for them in V1). Re-writes
+    ONLY the store that previously failed — never re-touches the one that
+    already succeeded.
+
+    Always re-embeds, regardless of which store failed. OpenSearch's
+    content/section/filename fields come from the same chunk objects the
+    embedder consumes, and V1 has no durable store for chunks independent
+    of their embeddings — recomputing the chunks without the embeddings
+    would mean two slightly different code paths for what's supposed to be
+    one deterministic pipeline. Re-embedding a chunk set that's discarded
+    for the Milvus side (when only Milvus needs redoing) is wasted work,
+    but cheap and bounded, not a correctness risk (LLD §6.3's own
+    reasoning for why this isn't worth forking the pipeline over in V1).
+    """
+    async with session_factory() as db:
+        job = await IngestionJobRepository.get_by_document_and_version(db, document_id, content_version)
+        if job is None or job.status != IngestionStatus.PARTIALLY_INDEXED.value:
+            return
+        storage_bucket, storage_key, filename = job.storage_bucket, job.storage_key, job.filename
+        owner_id, conversation_id = job.owner_id, job.conversation_id
+        milvus_status, opensearch_status = job.milvus_status, job.opensearch_status
+
+    if opensearch_status == StageStatus.FAILED.value and milvus_status == StageStatus.COMPLETE.value:
+        target = IndexTarget.OPENSEARCH
+    elif milvus_status == StageStatus.FAILED.value and opensearch_status == StageStatus.COMPLETE.value:
+        target = IndexTarget.MILVUS
+    else:
+        logger.warning("orchestrator.recovery_skipped_unexpected_state", document_id=str(document_id))
+        return
+
+    try:
+        raw_bytes = await downloader.fetch(storage_bucket, storage_key)
+        parsed = parser_module.parse(raw_bytes, filename)
+    except (downloader.DownloadError, parser_module.ParserError) as exc:
+        # Left PARTIALLY_INDEXED — the reconciliation sweep retries again
+        # next interval; no durable failure is recorded for a transient
+        # re-download/re-parse error on a job that already succeeded once.
+        logger.warning("orchestrator.recovery_download_or_parse_failed", document_id=str(document_id), error=str(exc))
+        return
+
+    chunks = chunker.chunk(parsed)
+    chunk_ids = [chunk_identity.derive_chunk_id(str(document_id), content_version, c.chunk_index) for c in chunks]
+
+    try:
+        vectors = await embed_batch(embedding_client, chunks)
+    except Exception as exc:
+        logger.warning("orchestrator.recovery_embedding_failed", document_id=str(document_id), error=str(exc))
+        return
+
+    records = [
+        ChunkRecord(
+            chunk_id=chunk_id,
+            document_id=str(document_id),
+            content_version=content_version,
+            chunk_index=c.chunk_index,
+            owner_id=str(owner_id),
+            conversation_id=str(conversation_id) if conversation_id else None,
+            filename=filename,
+            page_number=c.page_number,
+            section=c.section,
+            content=c.content,
+            embedding=vector,
+        )
+        for c, chunk_id, vector in zip(chunks, chunk_ids, vectors)
+    ]
+
+    index_result = await index_write(records, target)
+
+    async with session_factory() as db:
+        job = await IngestionJobRepository.get_by_document_and_version(db, document_id, content_version)
+        if target == IndexTarget.OPENSEARCH:
+            job.opensearch_status = index_result.opensearch_status
+        else:
+            job.milvus_status = index_result.milvus_status
+        job.chunk_count = len(records)
+        db.add(job)
+        await IngestionJobRepository.recompute_status(db, job)
+
+        if job.status == IngestionStatus.READY.value:
+            await OutboxRepository.insert(
+                db,
+                event_id=uuid.uuid4(),
+                topic=settings.KAFKA_TOPIC_PROCESSING_COMPLETED,
+                payload={
+                    "event_id": str(uuid.uuid4()),
+                    "document_id": str(document_id),
+                    "chunk_count": len(records),
+                    "timestamp": _now_iso(),
+                },
+            )
+        elif job.status == IngestionStatus.FAILED.value:
+            job.error_code = "INDEXING_ERROR"
+            job.error_message = "recovery attempt: both Milvus and OpenSearch writes failed"
+            db.add(job)
+            await OutboxRepository.insert(
+                db,
+                event_id=uuid.uuid4(),
+                topic=settings.KAFKA_TOPIC_PROCESSING_FAILED,
+                payload={
+                    "event_id": str(uuid.uuid4()),
+                    "document_id": str(document_id),
+                    "error_code": "INDEXING_ERROR",
+                    "error_message": job.error_message,
+                    "timestamp": _now_iso(),
+                },
+            )
+        # Still PARTIALLY_INDEXED (the target write failed again) — no
+        # outbox row, the sweep retries again next interval.
+
+        await db.commit()

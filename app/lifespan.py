@@ -15,6 +15,7 @@ from app.events.consumers.file_uploaded_consumer import run_file_uploaded_consum
 from app.events.ingestion_pool import BoundedIngestionPool
 from app.events.producers.processing_status_producer import start_producer, stop_producer
 from app.workers.outbox_worker import run_outbox_worker
+from app.workers.reconciliation_worker import run_reconciliation_worker
 
 logger = get_logger(__name__)
 
@@ -61,6 +62,11 @@ async def _startup_worker(app: FastAPI) -> None:
     )
     _spawn("file_deleted_consumer", lambda se: run_file_deleted_consumer(session_factory, se))
     _spawn("outbox_worker", lambda se: run_outbox_worker(session_factory, producer, se))
+    if settings.RECONCILIATION_ENABLED:
+        _spawn(
+            "reconciliation_worker",
+            lambda se: run_reconciliation_worker(session_factory, pool, embedding_client, se),
+        )
 
     app.state.worker_stop_events = stop_events
     app.state.worker_tasks = tasks

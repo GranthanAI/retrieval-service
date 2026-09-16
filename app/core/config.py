@@ -54,8 +54,12 @@ class Settings(BaseSettings):
     EMBEDDING_QUERY_TIMEOUT_SECONDS: float = 0.4
     EMBEDDING_RETRY_ATTEMPTS: int = 2
 
-    # --- File Service permission-check client ---
-    FILE_SERVICE_GRPC_TARGET: str = "localhost:50052"
+    # --- File Service permission-check client (HLD §16.2) ---
+    # REST, not gRPC — File Service is a FastAPI/HTTP service (no gRPC
+    # server), and HLD §16.2's own documented contract is
+    # `POST /internal/files/permissions/check`. Port 8006 matches
+    # file-service's own local-dev convention (Makefile's `make run`).
+    FILE_SERVICE_BASE_URL: str = "http://localhost:8006"
     FILE_SERVICE_PERMISSION_CHECK_TIMEOUT_SECONDS: float = 0.3
     FILE_SERVICE_SERVICE_CREDENTIAL: str = ""
 

@@ -133,3 +133,21 @@ class IngestionJobRepository:
             )
         )
         return list(result.scalars().all())
+
+    @staticmethod
+    async def list_stuck_not_started(db: AsyncSession, older_than: datetime) -> list[IngestionJob]:
+        """A gap identified during Phase 5 testing, not explicitly named in
+        LLD §3.2's own text: a crash between the inbox transaction
+        committing (job created as NOT_STARTED, Kafka offset already
+        acked) and the job actually being handed to the bounded ingestion
+        pool leaves it NOT_STARTED forever — `orchestrator.run()` never ran,
+        so it never reached PROCESSING, and `list_stuck_processing` alone
+        cannot find it. This is the equivalent safety net for that window.
+        """
+        result = await db.execute(
+            select(IngestionJob).where(
+                IngestionJob.status == IngestionStatus.NOT_STARTED.value,
+                IngestionJob.updated_at < older_than,
+            )
+        )
+        return list(result.scalars().all())
