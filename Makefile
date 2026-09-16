@@ -50,10 +50,12 @@ db-revision:
 # convention, not embedding-service's gitignored one) — retrieval.proto is
 # copied verbatim from llm-service (HLD §1.1 #2) and diffed against it in CI
 # (Phase 12), so keeping the generated pair alongside it in git makes drift
-# visible in the same PR that would introduce it.
+# visible in the same PR that would introduce it. embedding.proto is copied
+# verbatim from embedding-service (HLD §12) for the same reason — retrieval
+# is a gRPC client of embedding-service, not its proto's owner.
 proto:
-	uv run python -m grpc_tools.protoc -Iprotos --python_out=app/grpc --grpc_python_out=app/grpc protos/retrieval.proto
-	uv run python -c "import glob, re; [open(p, 'w', encoding='utf-8').write(re.sub(r'import (\w+_pb2) as (\w+__pb2)', r'from app.grpc import \1 as \2', open(p, 'r', encoding='utf-8').read())) for p in glob.glob('app/grpc/*_pb2_grpc.py')]"
+	uv run python -m grpc_tools.protoc -Iprotos --python_out=app/grpc --grpc_python_out=app/grpc protos/retrieval.proto protos/embedding.proto
+	uv run python scripts/fix_proto_grpc_imports.py
 
 run:
 	DEPLOYMENT_MODE=api uv run uvicorn app.main:app --reload --host 127.0.0.1 --port 8060
