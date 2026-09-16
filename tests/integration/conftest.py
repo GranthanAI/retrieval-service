@@ -3,9 +3,11 @@ from collections.abc import AsyncGenerator
 
 import pytest
 import pytest_asyncio
+from aiokafka import AIOKafkaProducer
 from alembic import command
 from alembic.config import Config
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from testcontainers.community.kafka import KafkaContainer
 from testcontainers.community.postgres import PostgresContainer
 
 
@@ -49,3 +51,36 @@ async def db_session(migrated_database_url: str) -> AsyncGenerator[AsyncSession,
         yield session
         await session.rollback()
     await engine.dispose()
+
+
+@pytest_asyncio.fixture
+async def session_factory(migrated_database_url: str) -> AsyncGenerator[async_sessionmaker, None]:
+    """A real `async_sessionmaker` against the migrated ephemeral Postgres —
+    for Phase 5 tests that need to pass a session factory (not a single
+    session) to a consumer/orchestrator, the same way `lifespan.py` does.
+    """
+    engine = create_async_engine(migrated_database_url)
+    factory = async_sessionmaker(bind=engine, expire_on_commit=False)
+    yield factory
+    await engine.dispose()
+
+
+@pytest.fixture(scope="session")
+def kafka_container():
+    """Ephemeral Kafka on a random free host port — isolated, nothing
+    persists after the test session. Session-scoped so its startup cost is
+    paid once across every Phase 5 test, matching file-service's own
+    convention.
+    """
+    with KafkaContainer() as container:
+        yield container
+
+
+@pytest_asyncio.fixture
+async def kafka_producer(kafka_container: KafkaContainer) -> AsyncGenerator[AIOKafkaProducer, None]:
+    producer = AIOKafkaProducer(bootstrap_servers=kafka_container.get_bootstrap_server())
+    await producer.start()
+    try:
+        yield producer
+    finally:
+        await producer.stop()

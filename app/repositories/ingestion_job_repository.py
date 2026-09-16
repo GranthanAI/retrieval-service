@@ -112,6 +112,16 @@ class IngestionJobRepository:
         return list(result.scalars().all())
 
     @staticmethod
+    async def mark_all_versions_deleted(db: AsyncSession, document_id: UUID) -> None:
+        """LLD §6.4 — `status -> DELETED`, all `content_version`s, since
+        `file.deleted` carries no version filter (HLD §8.2/§21)."""
+        result = await db.execute(select(IngestionJob).where(IngestionJob.document_id == document_id))
+        for job in result.scalars().all():
+            job.status = IngestionStatus.DELETED.value
+            db.add(job)
+        await db.flush()
+
+    @staticmethod
     async def list_stuck_processing(db: AsyncSession, older_than: datetime) -> list[IngestionJob]:
         """LLD §3.2's closing paragraph — the safety net for a crash *after*
         ack but *during* orchestrator.run(), with no redelivered event to
