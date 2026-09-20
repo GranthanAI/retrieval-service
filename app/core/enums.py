@@ -24,3 +24,14 @@ class StageStatus(str, Enum):
     PENDING = "PENDING"
     COMPLETE = "COMPLETE"
     FAILED = "FAILED"
+
+
+class RetrievalScope(int, Enum):
+    """Mirror of the frozen proto's `RetrievalScope` enum
+    (`llm-service/proto/retrieval.proto` — HLD §1.1 #2), for use in
+    query-pipeline code that shouldn't otherwise need to import
+    `app.grpc.retrieval_pb2`. Values match the proto exactly."""
+
+    FILES = 0
+    KNOWLEDGE_BASE = 1
+    ALL = 2

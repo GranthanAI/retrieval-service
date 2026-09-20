@@ -100,7 +100,19 @@ class OpenSearchRepository:
                 body=body,
                 request_timeout=settings.OPENSEARCH_QUERY_TIMEOUT_SECONDS,
             )
-            return [BM25SearchHit(chunk_id=hit["_id"], score=hit["_score"]) for hit in response["hits"]["hits"]]
+            return [
+                BM25SearchHit(
+                    chunk_id=hit["_id"],
+                    score=hit["_score"],
+                    document_id=hit["_source"]["document_id"],
+                    filename=hit["_source"]["filename"],
+                    content=hit["_source"]["content"],
+                    page_number=hit["_source"]["page_number"],
+                    section=hit["_source"]["section"],
+                    chunk_index=hit["_source"]["chunk_index"],
+                )
+                for hit in response["hits"]["hits"]
+            ]
 
         return await asyncio.to_thread(_search)
 

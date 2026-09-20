@@ -106,11 +106,32 @@ class MilvusRepository:
                 },
                 limit=top_n,
                 filter=filter_expr,
-                output_fields=["chunk_id"],
+                output_fields=["chunk_id", "document_id", "filename", "content", "page_number", "section", "chunk_index"],
                 timeout=settings.MILVUS_QUERY_TIMEOUT_SECONDS,
                 consistency_level="Strong",
             )
-            return [DenseSearchHit(chunk_id=hit["entity"]["chunk_id"], score=hit["distance"]) for hit in results[0]]
+            hits = []
+            for hit in results[0]:
+                entity = hit["entity"]
+                # Sentinel decoding — the Milvus boundary's own absent-value
+                # encoding (see _to_row's docstring above), decoded back to
+                # None here so callers see the same "None means absent"
+                # convention OpenSearch's hits already use natively.
+                page_number = entity["page_number"]
+                section = entity["section"]
+                hits.append(
+                    DenseSearchHit(
+                        chunk_id=entity["chunk_id"],
+                        score=hit["distance"],
+                        document_id=entity["document_id"],
+                        filename=entity["filename"],
+                        content=entity["content"],
+                        page_number=page_number if page_number != _ABSENT_PAGE_NUMBER else None,
+                        section=section if section != _ABSENT_VARCHAR else None,
+                        chunk_index=entity["chunk_index"],
+                    )
+                )
+            return hits
 
         return await asyncio.to_thread(_search)
 
