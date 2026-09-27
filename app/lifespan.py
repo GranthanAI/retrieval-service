@@ -5,6 +5,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
 from app.clients.embedding_client import EmbeddingClient
+from app.clients.file_service_client import FileServiceClient
 from app.core.config import settings
 from app.core.logging import get_logger
 from app.db.postgres import dispose_engine, get_engine
@@ -14,6 +15,10 @@ from app.events.consumers.file_processing_retry_consumer import run_file_process
 from app.events.consumers.file_uploaded_consumer import run_file_uploaded_consumer
 from app.events.ingestion_pool import BoundedIngestionPool
 from app.events.producers.processing_status_producer import start_producer, stop_producer
+from app.grpc.retrieval_servicer import RetrievalServicer
+from app.grpc.server import start_server, stop_server
+from app.stores.milvus_repository import MilvusRepository
+from app.stores.opensearch_repository import OpenSearchRepository
 from app.workers.outbox_worker import run_outbox_worker
 from app.workers.reconciliation_worker import run_reconciliation_worker
 
@@ -21,12 +26,26 @@ logger = get_logger(__name__)
 
 
 async def _startup_api(app: FastAPI) -> None:
-    """DEPLOYMENT_MODE=api branch (LLD §9): DB pool, gRPC server. The gRPC
-    server itself lands in Phase 9 — the DB engine (needed for the
-    permission-check/version-resolution reads the query pipeline will do)
-    is real from here on.
+    """DEPLOYMENT_MODE=api branch (LLD §9): DB pool, gRPC server (Phase 9).
+    Every real client `pipeline.run()` needs (embedding, File Service,
+    Milvus, OpenSearch) is constructed once here and handed to the
+    servicer — no more fakes at this layer.
     """
     app.state.db_engine = get_engine()
+    session_factory = get_session_factory()
+
+    embedding_client = EmbeddingClient()
+    app.state.api_embedding_client = embedding_client
+
+    servicer = RetrievalServicer(
+        session_factory=session_factory,
+        file_service_client=FileServiceClient(),
+        embedding_client=embedding_client,
+        milvus_repository=MilvusRepository(),
+        opensearch_repository=OpenSearchRepository(),
+    )
+    app.state.grpc_server = await start_server(servicer)
+
     logger.info("lifespan.api.startup")
 
 
@@ -94,6 +113,9 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         yield
     finally:
         logger.info("retrieval_service.shutdown.begin")
+        if settings.DEPLOYMENT_MODE in ("api", "all"):
+            await stop_server(app.state.grpc_server)
+            await app.state.api_embedding_client.close()
         if settings.DEPLOYMENT_MODE in ("worker", "all"):
             for stop_event in app.state.worker_stop_events.values():
                 stop_event.set()

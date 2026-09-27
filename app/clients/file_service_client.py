@@ -35,6 +35,17 @@ class FileServiceClient:
         if not document_ids:
             return []
 
+        # A trailing space in "Bearer " (credential="") is rejected by
+        # httpx/h11 as an illegal header value — not merely "unauthenticated
+        # against File Service" but a hard client-side exception, silently
+        # swallowed by the except-and-fail-closed below regardless. Omit the
+        # header entirely rather than send a malformed one; an unset
+        # credential is a real, unset local-dev value, not a token that
+        # happens to be the empty string.
+        headers = {}
+        if settings.FILE_SERVICE_SERVICE_CREDENTIAL:
+            headers["Authorization"] = f"Bearer {settings.FILE_SERVICE_SERVICE_CREDENTIAL}"
+
         try:
             async with httpx.AsyncClient(
                 base_url=self._base_url,
@@ -43,7 +54,7 @@ class FileServiceClient:
             ) as client:
                 response = await client.post(
                     "/internal/files/permissions/check",
-                    headers={"Authorization": f"Bearer {settings.FILE_SERVICE_SERVICE_CREDENTIAL}"},
+                    headers=headers,
                     json={"user_id": user_id, "document_ids": document_ids},
                 )
                 response.raise_for_status()
