@@ -1,5 +1,6 @@
 import asyncio
 
+import structlog
 from aiokafka import AIOKafkaConsumer
 from pydantic import ValidationError
 from sqlalchemy.ext.asyncio import async_sessionmaker
@@ -29,6 +30,8 @@ async def handle_message(session_factory: async_sessionmaker, raw_value: bytes) 
         logger.exception("file_deleted_consumer.malformed_payload")
         return
 
+    structlog.contextvars.bind_contextvars(event_id=str(payload.event_id), document_id=str(payload.document_id))
+
     async with session_factory() as db:
         is_new = await ProcessedEventRepository.mark_processed(db, payload.event_id, "file_deleted_consumer")
         await db.commit()
@@ -57,5 +60,7 @@ async def run_file_deleted_consumer(session_factory: async_sessionmaker, stop_ev
                         await handle_message(session_factory, record.value)
                     except Exception:
                         logger.exception("file_deleted_consumer.message_failed")
+                    finally:
+                        structlog.contextvars.clear_contextvars()
     finally:
         await consumer.stop()

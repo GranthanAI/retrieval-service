@@ -1,5 +1,6 @@
 import asyncio
 
+import structlog
 from aiokafka import AIOKafkaConsumer
 from pydantic import ValidationError
 from sqlalchemy.ext.asyncio import async_sessionmaker
@@ -33,6 +34,8 @@ async def handle_message(session_factory: async_sessionmaker, pool: BoundedInges
     except ValidationError:
         logger.exception("file_uploaded_consumer.malformed_payload")
         return
+
+    structlog.contextvars.bind_contextvars(event_id=str(payload.event_id), document_id=str(payload.document_id))
 
     try:
         content_version = parse_content_version(payload.storage.key)
@@ -87,5 +90,7 @@ async def run_file_uploaded_consumer(
                         await handle_message(session_factory, pool, record.value)
                     except Exception:
                         logger.exception("file_uploaded_consumer.message_failed")
+                    finally:
+                        structlog.contextvars.clear_contextvars()
     finally:
         await consumer.stop()

@@ -2,9 +2,11 @@ import uuid
 from datetime import datetime, timezone
 from uuid import UUID
 
+import structlog
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from app.clients.embedding_client import EmbeddingClient
+from app.core import metrics
 from app.core.config import settings
 from app.core.enums import IngestionStatus, StageStatus
 from app.core.logging import get_logger
@@ -79,9 +81,10 @@ async def _fail(
             },
         )
         await db.commit()
+    metrics.ingestion_jobs_total.labels(status=IngestionStatus.FAILED.value).inc()
 
 
-async def run(
+async def _run(
     session_factory: async_sessionmaker,
     document_id: UUID,
     content_version: int,
@@ -108,26 +111,30 @@ async def run(
         owner_id, conversation_id = job.owner_id, job.conversation_id
 
     try:
-        raw_bytes = await downloader.fetch(storage_bucket, storage_key)
+        with metrics.ingestion_stage_duration_seconds.labels(stage="download").time():
+            raw_bytes = await downloader.fetch(storage_bucket, storage_key)
     except downloader.DownloadError as exc:
         logger.warning("orchestrator.download_failed", document_id=str(document_id), error=str(exc))
         await _fail(session_factory, document_id, content_version, error_code="DOWNLOAD_ERROR", error_message=str(exc))
         return
 
     try:
-        parsed = parser_module.parse(raw_bytes, filename)
+        with metrics.ingestion_stage_duration_seconds.labels(stage="parse").time():
+            parsed = parser_module.parse(raw_bytes, filename)
     except parser_module.ParserError as exc:
         logger.warning("orchestrator.parse_failed", document_id=str(document_id), error=str(exc))
         await _fail(session_factory, document_id, content_version, error_code="PARSER_ERROR", error_message=str(exc))
         return
 
-    chunks = chunker.chunk(parsed)
-    chunk_ids = [
-        chunk_identity.derive_chunk_id(str(document_id), content_version, c.chunk_index) for c in chunks
-    ]
+    with metrics.ingestion_stage_duration_seconds.labels(stage="chunk").time():
+        chunks = chunker.chunk(parsed)
+        chunk_ids = [
+            chunk_identity.derive_chunk_id(str(document_id), content_version, c.chunk_index) for c in chunks
+        ]
 
     try:
-        vectors = await embed_batch(embedding_client, chunks)
+        with metrics.ingestion_stage_duration_seconds.labels(stage="embed").time():
+            vectors = await embed_batch(embedding_client, chunks)
     except Exception as exc:
         # No partial index writes are possible without embeddings — this is
         # the one stage that isn't independently retriable per-target like
@@ -161,7 +168,8 @@ async def run(
         for c, chunk_id, vector in zip(chunks, chunk_ids, vectors)
     ]
 
-    index_result = await index_write(records, IndexTarget.BOTH)
+    with metrics.ingestion_stage_duration_seconds.labels(stage="index").time():
+        index_result = await index_write(records, IndexTarget.BOTH)
 
     async with session_factory() as db:
         job = await IngestionJobRepository.get_by_document_and_version(db, document_id, content_version)
@@ -207,9 +215,11 @@ async def run(
         # must not be treated as fully searchable until both indexes agree.
 
         await db.commit()
+        settled_status = job.status
+    metrics.ingestion_jobs_total.labels(status=settled_status).inc()
 
 
-async def recover_partially_indexed_job(
+async def _recover(
     session_factory: async_sessionmaker,
     document_id: UUID,
     content_version: int,
@@ -327,3 +337,35 @@ async def recover_partially_indexed_job(
         # outbox row, the sweep retries again next interval.
 
         await db.commit()
+        settled_status = job.status
+    metrics.ingestion_jobs_total.labels(status=settled_status).inc()
+
+
+async def run(
+    session_factory: async_sessionmaker,
+    document_id: UUID,
+    content_version: int,
+    embedding_client: EmbeddingClient,
+) -> None:
+    """See `_run`. Wrapper only binds `document_id` into structlog
+    contextvars so every log line from one ingestion job carries it (LLD
+    §10), and clears it afterward — the pool worker task runs many jobs."""
+    structlog.contextvars.bind_contextvars(document_id=str(document_id))
+    try:
+        await _run(session_factory, document_id, content_version, embedding_client)
+    finally:
+        structlog.contextvars.unbind_contextvars("document_id")
+
+
+async def recover_partially_indexed_job(
+    session_factory: async_sessionmaker,
+    document_id: UUID,
+    content_version: int,
+    embedding_client: EmbeddingClient,
+) -> None:
+    """See `_recover`; same contextvar binding as `run`."""
+    structlog.contextvars.bind_contextvars(document_id=str(document_id))
+    try:
+        await _recover(session_factory, document_id, content_version, embedding_client)
+    finally:
+        structlog.contextvars.unbind_contextvars("document_id")

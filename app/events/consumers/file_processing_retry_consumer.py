@@ -1,5 +1,6 @@
 import asyncio
 
+import structlog
 from aiokafka import AIOKafkaConsumer
 from pydantic import ValidationError
 from sqlalchemy.ext.asyncio import async_sessionmaker
@@ -36,6 +37,8 @@ async def handle_message(session_factory: async_sessionmaker, pool: BoundedInges
     except ValidationError:
         logger.error("file_processing_retry_consumer.missing_or_malformed_content_version")
         return
+
+    structlog.contextvars.bind_contextvars(event_id=str(payload.event_id), document_id=str(payload.document_id))
 
     async with session_factory() as db:
         is_new = await ProcessedEventRepository.mark_processed(db, payload.event_id, "file_processing_retry_consumer")
@@ -76,5 +79,7 @@ async def run_file_processing_retry_consumer(
                         await handle_message(session_factory, pool, record.value)
                     except Exception:
                         logger.exception("file_processing_retry_consumer.message_failed")
+                    finally:
+                        structlog.contextvars.clear_contextvars()
     finally:
         await consumer.stop()

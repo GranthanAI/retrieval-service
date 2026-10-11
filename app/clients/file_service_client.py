@@ -1,5 +1,6 @@
 import httpx
 
+from app.core import metrics
 from app.core.config import settings
 from app.core.logging import get_logger
 
@@ -47,22 +48,23 @@ class FileServiceClient:
             headers["Authorization"] = f"Bearer {settings.FILE_SERVICE_SERVICE_CREDENTIAL}"
 
         try:
-            async with httpx.AsyncClient(
-                base_url=self._base_url,
-                timeout=settings.FILE_SERVICE_PERMISSION_CHECK_TIMEOUT_SECONDS,
-                transport=self._transport,
-            ) as client:
-                response = await client.post(
-                    "/internal/files/permissions/check",
-                    headers=headers,
-                    json={"user_id": user_id, "document_ids": document_ids},
-                )
-                response.raise_for_status()
-                body = response.json()
-                authorized = body["authorized_document_ids"]
-                if not isinstance(authorized, list) or not all(isinstance(doc_id, str) for doc_id in authorized):
-                    raise ValueError("malformed authorized_document_ids in response")
-                return authorized
+            with metrics.permission_check_latency_histogram.time():
+                async with httpx.AsyncClient(
+                    base_url=self._base_url,
+                    timeout=settings.FILE_SERVICE_PERMISSION_CHECK_TIMEOUT_SECONDS,
+                    transport=self._transport,
+                ) as client:
+                    response = await client.post(
+                        "/internal/files/permissions/check",
+                        headers=headers,
+                        json={"user_id": user_id, "document_ids": document_ids},
+                    )
+                    response.raise_for_status()
+                    body = response.json()
+                    authorized = body["authorized_document_ids"]
+                    if not isinstance(authorized, list) or not all(isinstance(d, str) for d in authorized):
+                        raise ValueError("malformed authorized_document_ids in response")
+                    return authorized
         except Exception as exc:
             logger.warning("file_service_client.permission_check_failed_closed", error=str(exc))
             return []

@@ -51,3 +51,10 @@ async def fetch(bucket: str, key: str) -> bytes:
         return await asyncio.wait_for(asyncio.to_thread(_get), timeout=settings.MINIO_DOWNLOAD_TIMEOUT_SECONDS)
     except Exception as exc:
         raise DownloadError(f"failed to download {bucket}/{key}: {exc}") from exc
+
+
+async def ping() -> None:
+    """Reachability probe for /health/ready (worker mode) — raises if MinIO
+    is unreachable. `bucket_exists` returning False is not a failure here:
+    the bucket is File Service's to create, not this service's."""
+    await asyncio.to_thread(_get_client().bucket_exists, settings.MINIO_BUCKET_FILES)

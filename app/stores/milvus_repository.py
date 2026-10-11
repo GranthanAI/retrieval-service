@@ -168,3 +168,8 @@ class MilvusRepository:
             client.flush(collection_name=settings.MILVUS_COLLECTION_NAME)
 
         await asyncio.to_thread(_delete)
+
+    async def ping(self) -> None:
+        """Reachability probe for /health/ready (api mode) — raises if
+        Milvus is unreachable."""
+        await asyncio.to_thread(_get_client().has_collection, settings.MILVUS_COLLECTION_NAME)

@@ -126,3 +126,8 @@ class OpenSearchRepository:
             )
 
         await asyncio.to_thread(_delete)
+
+    async def ping(self) -> None:
+        """Reachability probe for /health/ready (api mode). `info()` raises
+        on failure, unlike `ping()` which just returns False."""
+        await asyncio.to_thread(_get_client().info)

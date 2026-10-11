@@ -46,3 +46,15 @@ embedding_model_mismatch_total = Counter(
     "retrieval_embedding_model_mismatch_total",
     "embedding-service responses that failed the model/dimension guard (HLD §12) — should stay 0",
 )
+
+ingestion_jobs_total = Counter(
+    "retrieval_ingestion_jobs_total",
+    "Ingestion jobs by terminal/settled status (LLD §10)",
+    ["status"],
+)
+
+ingestion_stage_duration_seconds = Histogram(
+    "retrieval_ingestion_stage_duration_seconds",
+    "Ingestion pipeline stage duration (LLD §10)",
+    ["stage"],
+)

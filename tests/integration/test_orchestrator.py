@@ -8,7 +8,9 @@ import uuid
 from unittest.mock import AsyncMock, patch
 
 import pytest
+import structlog
 from minio import Minio
+from prometheus_client import REGISTRY
 from sqlalchemy import select
 
 from app.clients.embedding_client import EmbeddingClient
@@ -20,6 +22,12 @@ from app.models.outbox_event import OutboxEvent
 from app.repositories.ingestion_job_repository import IngestionJobRepository
 from app.stores.milvus_repository import MilvusRepository
 from app.stores.opensearch_repository import OpenSearchRepository
+
+def _sample(name: str, labels: dict | None = None) -> float:
+    return REGISTRY.get_sample_value(name, labels or {}) or 0.0
+
+
+STAGES = ("download", "parse", "chunk", "embed", "index")
 
 FIXTURE_PATH = "tests/fixtures/sample.pdf"
 TEST_BUCKET = "retrieval-test-bucket"
@@ -84,7 +92,17 @@ class TestOrchestratorHappyPath:
             )
             await db.commit()
 
+        ready_before = _sample("retrieval_ingestion_jobs_total", {"status": "READY"})
+        stage_before = {
+            stage: _sample("retrieval_ingestion_stage_duration_seconds_count", {"stage": stage}) for stage in STAGES
+        }
+
         await orchestrator.run(session_factory, document_id, 1, embedding_client)
+
+        assert _sample("retrieval_ingestion_jobs_total", {"status": "READY"}) == ready_before + 1
+        for stage in STAGES:
+            after = _sample("retrieval_ingestion_stage_duration_seconds_count", {"stage": stage})
+            assert after == stage_before[stage] + 1, stage
 
         async with session_factory() as db:
             job = await IngestionJobRepository.get_by_document_and_version(db, document_id, 1)
@@ -216,6 +234,49 @@ class TestOrchestratorForcedFailures:
             assert not any(r.payload["document_id"] == str(document_id) for r in completed_rows)
 
         await MilvusRepository().delete_by_document_id(str(document_id))
+        await engine.dispose()
+
+
+class TestIngestionObservability:
+    @pytest.mark.asyncio
+    async def test_failed_job_is_counted_and_document_id_is_bound_during_the_run(
+        self, migrated_database_url, embedding_client, monkeypatch
+    ) -> None:
+        from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
+
+        from app.ingestion import downloader
+
+        document_id = uuid.uuid4()
+        engine = create_async_engine(migrated_database_url)
+        session_factory = async_sessionmaker(bind=engine, expire_on_commit=False)
+
+        async with session_factory() as db:
+            await IngestionJobRepository.upsert_job(
+                db,
+                document_id=document_id,
+                content_version=1,
+                owner_id=uuid.uuid4(),
+                conversation_id=None,
+                filename="x.pdf",
+                storage_bucket=TEST_BUCKET,
+                storage_key="o/d/v1/original.pdf",
+            )
+            await db.commit()
+
+        seen: dict = {}
+
+        async def _failing_fetch(bucket, key):
+            seen.update(structlog.contextvars.get_contextvars())
+            raise downloader.DownloadError("boom")
+
+        monkeypatch.setattr(downloader, "fetch", _failing_fetch)
+        failed_before = _sample("retrieval_ingestion_jobs_total", {"status": "FAILED"})
+
+        await orchestrator.run(session_factory, document_id, 1, embedding_client)
+
+        assert _sample("retrieval_ingestion_jobs_total", {"status": "FAILED"}) == failed_before + 1
+        assert seen["document_id"] == str(document_id)  # bound for the whole job...
+        assert "document_id" not in structlog.contextvars.get_contextvars()  # ...and cleaned up after
         await engine.dispose()
 
 

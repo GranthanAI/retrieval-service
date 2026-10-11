@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 
+from app.api.middleware import RequestIDMiddleware
 from app.api.routers import health
 from app.core.config import settings
 from app.core.logging import configure_logging
@@ -17,6 +18,7 @@ def create_app() -> FastAPI:
         lifespan=lifespan,
     )
 
+    app.add_middleware(RequestIDMiddleware)
     app.include_router(health.router)
 
     return app

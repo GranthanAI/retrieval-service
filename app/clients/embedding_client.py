@@ -1,5 +1,6 @@
 import grpc
 
+from app.core import metrics
 from app.core.config import settings
 from app.core.exceptions import EmbeddingModelMismatchError
 from app.core.logging import get_logger
@@ -15,6 +16,7 @@ def _assert_model_matches(model: str, dimension: int) -> None:
     against a silent embedding-service model upgrade breaking the index.
     """
     if model != settings.EMBEDDING_MODEL_EXPECTED or dimension != settings.EMBEDDING_DIMENSION_EXPECTED:
+        metrics.embedding_model_mismatch_total.inc()
         raise EmbeddingModelMismatchError(
             f"embedding-service returned model={model!r} dimension={dimension}, "
             f"expected model={settings.EMBEDDING_MODEL_EXPECTED!r} "
