@@ -31,6 +31,24 @@ class FileServiceClient:
     def __init__(self, base_url: str | None = None, transport: httpx.AsyncBaseTransport | None = None) -> None:
         self._base_url = base_url or settings.FILE_SERVICE_BASE_URL
         self._transport = transport
+        # One long-lived client: constructing an httpx.AsyncClient per call
+        # rebuilds its SSL context (~1s on Windows), which alone exhausted the
+        # 300 ms permission-check budget, and defeats keep-alive.
+        self._client: httpx.AsyncClient | None = None
+
+    def _get_client(self) -> httpx.AsyncClient:
+        if self._client is None:
+            self._client = httpx.AsyncClient(
+                base_url=self._base_url,
+                timeout=settings.FILE_SERVICE_PERMISSION_CHECK_TIMEOUT_SECONDS,
+                transport=self._transport,
+            )
+        return self._client
+
+    async def close(self) -> None:
+        if self._client is not None:
+            await self._client.aclose()
+            self._client = None
 
     async def batch_check_permissions(self, user_id: str, document_ids: list[str]) -> list[str]:
         if not document_ids:
@@ -49,22 +67,17 @@ class FileServiceClient:
 
         try:
             with metrics.permission_check_latency_histogram.time():
-                async with httpx.AsyncClient(
-                    base_url=self._base_url,
-                    timeout=settings.FILE_SERVICE_PERMISSION_CHECK_TIMEOUT_SECONDS,
-                    transport=self._transport,
-                ) as client:
-                    response = await client.post(
-                        "/internal/files/permissions/check",
-                        headers=headers,
-                        json={"user_id": user_id, "document_ids": document_ids},
-                    )
-                    response.raise_for_status()
-                    body = response.json()
-                    authorized = body["authorized_document_ids"]
-                    if not isinstance(authorized, list) or not all(isinstance(d, str) for d in authorized):
-                        raise ValueError("malformed authorized_document_ids in response")
-                    return authorized
+                response = await self._get_client().post(
+                    "/internal/files/permissions/check",
+                    headers=headers,
+                    json={"user_id": user_id, "document_ids": document_ids},
+                )
+                response.raise_for_status()
+                body = response.json()
+                authorized = body["authorized_document_ids"]
+                if not isinstance(authorized, list) or not all(isinstance(d, str) for d in authorized):
+                    raise ValueError("malformed authorized_document_ids in response")
+                return authorized
         except Exception as exc:
             logger.warning("file_service_client.permission_check_failed_closed", error=str(exc))
             return []

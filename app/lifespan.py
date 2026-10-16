@@ -37,9 +37,11 @@ async def _startup_api(app: FastAPI) -> None:
     embedding_client = EmbeddingClient()
     app.state.api_embedding_client = embedding_client
 
+    file_service_client = FileServiceClient()
+    app.state.file_service_client = file_service_client
     servicer = RetrievalServicer(
         session_factory=session_factory,
-        file_service_client=FileServiceClient(),
+        file_service_client=file_service_client,
         embedding_client=embedding_client,
         milvus_repository=MilvusRepository(),
         opensearch_repository=OpenSearchRepository(),
@@ -116,6 +118,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         if settings.DEPLOYMENT_MODE in ("api", "all"):
             await stop_server(app.state.grpc_server)
             await app.state.api_embedding_client.close()
+            await app.state.file_service_client.close()
         if settings.DEPLOYMENT_MODE in ("worker", "all"):
             for stop_event in app.state.worker_stop_events.values():
                 stop_event.set()
