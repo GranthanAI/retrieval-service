@@ -8,9 +8,11 @@ from app.core import metrics
 from app.core.config import settings
 from app.core.enums import RetrievalScope
 from app.core.logging import get_logger
-from app.grpc.retrieval_pb2 import GetRelevantChunksRequest, GetRelevantChunksResponse
+from app.core.enums import IngestionStatus
+from app.grpc.retrieval_pb2 import GetRelevantChunksRequest, GetRelevantChunksResponse, RetrievalStatus
 from app.query import bm25_search, candidate_embeddings, dense_search, fusion, mmr, response_mapper, scope_guard
 from app.repositories.document_current_version_repository import DocumentCurrentVersionRepository
+from app.repositories.ingestion_job_repository import IngestionJobRepository
 from app.stores.milvus_repository import MilvusRepository
 from app.stores.opensearch_repository import OpenSearchRepository
 
@@ -32,31 +34,81 @@ async def run(
     tests use fakes standing in for every one of them.
     """
     scope = RetrievalScope(request.scope)
+    requested = list(dict.fromkeys(request.file_ids))  # distinct, order preserved
+    counts = {"requested_count": len(requested)}
+    base = {"trace_id": request.trace_id, "requested": len(requested)}
+
+    def done(status: int, detail: str, **extra):
+        # One structured line per query: why it ended the way it did. No query text, no content.
+        logger.info("retrieval.query_result", status=RetrievalStatus.Name(status), detail=detail, **base, **extra)
 
     # 1. Scope check (HLD §16.3/§16.4) — SHORT-CIRCUIT #1
     if not scope_guard.check(scope, list(request.file_ids)):
         reason = "no_scope" if scope != RetrievalScope.FILES else "no_file_ids"
         metrics.query_short_circuit_total.labels(reason=reason).inc()
-        return response_mapper.empty_response(request.trace_id)
+        done(RetrievalStatus.NO_SCOPE, reason)
+        return response_mapper.empty_response(
+            request.trace_id, RetrievalStatus.NO_SCOPE, "no file scope to search", **counts
+        )
 
-    # 2. Authorization (HLD §16.2) — SHORT-CIRCUIT #2
-    authorized_file_ids = await file_service_client.batch_check_permissions(
-        user_id=request.user_id, document_ids=list(request.file_ids)
-    )
+    # 2. Authorization (HLD §16.2) — SHORT-CIRCUIT #2. Fails closed, but the reason is reported:
+    # "the permission check could not run" is not the same as "you may not read these files".
+    permission = await file_service_client.check_permissions(user_id=request.user_id, document_ids=requested)
+    authorized_file_ids = permission.authorized
+    counts["authorized_count"] = len(authorized_file_ids)
+    if permission.failed:
+        metrics.query_short_circuit_total.labels(reason="permission_check_failed").inc()
+        done(RetrievalStatus.UNAVAILABLE, "permission_check_failed", error=permission.error, authorized=0)
+        return response_mapper.empty_response(
+            request.trace_id,
+            RetrievalStatus.UNAVAILABLE,
+            "the document permission check could not be completed",
+            **counts,
+        )
     if not authorized_file_ids:
         metrics.query_short_circuit_total.labels(reason="no_authorized_ids").inc()
-        return response_mapper.empty_response(request.trace_id)
+        done(RetrievalStatus.ACCESS_DENIED, "no_authorized_ids", authorized=0)
+        return response_mapper.empty_response(
+            request.trace_id,
+            RetrievalStatus.ACCESS_DENIED,
+            "none of the requested documents exist or are accessible to this user",
+            **counts,
+        )
 
-    # 3a. Version resolution (HLD §13.3 — local Postgres lookup, not File Service)
+    # 3a. Version resolution (HLD §13.3 — local Postgres lookup, not File Service), restricted to
+    # versions whose ingestion actually completed. The current version is registered when the
+    # upload event is consumed (before indexing), so "has a current version" alone does not mean
+    # "has chunks".
     async with session_factory() as db:
-        current_versions = await DocumentCurrentVersionRepository.get_many(db, authorized_file_ids)
+        registered = await DocumentCurrentVersionRepository.get_many(db, authorized_file_ids)
+        job_state = await IngestionJobRepository.statuses_for(db, registered) if registered else {}
+
+    current_versions: dict[str, int] = {}
+    indexing = failed = unregistered = 0
+    for doc in authorized_file_ids:
+        if doc not in registered:
+            unregistered += 1
+            continue
+        status, _chunks = job_state.get(doc, (None, None))
+        if status == IngestionStatus.READY.value:
+            current_versions[doc] = registered[doc]
+        elif status == IngestionStatus.FAILED.value:
+            failed += 1
+        else:
+            indexing += 1
+    counts["ready_count"] = len(current_versions)
+    doc_versions = {d: v for d, v in current_versions.items()}
 
     if not current_versions:
-        # Every authorized id has no completed/known ingestion — nothing to
-        # search. Short-circuited here (not left to fall through to two
-        # empty store searches) so an embed_query call isn't wasted on a
-        # request that structurally cannot produce results.
-        return response_mapper.empty_response(request.trace_id)
+        if failed:
+            status, detail = RetrievalStatus.INDEXING_FAILED, "indexing of the document failed"
+        elif indexing:
+            status, detail = RetrievalStatus.INDEXING, "the document is still being indexed"
+        else:
+            status, detail = RetrievalStatus.NOT_INDEXED, "the document has not been indexed yet"
+        metrics.query_short_circuit_total.labels(reason=RetrievalStatus.Name(status).lower()).inc()
+        done(status, detail, authorized=len(authorized_file_ids), indexing=indexing, failed=failed, unregistered=unregistered)
+        return response_mapper.empty_response(request.trace_id, status, detail, **counts)
 
     # 3b. Query embedding (HLD §12) — hard dependency for both search legs,
     # no partial-degrade path exists once this fails.
@@ -64,7 +116,10 @@ async def run(
         query_vector = await embedding_client.embed_query(request.query)
     except Exception as exc:
         logger.warning("pipeline.query_embedding_failed", error=str(exc))
-        return response_mapper.empty_response(request.trace_id)
+        done(RetrievalStatus.UNAVAILABLE, "query_embedding_failed", ready=len(current_versions))
+        return response_mapper.empty_response(
+            request.trace_id, RetrievalStatus.UNAVAILABLE, "the query could not be embedded", **counts
+        )
 
     # 4. Dense + BM25 search, concurrently — degradation matrix (LLD §7.2)
     dense_result, bm25_result = await asyncio.gather(
@@ -77,7 +132,10 @@ async def run(
     bm25_failed = isinstance(bm25_result, BaseException)
 
     if dense_failed and bm25_failed:
-        return response_mapper.empty_response(request.trace_id)
+        done(RetrievalStatus.UNAVAILABLE, "both_search_engines_failed", ready=len(current_versions))
+        return response_mapper.empty_response(
+            request.trace_id, RetrievalStatus.UNAVAILABLE, "the search engines are unavailable", **counts
+        )
 
     dense_hits = [] if dense_failed else dense_result
     bm25_hits = [] if bm25_failed else bm25_result
@@ -94,7 +152,9 @@ async def run(
         fused = fusion.reciprocal_rank_fusion([], bm25_hits, k=settings.FUSION_RRF_K)
         selected = fused[: settings.MMR_FINAL_TOP_K]
         sorted_selected = sorted(selected, key=lambda c: c.rrf_score, reverse=True)
-        return response_mapper.to_proto(sorted_selected, request.trace_id)
+        done(RetrievalStatus.OK if sorted_selected else RetrievalStatus.NO_MATCH, "bm25_only",
+             chunks=len(sorted_selected), versions=doc_versions)
+        return response_mapper.to_proto(sorted_selected, request.trace_id, **counts)
 
     if bm25_failed and not dense_failed:
         # OpenSearch fails, Milvus succeeds: dense-only candidates — still
@@ -113,4 +173,12 @@ async def run(
     selected = mmr.select(fused, embeddings, k=settings.MMR_FINAL_TOP_K, lambda_=settings.MMR_LAMBDA)
     sorted_selected = sorted(selected, key=lambda c: c.rrf_score, reverse=True)
 
-    return response_mapper.to_proto(sorted_selected, request.trace_id)
+    done(
+        RetrievalStatus.OK if sorted_selected else RetrievalStatus.NO_MATCH,
+        "ok" if sorted_selected else "no_relevant_chunks",
+        chunks=len(sorted_selected),
+        dense_hits=len(dense_hits),
+        bm25_hits=len(bm25_hits),
+        versions=doc_versions,
+    )
+    return response_mapper.to_proto(sorted_selected, request.trace_id, **counts)

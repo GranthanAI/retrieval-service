@@ -1,3 +1,5 @@
+from dataclasses import dataclass, field
+
 import httpx
 
 from app.core import metrics
@@ -5,6 +7,17 @@ from app.core.config import settings
 from app.core.logging import get_logger
 
 logger = get_logger(__name__)
+
+
+@dataclass(frozen=True)
+class PermissionCheckResult:
+    """Outcome of a batch permission check. `failed` distinguishes "the check could not be
+    performed" (timeout, 5xx, malformed body: fail closed, nothing authorized) from "the check
+    ran and the user may not read these documents"."""
+
+    authorized: list[str] = field(default_factory=list)
+    failed: bool = False
+    error: str = ""
 
 
 class FileServiceClient:
@@ -51,16 +64,16 @@ class FileServiceClient:
             self._client = None
 
     async def batch_check_permissions(self, user_id: str, document_ids: list[str]) -> list[str]:
+        """Authorized subset; fails closed (see `check_permissions` for the failure signal)."""
+        return (await self.check_permissions(user_id, document_ids)).authorized
+
+    async def check_permissions(self, user_id: str, document_ids: list[str]) -> PermissionCheckResult:
         if not document_ids:
-            return []
+            return PermissionCheckResult()
 
         # A trailing space in "Bearer " (credential="") is rejected by
-        # httpx/h11 as an illegal header value — not merely "unauthenticated
-        # against File Service" but a hard client-side exception, silently
-        # swallowed by the except-and-fail-closed below regardless. Omit the
-        # header entirely rather than send a malformed one; an unset
-        # credential is a real, unset local-dev value, not a token that
-        # happens to be the empty string.
+        # httpx/h11 as an illegal header value. Omit the header entirely rather than send a
+        # malformed one; an unset credential is a real, unset local-dev value.
         headers = {}
         if settings.FILE_SERVICE_SERVICE_CREDENTIAL:
             headers["Authorization"] = f"Bearer {settings.FILE_SERVICE_SERVICE_CREDENTIAL}"
@@ -77,7 +90,12 @@ class FileServiceClient:
                 authorized = body["authorized_document_ids"]
                 if not isinstance(authorized, list) or not all(isinstance(d, str) for d in authorized):
                     raise ValueError("malformed authorized_document_ids in response")
-                return authorized
+                return PermissionCheckResult(authorized=authorized)
         except Exception as exc:
-            logger.warning("file_service_client.permission_check_failed_closed", error=str(exc))
-            return []
+            metrics.permission_check_failures_total.inc()
+            logger.warning(
+                "file_service_client.permission_check_failed_closed",
+                error=str(exc),
+                requested=len(document_ids),
+            )
+            return PermissionCheckResult(authorized=[], failed=True, error=type(exc).__name__)

@@ -132,6 +132,20 @@ async def _run(
             chunk_identity.derive_chunk_id(str(document_id), content_version, c.chunk_index) for c in chunks
         ]
 
+    if not chunks:
+        # Parsing succeeded but produced no text (e.g. a scanned/image-only PDF, or an empty file).
+        # Indexing zero chunks must NOT end in READY: the file would look usable while no query
+        # can ever match it. Fail it visibly with an actionable message instead.
+        logger.warning("orchestrator.no_extractable_text", document_id=str(document_id), content_version=content_version)
+        await _fail(
+            session_factory,
+            document_id,
+            content_version,
+            error_code="NO_EXTRACTABLE_TEXT",
+            error_message="No text could be extracted from this document (it may be a scanned or image-only file).",
+        )
+        return
+
     try:
         with metrics.ingestion_stage_duration_seconds.labels(stage="embed").time():
             vectors = await embed_batch(embedding_client, chunks)
@@ -184,6 +198,12 @@ async def _run(
             # Written in the SAME transaction as the status transition
             # (LLD §3.3) — this is what makes "never publish .completed for
             # a PARTIALLY_INDEXED job" (HLD §20) enforceable structurally.
+            logger.info(
+                "orchestrator.indexed",
+                document_id=str(document_id),
+                content_version=content_version,
+                chunk_count=len(records),
+            )
             await OutboxRepository.insert(
                 db,
                 event_id=uuid.uuid4(),

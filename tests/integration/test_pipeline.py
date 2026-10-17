@@ -10,10 +10,12 @@ import uuid
 
 import pytest
 
+from app.clients.file_service_client import PermissionCheckResult
 from app.core.enums import RetrievalScope
 from app.grpc.retrieval_pb2 import GetRelevantChunksRequest
 from app.query import pipeline
 from app.repositories.document_current_version_repository import DocumentCurrentVersionRepository
+from app.repositories.ingestion_job_repository import IngestionJobRepository
 from app.stores.types import BM25SearchHit, DenseSearchHit
 
 
@@ -33,9 +35,9 @@ class FakeFileServiceClient:
         self._authorized = authorized
         self.last_call: dict | None = None
 
-    async def batch_check_permissions(self, user_id: str, document_ids: list[str]) -> list[str]:
+    async def check_permissions(self, user_id: str, document_ids: list[str]):
         self.last_call = {"user_id": user_id, "document_ids": document_ids}
-        return [d for d in document_ids if d in self._authorized]
+        return PermissionCheckResult(authorized=[d for d in document_ids if d in self._authorized])
 
 
 class FakeMilvusRepository:
@@ -88,9 +90,22 @@ def _bm25_hit(chunk_id: str, score: float) -> BM25SearchHit:
     return BM25SearchHit(chunk_id=chunk_id, score=score, document_id="doc-a", filename="a.pdf", content="hit " + chunk_id)
 
 
-async def _seed_current_version(session_factory, document_id: str, version: int = 1) -> None:
+async def _seed_current_version(session_factory, document_id: str, version: int = 1, status: str = "READY") -> None:
+    """Registers the current version AND an ingestion job in `status` (the query only searches
+    versions whose indexing finished, so a bare version row now means "not searchable yet")."""
     async with session_factory() as db:
         await DocumentCurrentVersionRepository.advance_if_newer(db, document_id, version)
+        job = await IngestionJobRepository.upsert_job(
+            db,
+            document_id=uuid.UUID(document_id),
+            content_version=version,
+            owner_id=uuid.uuid4(),
+            conversation_id=None,
+            filename="a.pdf",
+            storage_bucket="b",
+            storage_key="k",
+        )
+        job.status = status
         await db.commit()
 
 

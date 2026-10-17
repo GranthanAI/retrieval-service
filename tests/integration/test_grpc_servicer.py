@@ -20,6 +20,7 @@ from starlette.requests import Request
 from starlette.responses import JSONResponse
 from starlette.routing import Route
 
+from app.clients.file_service_client import PermissionCheckResult
 from app.clients.embedding_client import EmbeddingClient
 from app.clients.file_service_client import FileServiceClient
 from app.core.config import settings
@@ -239,7 +240,7 @@ class TestLoadAtLowConcurrency:
         modest concurrent burst when every downstream call is fast."""
 
         async def _fast_check_permissions(self, user_id, document_ids):
-            return list(document_ids)
+            return PermissionCheckResult(authorized=list(document_ids))
 
         async def _fast_embed_query(self, text):
             return [0.1] * 384
@@ -251,7 +252,7 @@ class TestLoadAtLowConcurrency:
             return []
 
         with (
-            patch.object(FileServiceClient, "batch_check_permissions", _fast_check_permissions),
+            patch.object(FileServiceClient, "check_permissions", _fast_check_permissions),
             patch.object(EmbeddingClient, "embed_query", _fast_embed_query),
             patch.object(MilvusRepository, "search", _fast_search_empty_dense),
             patch.object(OpenSearchRepository, "search", _fast_search_empty_bm25),

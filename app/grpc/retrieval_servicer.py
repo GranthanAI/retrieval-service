@@ -8,7 +8,7 @@ from app.core import metrics
 from app.core.config import settings
 from app.core.logging import get_logger
 from app.grpc import retrieval_pb2_grpc
-from app.grpc.retrieval_pb2 import GetRelevantChunksRequest, GetRelevantChunksResponse
+from app.grpc.retrieval_pb2 import GetRelevantChunksRequest, GetRelevantChunksResponse, RetrievalStatus
 from app.query import pipeline, response_mapper
 from app.stores.milvus_repository import MilvusRepository
 from app.stores.opensearch_repository import OpenSearchRepository
@@ -63,4 +63,9 @@ class RetrievalServicer(retrieval_pb2_grpc.RetrievalServiceServicer):
                 # 3.11 — LLD §7.1 degrades, never raises, on a deadline miss.
                 metrics.query_timeout_counter.inc()
                 logger.warning("retrieval_servicer.deadline_exceeded", trace_id=request.trace_id)
-                return response_mapper.empty_response(request.trace_id)
+                return response_mapper.empty_response(
+                    request.trace_id,
+                    RetrievalStatus.TIMEOUT,
+                    "the retrieval query exceeded its deadline",
+                    requested_count=len(set(request.file_ids)),
+                )

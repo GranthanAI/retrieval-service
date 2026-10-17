@@ -13,6 +13,20 @@ enum RetrievalScope {
   ALL = 2;
 }
 
+// Outcome of a retrieval query. OK = 0 is the proto3 default, so an older server that does not
+// set the field is read as OK by a newer client (and an older client simply ignores the field).
+enum RetrievalStatus {
+  OK = 0;               // chunks returned
+  NO_MATCH = 1;         // documents are indexed and accessible, but nothing relevant matched
+  NO_SCOPE = 2;         // request had no file scope to search
+  ACCESS_DENIED = 3;    // none of the requested documents is accessible to the user (or does not exist / deleted)
+  NOT_INDEXED = 4;      // accessible, but no indexed version is registered yet
+  INDEXING = 5;         // accessible, current version is still being indexed
+  INDEXING_FAILED = 6;  // accessible, indexing of the current version failed
+  UNAVAILABLE = 7;      // a dependency (permission check, embedding, both search engines) failed
+  TIMEOUT = 8;          // the query deadline was exceeded
+}
+
 message GetRelevantChunksRequest {
   string user_id = 1;
   string conversation_id = 2;
@@ -38,4 +52,10 @@ message GetRelevantChunksResponse {
   repeated DocumentChunk chunks = 1;
   int32 total_tokens = 2;
   string request_id = 3;
+  RetrievalStatus status = 4;
+  // Short, non-sensitive explanation of `status` (never contains document content).
+  string status_detail = 5;
+  int32 requested_count = 6;   // distinct document ids in the request
+  int32 authorized_count = 7;  // of which the user may read
+  int32 ready_count = 8;       // of which have a fully indexed current version
 }
