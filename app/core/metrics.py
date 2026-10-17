@@ -37,6 +37,17 @@ query_short_circuit_total = Counter(
     ["reason"],
 )
 
+query_status_total = Counter(
+    "retrieval_query_status_total",
+    "GetRelevantChunks responses by RetrievalStatus (OK, NO_MATCH, ACCESS_DENIED, INDEXING, ...)",
+    ["status"],
+)
+
+permission_check_failures_total = Counter(
+    "retrieval_permission_check_failures_total",
+    "File Service permission checks that failed closed (timeout, 5xx, malformed response)",
+)
+
 permission_check_latency_histogram = Histogram(
     "retrieval_permission_check_latency_seconds",
     "File Service batch permission-check call latency only (HLD §24)",

@@ -1,7 +1,7 @@
 from datetime import datetime
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import select, tuple_
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -151,3 +151,20 @@ class IngestionJobRepository:
             )
         )
         return list(result.scalars().all())
+
+
+    @staticmethod
+    async def statuses_for(db: AsyncSession, versions: dict[str, int]) -> dict[str, tuple[str, int | None]]:
+        """Indexing status of exactly the CURRENT version of each document: `{document_id:
+        (status, chunk_count)}`. A document with no ingestion job for its current version is
+        absent. This is what lets a query tell "indexed" from "registered but still indexing"
+        (the current version is registered when file.uploaded is consumed, before indexing)."""
+        if not versions:
+            return {}
+        pairs = [(UUID(d), v) for d, v in versions.items()]
+        result = await db.execute(
+            select(IngestionJob.document_id, IngestionJob.status, IngestionJob.chunk_count).where(
+                tuple_(IngestionJob.document_id, IngestionJob.content_version).in_(pairs)
+            )
+        )
+        return {str(doc): (status, chunks) for doc, status, chunks in result.all()}
