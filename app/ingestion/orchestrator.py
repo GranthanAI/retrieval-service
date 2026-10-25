@@ -11,6 +11,7 @@ from app.core.config import settings
 from app.core.enums import IngestionStatus, StageStatus
 from app.core.logging import get_logger
 from app.ingestion import chunk_identity, chunker, downloader
+from app.ingestion import transcript as transcript_module
 from app.ingestion import parser as parser_module
 from app.ingestion.embedder import embed_batch
 from app.ingestion.indexer import IndexTarget
@@ -120,14 +121,16 @@ async def _run(
 
     try:
         with metrics.ingestion_stage_duration_seconds.labels(stage="parse").time():
-            parsed = parser_module.parse(raw_bytes, filename)
+            # A File Service YouTube transcript (canonical JSON) keeps its timestamps; everything else is a document.
+            transcript_doc = transcript_module.parse_transcript(raw_bytes)
+            parsed = None if transcript_doc is not None else parser_module.parse(raw_bytes, filename)
     except parser_module.ParserError as exc:
         logger.warning("orchestrator.parse_failed", document_id=str(document_id), error=str(exc))
         await _fail(session_factory, document_id, content_version, error_code="PARSER_ERROR", error_message=str(exc))
         return
 
     with metrics.ingestion_stage_duration_seconds.labels(stage="chunk").time():
-        chunks = chunker.chunk(parsed)
+        chunks = transcript_module.chunk_transcript(transcript_doc) if transcript_doc is not None else chunker.chunk(parsed)
         chunk_ids = [
             chunk_identity.derive_chunk_id(str(document_id), content_version, c.chunk_index) for c in chunks
         ]
@@ -279,7 +282,8 @@ async def _recover(
 
     try:
         raw_bytes = await downloader.fetch(storage_bucket, storage_key)
-        parsed = parser_module.parse(raw_bytes, filename)
+        transcript_doc = transcript_module.parse_transcript(raw_bytes)
+        parsed = None if transcript_doc is not None else parser_module.parse(raw_bytes, filename)
     except (downloader.DownloadError, parser_module.ParserError) as exc:
         # Left PARTIALLY_INDEXED — the reconciliation sweep retries again
         # next interval; no durable failure is recorded for a transient
@@ -287,7 +291,7 @@ async def _recover(
         logger.warning("orchestrator.recovery_download_or_parse_failed", document_id=str(document_id), error=str(exc))
         return
 
-    chunks = chunker.chunk(parsed)
+    chunks = transcript_module.chunk_transcript(transcript_doc) if transcript_doc is not None else chunker.chunk(parsed)
     chunk_ids = [chunk_identity.derive_chunk_id(str(document_id), content_version, c.chunk_index) for c in chunks]
 
     try:
