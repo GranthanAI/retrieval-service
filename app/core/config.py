@@ -87,6 +87,19 @@ class Settings(BaseSettings):
     QUERY_PIPELINE_DEADLINE_SECONDS: float = 1.8
 
     # --- Ingestion pipeline tuning ---
+    # --- Parsing: which files are read and how much work one file may cause ---
+    # Zip archives are opened and every readable member is indexed (see app/ingestion/archive.py). These bound what a hostile or
+    # simply huge archive can cost.
+    ARCHIVE_MAX_ENTRIES: int = 2_000
+    ARCHIVE_MAX_MEMBER_BYTES: int = 50 * 1024 * 1024
+    ARCHIVE_MAX_TOTAL_BYTES: int = 300 * 1024 * 1024
+    ARCHIVE_MAX_COMPRESSION_RATIO: int = 200
+    ARCHIVE_MAX_DEPTH: int = 2               # a zip inside a zip is opened; a third level is not
+    ARCHIVE_MAX_DOCUMENT_MEMBERS: int = 60   # PDF/Word/PowerPoint/Excel/HTML members (slow to parse); text and code are not limited
+    PARSE_MAX_TEXT_CHARS: int = 8_000_000    # text beyond this in one file is not indexed
+    LEGACY_DOC_COMMAND: str = "antiword"     # converter for binary .doc files; absent = a clear "save as .docx" error
+    LEGACY_DOC_TIMEOUT_SECONDS: float = 30.0
+
     CHUNK_TARGET_TOKENS: int = 450
     CHUNK_MAX_TOKENS: int = 600
     CHUNK_OVERLAP_TOKENS: int = 60

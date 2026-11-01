@@ -29,6 +29,10 @@ ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     PATH="/app/.venv/bin:$PATH"
 
+# antiword reads legacy .doc uploads (LEGACY_DOC_COMMAND); without it .doc gets a "save as .docx" error.
+RUN apt-get update && apt-get install -y --no-install-recommends antiword \
+    && rm -rf /var/lib/apt/lists/*
+
 RUN groupadd -r appgroup && useradd -r -g appgroup -s /sbin/nologin appuser
 
 WORKDIR /app
