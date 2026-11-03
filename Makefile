@@ -1,4 +1,4 @@
-.PHONY: help sync infra infra-down infra-status db-create db-migrate db-revision proto run run-worker run-all test lint clean
+.PHONY: help sync infra infra-down infra-status db-create db-migrate db-revision proto run run-worker run-all test eval eval-real lint clean
 
 all: help
 
@@ -16,6 +16,9 @@ help:
 	@echo "  make run-worker  - Launch DEPLOYMENT_MODE=worker locally (no reload — long-running consumers)"
 	@echo "  make run-all     - Launch DEPLOYMENT_MODE=all locally (single-process dev convenience)"
 	@echo "  make test        - Run unit tests using pytest"
+	@echo "  make eval        - Offline retrieval benchmark, fake embedder (CI). MODE=real for all-MiniLM-L6-v2 + live stores"
+	@echo "                     options: EVAL_ARGS=\"--label p1 --compare evaluation/results/baseline-real.json -v\""
+	@echo "  make eval-real   - Same as: make eval MODE=real (needs: uv sync --group eval)"
 	@echo "  make clean       - Remove virtual environment (.venv) and byte caches"
 
 sync:
@@ -68,6 +71,15 @@ run-all:
 
 test:
 	uv run pytest
+
+# Offline retrieval benchmark (evaluation/). MODE=fake (default) is deterministic and needs no model or infrastructure;
+# MODE=real loads all-MiniLM-L6-v2 locally and uses live Milvus/OpenSearch when reachable (throwaway collection/index, removed afterwards).
+MODE ?= fake
+eval:
+	uv run --group eval python -m evaluation.run --$(MODE) $(EVAL_ARGS)
+
+eval-real:
+	$(MAKE) eval MODE=real
 
 clean:
 	rm -rf .venv
