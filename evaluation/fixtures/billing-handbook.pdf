@@ -1,0 +1,143 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [4 0 R 6 0 R 8 0 R 10 0 R 12 0 R 14 0 R] /Count 6 >>
+endobj
+3 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+4 0 obj
+<< /Type /Page /Parent 2 0 R /Resources << /Font << /F1 3 0 R >> >> /MediaBox [0 0 612 792] /Contents 5 0 R >>
+endobj
+5 0 obj
+<< /Length 279 >>
+stream
+BT /F1 20 Tf 60 740 Td (Billing handbook) Tj ET
+BT /F1 11 Tf 60 704 Td () Tj ET
+BT /F1 11 Tf 60 683 Td (This handbook describes how the billing team runs settlement, reconciliation and pricing.) Tj ET
+BT /F1 11 Tf 60 662 Td (It is written for new finance operations staff.) Tj ET
+endstream
+endobj
+6 0 obj
+<< /Type /Page /Parent 2 0 R /Resources << /Font << /F1 3 0 R >> >> /MediaBox [0 0 612 792] /Contents 7 0 R >>
+endobj
+7 0 obj
+<< /Length 337 >>
+stream
+BT /F1 20 Tf 60 740 Td (How billing works) Tj ET
+BT /F1 11 Tf 60 704 Td () Tj ET
+BT /F1 11 Tf 60 683 Td (Customers are charged at the start of each billing period.) Tj ET
+BT /F1 11 Tf 60 662 Td (Charges are collected by the payment gateway and settled into the company bank account in) Tj ET
+BT /F1 11 Tf 60 645 Td (daily batches.) Tj ET
+endstream
+endobj
+8 0 obj
+<< /Type /Page /Parent 2 0 R /Resources << /Font << /F1 3 0 R >> >> /MediaBox [0 0 612 792] /Contents 9 0 R >>
+endobj
+9 0 obj
+<< /Length 564 >>
+stream
+BT /F1 20 Tf 60 740 Td (Settlement reconciliation) Tj ET
+BT /F1 11 Tf 60 704 Td () Tj ET
+BT /F1 11 Tf 60 683 Td (Reconciliation confirms that every settled batch matches the ledger.) Tj ET
+BT /F1 11 Tf 60 662 Td (Finance reviews the settlement report every morning and compares it with the ledger) Tj ET
+BT /F1 11 Tf 60 645 Td (totals. Finance reviews the settlement report every morning and compares it with the) Tj ET
+BT /F1 11 Tf 60 628 Td (ledger totals.) Tj ET
+BT /F1 11 Tf 60 607 Td (Step one is to download the settlement report for the previous day.) Tj ET
+endstream
+endobj
+10 0 obj
+<< /Type /Page /Parent 2 0 R /Resources << /Font << /F1 3 0 R >> >> /MediaBox [0 0 612 792] /Contents 11 0 R >>
+endobj
+11 0 obj
+<< /Length 614 >>
+stream
+BT /F1 11 Tf 60 740 Td (Finance reviews the settlement report every morning and compares it with the ledger) Tj ET
+BT /F1 11 Tf 60 723 Td (totals. Finance reviews the settlement report every morning and compares it with the) Tj ET
+BT /F1 11 Tf 60 706 Td (ledger totals. Finance reviews the settlement report every morning and compares it with) Tj ET
+BT /F1 11 Tf 60 689 Td (the ledger totals.) Tj ET
+BT /F1 11 Tf 60 668 Td (Step two is to match each settled payment to a ledger entry by payment reference.) Tj ET
+BT /F1 11 Tf 60 647 Td (Step three is to list every unmatched payment on the exceptions sheet.) Tj ET
+endstream
+endobj
+12 0 obj
+<< /Type /Page /Parent 2 0 R /Resources << /Font << /F1 3 0 R >> >> /MediaBox [0 0 612 792] /Contents 13 0 R >>
+endobj
+13 0 obj
+<< /Length 484 >>
+stream
+BT /F1 11 Tf 60 740 Td (Finance reviews the settlement report every morning and compares it with the ledger) Tj ET
+BT /F1 11 Tf 60 723 Td (totals. Finance reviews the settlement report every morning and compares it with the) Tj ET
+BT /F1 11 Tf 60 706 Td (ledger totals.) Tj ET
+BT /F1 11 Tf 60 685 Td (Unmatched payments older than 14 days are escalated to the finance-ops queue.) Tj ET
+BT /F1 11 Tf 60 664 Td (After escalation the exceptions sheet is archived by the team lead.) Tj ET
+endstream
+endobj
+14 0 obj
+<< /Type /Page /Parent 2 0 R /Resources << /Font << /F1 3 0 R >> >> /MediaBox [0 0 612 792] /Contents 15 0 R >>
+endobj
+15 0 obj
+<< /Length 1092 >>
+stream
+BT /F1 20 Tf 60 740 Td (Pricing plans) Tj ET
+BT /F1 11 Tf 60 704 Td () Tj ET
+BT /F1 11 Tf 60 683 Td (The table below lists the three plans and their limits.) Tj ET
+60 636 90 26 re S
+BT /F1 11 Tf 66 645 Td (Plan) Tj ET
+150 636 130 26 re S
+BT /F1 11 Tf 156 645 Td (Price per month) Tj ET
+280 636 110 26 re S
+BT /F1 11 Tf 286 645 Td (Storage limit) Tj ET
+390 636 90 26 re S
+BT /F1 11 Tf 396 645 Td (Seats) Tj ET
+60 610 90 26 re S
+BT /F1 11 Tf 66 619 Td (Starter) Tj ET
+150 610 130 26 re S
+BT /F1 11 Tf 156 619 Td ($49) Tj ET
+280 610 110 26 re S
+BT /F1 11 Tf 286 619 Td (50 GB) Tj ET
+390 610 90 26 re S
+BT /F1 11 Tf 396 619 Td (3) Tj ET
+60 584 90 26 re S
+BT /F1 11 Tf 66 593 Td (Team) Tj ET
+150 584 130 26 re S
+BT /F1 11 Tf 156 593 Td ($199) Tj ET
+280 584 110 26 re S
+BT /F1 11 Tf 286 593 Td (500 GB) Tj ET
+390 584 90 26 re S
+BT /F1 11 Tf 396 593 Td (25) Tj ET
+60 558 90 26 re S
+BT /F1 11 Tf 66 567 Td (Enterprise) Tj ET
+150 558 130 26 re S
+BT /F1 11 Tf 156 567 Td ($1499) Tj ET
+280 558 110 26 re S
+BT /F1 11 Tf 286 567 Td (5 TB) Tj ET
+390 558 90 26 re S
+BT /F1 11 Tf 396 567 Td (unlimited) Tj ET
+endstream
+endobj
+xref
+0 16
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000148 00000 n 
+0000000218 00000 n 
+0000000344 00000 n 
+0000000674 00000 n 
+0000000800 00000 n 
+0000001188 00000 n 
+0000001314 00000 n 
+0000001929 00000 n 
+0000002057 00000 n 
+0000002723 00000 n 
+0000002851 00000 n 
+0000003387 00000 n 
+0000003515 00000 n 
+trailer
+<< /Size 16 /Root 1 0 R >>
+startxref
+4660
+%%EOF

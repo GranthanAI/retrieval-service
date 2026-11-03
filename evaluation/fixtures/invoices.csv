@@ -1,0 +1,9 @@
+invoice_id,customer,plan,amount_usd,status
+INV-2001,Northwind Traders,Team,199,paid
+INV-2002,Contoso Ltd,Enterprise,1499,paid
+INV-2003,Fabrikam Inc,Starter,49,overdue
+INV-2004,Adventure Works,Team,199,paid
+INV-2005,Tailspin Toys,Starter,49,paid
+INV-2006,Wingtip Group,Enterprise,1499,refunded
+INV-2007,Litware Corp,Team,199,overdue
+INV-2008,Proseware,Starter,49,paid
