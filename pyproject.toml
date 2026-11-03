@@ -29,6 +29,10 @@ dev = [
     "pytest-asyncio>=0.23.5",
     "testcontainers[postgres,kafka]>=4.4.0",
 ]
+# Only for `make eval-real` (evaluation/): loads all-MiniLM-L6-v2 locally. Not needed by the service itself.
+eval = [
+    "sentence-transformers>=3.0.0",
+]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

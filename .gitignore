@@ -60,3 +60,6 @@ dmypy.json
 .vscode/
 *.swp
 *.swo
+
+# Retrieval benchmark: cached Docling parses
+evaluation/.cache/
