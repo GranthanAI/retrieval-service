@@ -56,8 +56,22 @@ class _Embed:
         return [1.0, 0.0]
 
 
+_VOCAB = ("time year people way day man thing woman life child world school state family student group country problem hand part place "
+          "case week company system program question work government number night point home water room mother area money story fact month "
+          "lot right study book eye job word business issue side kind head house service friend father power hour game line end member law "
+          "car city community name president team minute idea kid body information back parent face others level office door health person "
+          "art war history party result change morning reason research girl guy moment air teacher force education").split()
+
+
+def _text(i):
+    """100 distinct common words (about one wordpiece each) in a chunk-specific order: real token counts, and no two chunks are near-duplicates."""
+    import random
+
+    return " ".join(random.Random(i).sample(_VOCAB, 100))
+
+
 def _hit(cls, i):
-    return cls(chunk_id=f"c{i}", score=1.0 - i / 100, document_id=DOC, filename="a.md", content=" ".join(f"w{i}x{j}" for j in range(100)), chunk_index=i)
+    return cls(chunk_id=f"c{i}", score=1.0 - i / 100, document_id=DOC, filename="a.md", content=_text(i), chunk_index=i)
 
 
 class _Milvus:
@@ -99,9 +113,9 @@ async def test_p1_2_top_k_is_honoured(ready_document):
 
 
 async def test_p1_2_max_tokens_drops_lowest_ranked_chunks(ready_document):
-    response = await _run(_Embed(), top_k=10, max_tokens=1000)  # each chunk is ~400 wordpieces
+    response = await _run(_Embed(), top_k=10, max_tokens=250)  # each chunk is about 100 wordpieces
     assert 0 < len(response.chunks) < 10
-    assert response.total_tokens <= 1000
+    assert response.total_tokens <= 250
 
 
 # --- P1-3 ---------------------------------------------------------------------------------------------------------------
