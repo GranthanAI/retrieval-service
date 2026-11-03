@@ -11,8 +11,8 @@ new index generation, behaviour changes behind a flag with a documented default,
 
 | Phase | Topic | Branch | Status |
 |---|---|---|---|
-| 0 | Offline benchmark (`evaluation/`, `make eval`) | `fix/retrieval-phase-0-benchmark` | **Done, awaiting review** |
-| 1 | Query-time fixes (MMR, request fields, HNSW `ef`, embed fallback, phrase boosts, dedupe, per-file balance) | | Not started |
+| 0 | Offline benchmark (`evaluation/`, `make eval`) | main (`65bb38f`, pushed) | **Done** |
+| 1 | Query-time fixes (MMR, request fields, HNSW `ef`, embed fallback, phrase boosts, dedupe, per-file balance) | main (local commit, not pushed) | **Done, awaiting review** |
 | 2 | Index generations, tokenizer-aware chunking, heading paths, provenance, tables, analyzers | | Not started |
 | 3 | Reranker, neighbour expansion, weak-retrieval signal | | Not started |
 | 4 | embedding-service performance under load | | Not started |
@@ -103,3 +103,50 @@ and hld "Security"; the Phase 6 section was not among them. The bug is reproduce
 
 Strict-xfail tests (fail today, flip when fixed): `tests/unit/test_retrieval_quality_xfail.py` (P1-1, P1-2 x2, P1-3, P1-4) and
 `tests/eval/test_benchmark_smoke.py::test_phase_6_section_is_in_the_top_3`.
+
+## Phase 1 (query-time fixes, no re-index)
+
+Changes (all in retrieval-service; flags and defaults in `app/core/config.py`):
+
+| Item | Change | Flag / default |
+|---|---|---|
+| P1-1 | `mmr.normalise_relevance` min-max scales RRF to 0-1 before MMR; only candidates at or above the floor are diversified, the rest only fill `k` | `MMR_RELEVANCE_FLOOR=0.5` |
+| P1-2 | `top_k` honoured (cap, 0 = `MMR_FINAL_TOP_K`); `max_tokens` drops the lowest-ranked chunks until the total fits; `total_tokens` is a real count. `min_relevance_score` is **ignored** until the reranker exists (Phase 3): RRF scores are rank-derived | `RETRIEVAL_MAX_TOP_K=20`, `TOKEN_COUNT_TOKENIZER_ID=sentence-transformers/all-MiniLM-L6-v2` |
+| P1-3 | Milvus search sends `{"ef": max(MILVUS_HNSW_EF, limit)}`; `MILVUS_SEARCH_NPROBE` removed | `MILVUS_HNSW_EF=64` |
+| P1-4 | Embedding failure falls back to the BM25-only path (`search_degraded_total{engine="bm25_only"}`), status OK / NO_MATCH | `EMBEDDING_FAILURE_FALLBACK_BM25=true` |
+| phrases | `match_phrase` should-clauses on `section` (x5) and `content` (x2); `multi_match` stays `must`; document scope moved from `should` to `filter` so the boosts cannot widen it | `OPENSEARCH_PHRASE_BOOST_ENABLED=true` |
+| near-duplicates | word 3-shingle Jaccard above the threshold drops the lower-ranked candidate before MMR | `DEDUPE_JACCARD_THRESHOLD=0.9` (1.0 = off) |
+| per-file balance | with 2+ files, each file's best candidate (normalised relevance at or above the floor) is seeded into the selection | `BALANCE_ACROSS_FILES=true` |
+| heading match | **not in the spec.** A candidate whose section contains a word pair from the query ("phase 6") gets one extra rank-1 RRF vote | `HEADING_MATCH_BOOST=1.0` (0 = off) |
+
+Why the heading-match boost was added: with only the items above, the Phase 6 section was BM25 rank 1 but dense rank 29 (twelve
+phase sections read alike), so RRF placed it 11th and it never reached the final set. Phrase boosts only help when the whole
+query is a phrase; they cannot change an already-rank-1 BM25 position. Decision needed: keep, or drop and rely on the Phase 3 reranker.
+
+Token counting: the tokenizer.json shipped with all-MiniLM-L6-v2 truncates to 128 and pads to 128, which silently caps every count;
+`app/query/tokens.py` disables both (unit test `test_token_count_is_not_capped_or_padded`).
+
+Existing tests changed (design change, not weakened):
+* `tests/unit/test_pipeline_status.py::test_embedding_outage_is_unavailable` asserted UNAVAILABLE on an embedding failure, which P1-4
+  reverses. It now runs with `EMBEDDING_FAILURE_FALLBACK_BM25=false` (original behaviour preserved under the flag), and a new test
+  covers the default (NO_MATCH when the keyword leg finds nothing).
+* The Phase 0 strict-xfail tests were renamed `test_retrieval_quality.py` and their markers removed as each bug was fixed. Their
+  fixture chunks were made textually distinct (identical chunks are now correctly collapsed as near-duplicates), and the
+  `max_tokens` budget in that test was raised to 1000 to match real wordpiece counts.
+
+### Phase 1 results (before = Phase 0 baseline)
+
+| Metric | Fake before | Fake after | Real before | Real after |
+|---|---|---|---|---|
+| Recall@5 | 0.591 | 0.773 | 0.432 | 0.909 |
+| Recall@10 | 0.591 | 0.864 | 0.432 | 0.955 |
+| MRR@10 | 0.636 | 0.789 | 0.500 | 0.827 |
+| nDCG@10 | 0.601 | 0.795 | 0.447 | 0.857 |
+| Identifier exact recall@5 | 1.000 | 1.000 | 1.000 | 1.000 |
+| Page attribution accuracy | 0.333 | 0.333 | 0.000 | 0.333 |
+| Multi-file coverage | 0.333 | 1.000 | 0.500 | 1.000 |
+| No-answer precision / recall | n/a / 0 | n/a / 0 | n/a / 0 | n/a / 0 |
+
+Acceptance: "what is phase 6 about?" has the Phase 6 section in the top 3 in both modes. Still failing: "exit criteria of phase 6"
+and similar (Recall@5 0.0 for `phase_exit`): the "Exit criteria" chunk carries no phase number. That needs the heading path (Phase 2).
+Page attribution only improves where the evidence happens to be on a section's first page (Phase 2). No-answer needs Phase 3.
