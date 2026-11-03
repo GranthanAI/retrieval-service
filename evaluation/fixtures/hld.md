@@ -19,3 +19,15 @@ When the payment gateway is unavailable the service queues the charge and retrie
 ## Security
 
 All admin endpoints require the support role. Secrets are read from the environment and never logged.
+
+## Currency handling
+
+Prices are stored in minor units (cents) as integers. The service never stores floating point money amounts.
+
+## Data stores
+
+PostgreSQL is the system of record. Redis is used only for rate limiting and never holds the only copy of any data.
+
+## Scalability
+
+The API scales horizontally behind a load balancer. The retry worker runs as a single leader elected through a database advisory lock.

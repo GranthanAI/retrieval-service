@@ -92,11 +92,15 @@ def backend(stores: str):
     """Yields (milvus_repo, opensearch_repo, description). `stores` is 'fake' or 'real'."""
     run_id = uuid.uuid4().hex[:8]
     saved = (settings.MILVUS_COLLECTION_NAME, settings.OPENSEARCH_INDEX_NAME, milvus_module._client, opensearch_module._client)
+    saved_timeouts = (settings.MILVUS_QUERY_TIMEOUT_SECONDS, settings.OPENSEARCH_QUERY_TIMEOUT_SECONDS)
     try:
         if stores == "fake":
             milvus_module._client, opensearch_module._client = FakeMilvusClient(), FakeOpenSearchClient()
             yield MilvusRepository(), OpenSearchRepository(), "in-memory fakes (client level)"
         else:
+            # The service's 0.5 s query timeouts are a latency SLO, not something to measure here: a timeout silently degrades the
+            # query to one engine and would contaminate the quality numbers. Degradations are counted per question anyway.
+            settings.MILVUS_QUERY_TIMEOUT_SECONDS = settings.OPENSEARCH_QUERY_TIMEOUT_SECONDS = 10.0
             settings.MILVUS_COLLECTION_NAME = f"eval_chunks_{run_id}"
             settings.OPENSEARCH_INDEX_NAME = f"eval_chunks_{run_id}"
             milvus_module._client = opensearch_module._client = None
@@ -112,6 +116,7 @@ def backend(stores: str):
                     print(f"warning: could not clean up eval collection/index {settings.MILVUS_COLLECTION_NAME}: {exc}")
     finally:
         settings.MILVUS_COLLECTION_NAME, settings.OPENSEARCH_INDEX_NAME, milvus_module._client, opensearch_module._client = saved
+        settings.MILVUS_QUERY_TIMEOUT_SECONDS, settings.OPENSEARCH_QUERY_TIMEOUT_SECONDS = saved_timeouts
 
 
 class _Session:
@@ -196,6 +201,12 @@ def _to_ranked(resp) -> list[metrics.RankedChunk]:
 async def ask(q: Question, embedder, milvus, opensearch, top_k: int = 10) -> metrics.QuestionResult:
     req = GetRelevantChunksRequest(user_id="eval-user", conversation_id="eval-conv", query=q.query, top_k=top_k,
                                    scope=int(RetrievalScope.FILES), file_ids=[doc_id(f) for f in q.files], trace_id=f"eval-{q.id}")
+    from app.core import metrics as service_metrics  # noqa: PLC0415
+
+    def degraded() -> float:
+        return sum(service_metrics.search_degraded_total.labels(engine=e)._value.get() for e in ("dense_only", "bm25_only"))
+
+    before = degraded()
     t0 = time.perf_counter()
     resp = await pipeline.run(req, session_factory=_Session, file_service_client=_Files(), embedding_client=embedder,
                               milvus_repository=milvus, opensearch_repository=opensearch)
@@ -205,17 +216,41 @@ async def ask(q: Question, embedder, milvus, opensearch, top_k: int = 10) -> met
         from app.grpc.retrieval_pb2 import Coverage  # noqa: PLC0415
 
         coverage = Coverage.Name(resp.coverage)
-    return metrics.QuestionResult(q, _to_ranked(resp), status=RetrievalStatus.Name(resp.status), coverage=coverage, latency_ms=ms)
+    return metrics.QuestionResult(q, _to_ranked(resp), status=RetrievalStatus.Name(resp.status), coverage=coverage, latency_ms=ms,
+                                  note="degraded" if degraded() > before else "")
 
 
-async def run_benchmark(embedder, stores: str, questions: list[Question] | None = None, files: list[str] | None = None):
-    """Returns (results, ingest stats, backend description). `files` limits the corpus (tests use the Markdown files only, which
-    avoids the Docling parse); every question's gold evidence must then lie inside it."""
-    questions = questions or QUESTIONS
+@dataclass
+class Config:
+    """One evaluated configuration: settings overrides (applied with mock.patch.object on `settings`) and the request's top_k."""
+
+    name: str = "default"
+    overrides: dict | None = None
+    top_k: int = 10
+
+
+@contextmanager
+def applied(overrides: dict | None):
+    if not overrides:
+        yield
+        return
+    with mock.patch.multiple(settings, **overrides):
+        yield
+
+
+async def run_benchmark(embedder, stores: str, sets: dict[str, list[Question]], configs: list[Config] | None = None, files: list[str] | None = None):
+    """Indexes the corpus ONCE, then answers every question set under every config.
+    Returns ({config name: {set name: [QuestionResult]}}, ingest stats, backend description). `files` limits the corpus (tests use the
+    Markdown files only, which avoids the Docling parse); every question's gold evidence must then lie inside it."""
+    configs = configs or [Config()]
     corpus = {n: b for n, b in fixture_files().items() if files is None or n in files}
+    all_questions = [q for qs in sets.values() for q in qs]
+    out: dict[str, dict[str, list[metrics.QuestionResult]]] = {}
     with backend(stores) as (milvus, opensearch, description), patched_state(list(corpus)):
         stats = await ingest(corpus, embedder, milvus, opensearch)
-        if bad := missing_gold(questions, stats.chunk_texts):
-            raise SystemExit("gold evidence not found in any indexed chunk (fix questions.py or the fixtures):\n  " + "\n  ".join(bad))
-        results = [await ask(q, embedder, milvus, opensearch) for q in questions]
-    return results, stats, description
+        if bad := missing_gold(all_questions, stats.chunk_texts):
+            raise SystemExit("gold evidence not found in any indexed chunk (fix the questions or the fixtures):" + "".join("\n  " + b for b in bad))
+        for cfg in configs:
+            with applied(cfg.overrides):
+                out[cfg.name] = {name: [await ask(q, embedder, milvus, opensearch, top_k=cfg.top_k) for q in qs] for name, qs in sets.items()}
+    return out, stats, description

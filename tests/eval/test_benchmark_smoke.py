@@ -5,17 +5,18 @@ import pytest_asyncio
 
 from evaluation import harness, metrics
 from evaluation.embedders import FakeEmbedder
+from evaluation.heldout import HELDOUT
 from evaluation.questions import QUESTIONS
 
-MD = ["PHASES.md", "hld.md", "lld.md", "runbook.md"]
+MD = ["PHASES.md", "hld.md", "lld.md", "runbook.md", "onboarding.md"]
 # Questions whose gold evidence lies in the Markdown files, plus the unanswerable ones.
 MD_QUESTIONS = [q for q in QUESTIONS if all(f in MD for f, _ in q.evidence)]
 
 
 @pytest_asyncio.fixture(scope="module", loop_scope="module")
 async def results():
-    res, stats, _ = await harness.run_benchmark(FakeEmbedder(), "fake", MD_QUESTIONS, files=MD)
-    return {r.question.id: r for r in res}, stats
+    out, stats, _ = await harness.run_benchmark(FakeEmbedder(), "fake", {"main": MD_QUESTIONS}, files=MD)
+    return {r.question.id: r for r in out["default"]["main"]}, stats
 
 
 @pytest.mark.asyncio(loop_scope="module")
@@ -37,3 +38,12 @@ async def test_phase_6_section_is_in_the_top_3(results):
     by_id, _ = results
     rank = metrics.first_relevant_rank(by_id["p6-about"])
     assert rank is not None and rank <= 3
+
+
+def test_question_sets_meet_the_agreed_minimums():
+    from collections import Counter
+
+    per_cat = Counter(q.category for q in QUESTIONS)
+    assert len(QUESTIONS) >= 80 and min(per_cat.values()) >= 6, per_cat
+    assert len(HELDOUT) >= 25
+    assert len({q.id for q in QUESTIONS} | {q.id for q in HELDOUT}) == len(QUESTIONS) + len(HELDOUT)  # ids are unique across both sets

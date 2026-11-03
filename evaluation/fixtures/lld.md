@@ -15,3 +15,15 @@ The retry worker scans for payments in the failed state every five minutes. It a
 ## Invoice numbering
 
 Invoice numbers are allocated from a database sequence per year, formatted as INV-YYYY-NNNNNN, and are never reused.
+
+## Money type
+
+Amounts are held in a Money value object with an integer amount_minor and a three-letter currency code. Arithmetic across different currencies raises CurrencyMismatchError.
+
+## Pagination
+
+List endpoints use cursor pagination with an opaque cursor and a maximum page size of 100.
+
+## Error format
+
+Errors are returned as JSON with the fields code, message and request_id.

@@ -150,3 +150,30 @@ Existing tests changed (design change, not weakened):
 Acceptance: "what is phase 6 about?" has the Phase 6 section in the top 3 in both modes. Still failing: "exit criteria of phase 6"
 and similar (Recall@5 0.0 for `phase_exit`): the "Exit criteria" chunk carries no phase number. That needs the heading path (Phase 2).
 Page attribution only improves where the evidence happens to be on a section's first page (Phase 2). No-answer needs Phase 3.
+
+## Phase 1 review follow-ups (in progress, paused)
+
+Done:
+* Phase 1 moved to branch `fix/retrieval-phase-1-query` (note: `origin/main` also already contains it, pushed on request before this review).
+* Integration suite: 40 passed / 7 failed / 0 skipped on both 65bb38f and Phase 1, i.e. no new failures. All 7 pass against an
+  OpenSearch index created by `scripts/provision_opensearch_index.py`: the shared dev index `retrieval_document_chunks` was
+  auto-created by dynamic mapping (`document_id` is `text`, not `keyword`), so exact-match filters never match. Environment, not code.
+  The Milvus roundtrip test is flaky under the 0.5 s timeout (passed on rerun).
+* `tests/integration/test_opensearch_scope_live.py`: 14 live-OpenSearch tests (end-to-end query, out-of-scope document never returned
+  on an exact heading/phrase, older `content_version` never returned, plus a sensitivity test). With scope moved back into `should`,
+  8 of them fail.
+* `tests/unit/test_retrieval_quality.py`: the `max_tokens` reproduction had been weakened (it passed on the old code); restored. All 5
+  reproductions fail on 65bb38f and pass on Phase 1.
+* Benchmark: main set 80 questions (72 answerable, 8 per category), held-out set 33 (29 answerable, `evaluation/heldout.py`, never tune
+  against it). Metrics print with counts (e.g. 36/72). `page_attribution_accuracy` is now accompanied by `page_given_retrieved`:
+  the earlier 0.0 to 0.333 change was retrieval (no PDF chunk was retrieved at baseline), not the parser.
+* Harness: real-mode runs raise the Milvus/OpenSearch timeouts to 10 s and count questions that ran on one engine only
+  (a 0.5 s Milvus timeout silently degraded some queries and invalidated a first sweep).
+
+Open (not yet run, so no numbers are claimed here):
+* HEADING_MATCH_BOOST at 0 vs 1.0, per category, main and held-out. Default stays 1.0 only if no held-out category drops;
+  otherwise it becomes 0. Re-evaluate after the Phase 3 reranker either way.
+* Recall@5 vs Recall@8 (request `top_k` 5 / 6 / 8), main and held-out. DECISION OPEN: what llm-service should send
+  (it currently sends top_k=5, max_tokens=4000, so Phase 1 now returns 5 chunks instead of 6). llm-service is unchanged.
+* Pre-change baseline (65bb38f) on the new 80 + 33 question sets, with the corrected harness.
+Run: `make eval MODE=real EVAL_ARGS="--sets main,heldout --label p1-sweep --config default: --config boost0:HEADING_MATCH_BOOST=0 --config k5:top_k=5 --config k8:top_k=8"`

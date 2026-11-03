@@ -96,6 +96,18 @@ When the payment gateway is unavailable the service queues the charge and retrie
 ## Security
 
 All admin endpoints require the support role. Secrets are read from the environment and never logged.
+
+## Currency handling
+
+Prices are stored in minor units (cents) as integers. The service never stores floating point money amounts.
+
+## Data stores
+
+PostgreSQL is the system of record. Redis is used only for rate limiting and never holds the only copy of any data.
+
+## Scalability
+
+The API scales horizontally behind a load balancer. The retry worker runs as a single leader elected through a database advisory lock.
 """
 
 LLD = """# billing-service low-level design
@@ -115,6 +127,18 @@ The retry worker scans for payments in the failed state every five minutes. It a
 ## Invoice numbering
 
 Invoice numbers are allocated from a database sequence per year, formatted as INV-YYYY-NNNNNN, and are never reused.
+
+## Money type
+
+Amounts are held in a Money value object with an integer amount_minor and a three-letter currency code. Arithmetic across different currencies raises CurrencyMismatchError.
+
+## Pagination
+
+List endpoints use cursor pagination with an opaque cursor and a maximum page size of 100.
+
+## Error format
+
+Errors are returned as JSON with the fields code, message and request_id.
 """
 
 RUNBOOK = """# billing-service operations runbook
@@ -134,6 +158,53 @@ Customers manage their plan through /api/v1/subscriptions. The endpoint accepts 
 ## Support contacts
 
 Billing questions go to the finance-ops queue. Gateway outages go to the platform on-call.
+
+## Alerting
+
+The invoice-lag alert pages the on-call engineer when invoice generation is more than 60 minutes behind schedule. The alert is named INVOICE_LAG_HIGH.
+
+## Rate limits
+
+The public API allows 120 requests per minute per API key. Clients that exceed the limit receive status 429 with a Retry-After header. The limit is set by RATE_LIMIT_PER_MINUTE.
+
+## Backups
+
+Database backups run nightly at 02:30 UTC and are kept for 35 days. Restores are rehearsed once a quarter.
+
+## Data retention
+
+Invoice records are kept for seven years. Raw webhook payloads are deleted after 90 days.
+
+## Escalation
+
+If the on-call engineer does not acknowledge a page within 15 minutes, it escalates to the engineering manager.
+"""
+
+ONBOARDING = """# Customer onboarding guide
+
+## Account setup
+
+New customers receive an invitation email that expires after 72 hours. The first user to accept becomes the account owner.
+
+## Free trial
+
+Every new account starts with a 14 day trial of the Team plan. No card is required during the trial.
+
+## Support hours
+
+Support is staffed from 08:00 to 20:00 UTC on weekdays. Enterprise customers have a 24 hour line.
+
+## Service levels
+
+The target first response time is 4 hours for Team customers and 1 hour for Enterprise customers.
+
+## Cancelling
+
+A customer can cancel at any time. The subscription stays active until the end of the paid period and is not refunded pro rata.
+
+## Data export
+
+Customers can request a full export of their invoices as CSV. Exports are ready within one business day.
 """
 
 INVOICES = [("invoice_id", "customer", "plan", "amount_usd", "status")] + [
@@ -143,6 +214,15 @@ INVOICES = [("invoice_id", "customer", "plan", "amount_usd", "status")] + [
         ("Tailspin Toys", "Starter", 49, "paid"), ("Wingtip Group", "Enterprise", 1499, "refunded"),
         ("Litware Corp", "Team", 199, "overdue"), ("Proseware", "Starter", 49, "paid"),
     ], start=1)]
+
+
+_ADJ = ["Blue", "Red", "Green", "Silver", "Golden", "Northern", "Southern", "Eastern", "Western", "Rapid", "Quiet", "Bright", "Solid"]
+_NOUN = ["Harbor", "Mills", "Labs", "Works", "Freight", "Foods", "Systems", "Media", "Energy", "Optics"]
+_PLANS = [("Starter", 49), ("Team", 199), ("Enterprise", 1499)]
+_STATUS = ["paid", "paid", "paid", "overdue", "refunded"]
+for _i in range(9, 61):
+    _plan, _amt = _PLANS[_i % 3]
+    INVOICES.append((f"INV-20{_i:02d}", f"{_ADJ[_i % len(_ADJ)]} {_NOUN[(_i * 3) % len(_NOUN)]}", _plan, _amt, _STATUS[(_i * 7) % len(_STATUS)]))
 
 
 def pdf_pages() -> list[list[str]]:
@@ -230,6 +310,7 @@ def main() -> None:
     (HERE / "hld.md").write_text(HLD, encoding="utf-8", newline="\n")
     (HERE / "lld.md").write_text(LLD, encoding="utf-8", newline="\n")
     (HERE / "runbook.md").write_text(RUNBOOK, encoding="utf-8", newline="\n")
+    (HERE / "onboarding.md").write_text(ONBOARDING, encoding="utf-8", newline="\n")
     with open(HERE / "invoices.csv", "w", encoding="utf-8", newline="") as f:
         csv.writer(f, lineterminator="\n").writerows(INVOICES)
     (HERE / "billing-handbook.pdf").write_bytes(build_pdf(pdf_pages()))

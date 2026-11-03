@@ -89,9 +89,23 @@ def abstained(result: QuestionResult) -> bool:
 
 @dataclass
 class Summary:
+    """metrics: name -> mean (None when no question applies). `fractions`: name -> (sum of per-question scores, number of questions),
+    so a reader can see that 0.909 is 20/22 and that one question moves it by 4.5 points."""
+
     metrics: dict[str, float | None] = field(default_factory=dict)
-    by_category: dict[str, dict[str, float]] = field(default_factory=dict)
+    fractions: dict[str, tuple[float, int]] = field(default_factory=dict)
+    by_category: dict[str, dict] = field(default_factory=dict)
     counts: dict[str, int] = field(default_factory=dict)
+
+    def show(self, name: str) -> str:
+        """'0.909 (20/22)'; ratios only for metrics that are a share of questions, 'n=22' for rank-based ones."""
+        v = self.metrics.get(name)
+        if v is None:
+            return "n/a"
+        total, n = self.fractions[name]
+        if name.startswith(("mrr", "ndcg")):
+            return f"{v:.3f} (n={n})"
+        return f"{v:.3f} ({total:g}/{n})" if abs(total - round(total)) < 1e-9 else f"{v:.3f} ({total:.1f}/{n})"
 
 
 def _mean(xs: list[float]) -> float | None:
@@ -100,26 +114,37 @@ def _mean(xs: list[float]) -> float | None:
 
 def summarise(results: list[QuestionResult]) -> Summary:
     answerable = [r for r in results if r.question.answerable]
-    s = Summary()
-    m = s.metrics
-    m["recall@5"] = _mean([recall_at(r, 5) for r in answerable])
-    m["recall@10"] = _mean([recall_at(r, 10) for r in answerable])
-    m["mrr@10"] = _mean([rr_at(r) for r in answerable])
-    m["ndcg@10"] = _mean([ndcg_at(r) for r in answerable])
-    m["identifier_exact_recall@5"] = _mean([recall_at(r, 5) for r in answerable if r.question.category == "identifier"])
-    m["page_attribution_accuracy"] = _mean([float(page_correct(r)) for r in answerable if r.question.pages and r.question.category == "page"])
-    m["multi_file_coverage"] = _mean([file_coverage(r) for r in answerable if r.question.expected_files])
-
     unanswerable = [r for r in results if not r.question.answerable]
-    tp = sum(abstained(r) for r in unanswerable)           # abstained and there was nothing to find
-    fp = sum(abstained(r) for r in answerable)             # abstained although the answer exists
-    m["no_answer_precision"] = round(tp / (tp + fp), 4) if tp + fp else None   # of all abstentions, how many were right
-    m["no_answer_recall"] = _mean([float(abstained(r)) for r in unanswerable])  # of all unanswerable questions, how many were caught
+    s = Summary()
 
-    for cat in sorted({r.question.category for r in results}):
+    def put(name: str, scores: list[float]) -> None:
+        s.metrics[name] = _mean(scores)
+        s.fractions[name] = (round(sum(scores), 4), len(scores))
+
+    put("recall@5", [recall_at(r, 5) for r in answerable])
+    put("recall@8", [recall_at(r, 8) for r in answerable])
+    put("recall@10", [recall_at(r, 10) for r in answerable])
+    put("mrr@10", [rr_at(r) for r in answerable])
+    put("ndcg@10", [ndcg_at(r) for r in answerable])
+    put("identifier_exact_recall@5", [recall_at(r, 5) for r in answerable if r.question.category == "identifier"])
+    pages = [r for r in answerable if r.question.pages]
+    put("page_attribution_accuracy", [float(page_correct(r)) for r in pages])  # retrieved AND right page, over all page questions
+    found = [r for r in pages if recall_at(r, 5) > 0]
+    put("page_given_retrieved", [float(page_correct(r)) for r in found])       # right page, over page questions whose chunk was retrieved
+    put("multi_file_coverage", [file_coverage(r) for r in answerable if r.question.expected_files])
+    tp = sum(abstained(r) for r in unanswerable)          # abstained and there was nothing to find
+    fp = sum(abstained(r) for r in answerable)            # abstained although the answer exists
+    s.metrics["no_answer_precision"] = round(tp / (tp + fp), 4) if tp + fp else None   # of all abstentions, how many were right
+    s.fractions["no_answer_precision"] = (tp, tp + fp)
+    put("no_answer_recall", [float(abstained(r)) for r in unanswerable])               # of all unanswerable questions, how many were caught
+
+    for cat in sorted({r.question.category for r in answerable}):
         rs = [r for r in answerable if r.question.category == cat]
-        if rs:
-            s.by_category[cat] = {"n": len(rs), "recall@5": _mean([recall_at(r, 5) for r in rs]), "mrr@10": _mean([rr_at(r) for r in rs])}
+        s.by_category[cat] = {
+            "n": len(rs),
+            "recall@5": _mean([recall_at(r, 5) for r in rs]), "recall@5_sum": round(sum(recall_at(r, 5) for r in rs), 4),
+            "mrr@10": _mean([rr_at(r) for r in rs]), "ndcg@10": _mean([ndcg_at(r) for r in rs]),
+        }
     s.counts = {"questions": len(results), "answerable": len(answerable), "unanswerable": len(unanswerable)}
     return s
 

@@ -1,10 +1,15 @@
 """Offline retrieval benchmark.
 
-    uv run python -m evaluation.run --fake                 # CI: deterministic hash embedder + in-memory stores
-    uv run python -m evaluation.run --real                 # all-MiniLM-L6-v2 + live Milvus/OpenSearch when reachable
+    uv run python -m evaluation.run --fake                       # CI: deterministic hash embedder + in-memory stores
+    uv run python -m evaluation.run --real                       # all-MiniLM-L6-v2 + live Milvus/OpenSearch when reachable
     uv run python -m evaluation.run --real --label p1 --compare evaluation/results/baseline-real.json
+    uv run python -m evaluation.run --real --sets main,heldout \\
+        --config boost0:HEADING_MATCH_BOOST=0 --config boost1:HEADING_MATCH_BOOST=1.0 --config k5:top_k=5 --config k8:top_k=8
 
-Prints the metrics and writes them (with per-question detail) to evaluation/results/<label>-<mode>.json."""
+Question sets: `main` (tuning set, questions.py) and `heldout` (heldout.py: report only, never tune against it; no per-question rows
+are printed for it). The corpus is indexed once and every set is answered under every --config. A --config is
+`name:KEY=VALUE[,KEY=VALUE...]` where KEY is a Settings field (or `top_k`, the request's top_k; default 10).
+Results are written to evaluation/results/<label>-<mode>.json."""
 import argparse
 import asyncio
 import json
@@ -14,9 +19,11 @@ import subprocess
 import sys
 
 from evaluation import harness, metrics
-from evaluation.questions import QUESTIONS
+from evaluation.harness import Config
 
 RESULTS = pathlib.Path(__file__).resolve().parent / "results"
+TABLE = ["recall@5", "recall@8", "recall@10", "mrr@10", "ndcg@10", "identifier_exact_recall@5", "page_attribution_accuracy",
+         "page_given_retrieved", "multi_file_coverage", "no_answer_precision", "no_answer_recall"]
 
 
 def _git(*args: str) -> str:
@@ -26,8 +33,27 @@ def _git(*args: str) -> str:
         return ""
 
 
-def _fmt(v) -> str:
-    return "  n/a " if v is None else f"{v:6.3f}"
+def _parse_config(spec: str) -> Config:
+    name, _, rest = spec.partition(":")
+    overrides, top_k = {}, 10
+    for item in filter(None, rest.split(",")):
+        key, _, value = item.partition("=")
+        if key == "top_k":
+            top_k = int(value)
+            continue
+        from app.core.config import settings
+
+        current = getattr(settings, key)  # AttributeError on a typo: fail loudly
+        overrides[key] = type(current)(value) if not isinstance(current, bool) else value.lower() in ("1", "true", "yes")
+    return Config(name, overrides, top_k)
+
+
+def _questions(names: list[str]):
+    from evaluation.heldout import HELDOUT
+    from evaluation.questions import QUESTIONS
+
+    known = {"main": QUESTIONS, "heldout": HELDOUT}
+    return {n: known[n] for n in names}
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -36,9 +62,11 @@ def main(argv: list[str] | None = None) -> int:
     mode.add_argument("--fake", action="store_true", help="deterministic hash embedder, in-memory stores (CI)")
     mode.add_argument("--real", action="store_true", help="all-MiniLM-L6-v2 via sentence-transformers; live stores when reachable")
     ap.add_argument("--stores", choices=["auto", "fake", "real"], default="auto", help="--real only: force the store backend")
+    ap.add_argument("--sets", default="main", help="comma list of: main, heldout")
+    ap.add_argument("--config", action="append", default=[], help="name:KEY=VALUE[,KEY=VALUE]  (repeatable; default: the current settings)")
     ap.add_argument("--label", default="run", help="prefix of the result file name")
-    ap.add_argument("--compare", type=pathlib.Path, help="a previous result JSON to print deltas against")
-    ap.add_argument("--verbose", "-v", action="store_true", help="print one line per question")
+    ap.add_argument("--compare", type=pathlib.Path, help="a previous result JSON to print deltas against (first config, main set)")
+    ap.add_argument("--verbose", "-v", action="store_true", help="one line per question (main set only)")
     args = ap.parse_args(argv)
 
     import logging
@@ -64,43 +92,52 @@ def main(argv: list[str] | None = None) -> int:
         else:
             stores = args.stores
 
-    results, stats, backend = asyncio.run(harness.run_benchmark(embedder, stores))
-    summary = metrics.summarise(results)
+    set_names = [n.strip() for n in args.sets.split(",") if n.strip()]
+    configs = [_parse_config(c) for c in args.config] or [Config()]
+    out, stats, backend = asyncio.run(harness.run_benchmark(embedder, stores, _questions(set_names), configs))
 
     base = json.loads(args.compare.read_text()) if args.compare else None
     print(f"\nmode={mode_name} embedder={embedder.name} backend={backend}")
-    print(f"corpus: {stats.files} files, {stats.chunks} chunks ({stats.seconds}s to ingest); questions: {summary.counts}")
-    print(f"\n{'metric':<30}{'value':>8}" + (f"{'baseline':>10}{'delta':>9}" if base else ""))
-    for k, v in summary.metrics.items():
-        line = f"{k:<30}{_fmt(v):>8}"
-        if base:
-            b = base["metrics"].get(k)
-            line += f"{_fmt(b):>10}" + (f"{v - b:+9.3f}" if v is not None and b is not None else "")
-        print(line)
-    print(f"\n{'category':<14}{'n':>3}{'R@5':>8}{'MRR@10':>8}")
-    for cat, row in summary.by_category.items():
-        print(f"{cat:<14}{row['n']:>3}{_fmt(row['recall@5']):>8}{_fmt(row['mrr@10']):>8}")
-    print(f"\nlatency (pipeline.run, ms): p50={_pct([r.latency_ms for r in results], 50):.1f} p95={_pct([r.latency_ms for r in results], 95):.1f}")
-
-    detail = []
-    for r in results:
-        rank = metrics.first_relevant_rank(r)
-        detail.append({
-            "id": r.question.id, "category": r.question.category, "query": r.question.query, "status": r.status,
-            "first_relevant_rank": rank, "returned": len(r.chunks), "coverage": r.coverage,
-            "top": [{"file": c.file, "section": c.section, "pages": [c.page_start, c.page_end], "relevant": metrics.is_relevant(c, r.question)} for c in r.chunks[:10]],
-        })
-        if args.verbose:
-            print(f"  {r.question.id:<18} first_rel_rank={rank} returned={len(r.chunks)} status={r.status}")
+    print(f"corpus: {stats.files} files, {stats.chunks} chunks ({stats.seconds}s to ingest)")
+    record = {}
+    for cfg in configs:
+        for set_name in set_names:
+            results = out[cfg.name][set_name]
+            summary = metrics.summarise(results)
+            print(f"\n=== config={cfg.name} overrides={cfg.overrides or {}} top_k={cfg.top_k} set={set_name} {summary.counts} ===")
+            b = (base or {}).get("runs", {}).get(f"{cfg.name}/{set_name}", {}).get("metrics") if base else None
+            for k in TABLE:
+                line = f"{k:<28}{summary.show(k):<22}"
+                if b and b.get(k) is not None and summary.metrics[k] is not None:
+                    line += f"  baseline {b[k]:.3f}  delta {summary.metrics[k] - b[k]:+.3f}"
+                print(line)
+            print(f"\n{'category':<14}{'n':>3}{'R@5':>8}{'MRR@10':>8}{'nDCG@10':>9}")
+            for cat, row in summary.by_category.items():
+                print(f"{cat:<14}{row['n']:>3}{row['recall@5']:>8.3f}{row['mrr@10']:>8.3f}{row['ndcg@10']:>9.3f}")
+            lat = [r.latency_ms for r in results]
+            n_degraded = sum(r.note == "degraded" for r in results)
+            print(f"questions that ran on one search engine only (timeout/failure; contaminates the numbers if > 0): {n_degraded}")
+            print(f"latency (pipeline.run, ms): p50={_pct(lat, 50):.1f} p95={_pct(lat, 95):.1f}")
+            detail = []
+            for r in results:
+                rank = metrics.first_relevant_rank(r)
+                detail.append({"id": r.question.id, "category": r.question.category, "status": r.status, "first_relevant_rank": rank,
+                               "returned": len(r.chunks), "coverage": r.coverage})
+                if args.verbose and set_name == "main":
+                    print(f"  {r.question.id:<22} first_rel_rank={rank} returned={len(r.chunks)} status={r.status}")
+            record[f"{cfg.name}/{set_name}"] = {
+                "overrides": cfg.overrides or {}, "top_k": cfg.top_k, "metrics": summary.metrics,
+                "fractions": {k: list(v) for k, v in summary.fractions.items()}, "by_category": summary.by_category, "counts": summary.counts, "degraded_questions": n_degraded,
+                "questions": detail if set_name == "main" else [{"id": d["id"], "category": d["category"]} for d in detail],  # no per-question outcomes for held-out
+            }
 
     RESULTS.mkdir(exist_ok=True)
-    out = RESULTS / f"{args.label}-{mode_name}.json"
-    out.write_text(json.dumps({
+    path = RESULTS / f"{args.label}-{mode_name}.json"
+    path.write_text(json.dumps({
         "label": args.label, "mode": mode_name, "embedder": embedder.name, "backend": backend, "git": _git("rev-parse", "--short", "HEAD"),
-        "python": platform.python_version(), "ingest": {"chunks": stats.chunks, "per_file": stats.chunks_per_file},
-        "metrics": summary.metrics, "by_category": summary.by_category, "counts": summary.counts, "questions": detail,
+        "python": platform.python_version(), "ingest": {"chunks": stats.chunks, "per_file": stats.chunks_per_file}, "runs": record,
     }, indent=2) + "\n")
-    print(f"\nwrote {out}")
+    print(f"\nwrote {path}")
     return 0
 
 
