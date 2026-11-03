@@ -77,21 +77,24 @@ class OpenSearchRepository:
             for doc_id, version in current_versions.items()
         ]
 
-        body = {
-            "size": top_n,
-            "query": {
-                "bool": {
-                    "must": {
-                        "multi_match": {
-                            "query": query_text,
-                            "fields": ["content", "section^1.5", "filename^2.0"],
-                        }
-                    },
-                    "should": should_clauses,
-                    "minimum_should_match": 1,
+        # Scope is a `filter` (required, unscored), NOT a `should` with minimum_should_match: with scoring `should` clauses present
+        # below, any one of them would otherwise satisfy the minimum and let an out-of-scope document in.
+        bool_query: dict = {
+            "must": {
+                "multi_match": {
+                    "query": query_text,
+                    "fields": ["content", "section^1.5", "filename^2.0"],
                 }
             },
+            "filter": [{"bool": {"should": should_clauses, "minimum_should_match": 1}}],
         }
+        if settings.OPENSEARCH_PHRASE_BOOST_ENABLED and query_text.strip():
+            # Optional score boosts: a query that is (or contains) an exact heading or phrase ranks that section first.
+            bool_query["should"] = [
+                {"match_phrase": {"section": {"query": query_text, "boost": settings.OPENSEARCH_SECTION_PHRASE_BOOST}}},
+                {"match_phrase": {"content": {"query": query_text, "boost": settings.OPENSEARCH_CONTENT_PHRASE_BOOST}}},
+            ]
+        body = {"size": top_n, "query": {"bool": bool_query}}
 
         def _search() -> list[BM25SearchHit]:
             client = _get_client()

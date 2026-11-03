@@ -31,4 +31,5 @@ class FusedCandidate:
     bm25_score: float | None = None
     bm25_rank: int | None = None
     rrf_score: float = 0.0
+    norm_relevance: float | None = None  # rrf_score min-max normalised within the candidate pool, 0-1
     mmr_score: float | None = None  # selection-order-dependent; internal tracking only, HLD §18.2

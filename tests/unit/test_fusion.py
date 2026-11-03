@@ -1,3 +1,4 @@
+from app.query import fusion
 from app.query.fusion import reciprocal_rank_fusion
 from app.stores.types import BM25SearchHit, DenseSearchHit
 
@@ -68,3 +69,26 @@ class TestReciprocalRankFusion:
         assert c.page_number == 3
         assert c.section == "Intro"
         assert c.chunk_index == 2
+
+
+class TestHeadingMatchBoost:
+    def _cands(self):
+        from app.query.scoring import FusedCandidate
+
+        return [
+            FusedCandidate("a", section="Phase 5: Invoice generation", rrf_score=0.031),
+            FusedCandidate("b", section="Phase 6: Payment gateway webhooks", rrf_score=0.027),
+            FusedCandidate("c", section=None, rrf_score=0.026),
+        ]
+
+    def test_section_sharing_a_word_pair_with_the_query_moves_to_the_top(self):
+        out = fusion.boost_heading_matches(self._cands(), "what is phase 6 about?", bonus=1 / 61)
+        assert [c.chunk_id for c in out] == ["b", "a", "c"]
+
+    def test_stop_word_only_pairs_and_disabled_bonus_change_nothing(self):
+        assert [c.chunk_id for c in fusion.boost_heading_matches(self._cands(), "what is the", bonus=1 / 61)] == ["a", "b", "c"]
+        assert [c.chunk_id for c in fusion.boost_heading_matches(self._cands(), "phase 6", bonus=0)] == ["a", "b", "c"]
+
+    def test_hinglish_query_matches_too(self):
+        out = fusion.boost_heading_matches(self._cands(), "Phase 6 mein kya karna hai?", bonus=1 / 61)
+        assert out[0].chunk_id == "b"

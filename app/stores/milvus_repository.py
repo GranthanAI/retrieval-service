@@ -102,7 +102,7 @@ class MilvusRepository:
                 anns_field="embedding",
                 search_params={
                     "metric_type": settings.MILVUS_INDEX_METRIC_TYPE,
-                    "params": {"nprobe": settings.MILVUS_SEARCH_NPROBE},
+                    "params": {"ef": max(settings.MILVUS_HNSW_EF, top_n)},
                 },
                 limit=top_n,
                 filter=filter_expr,

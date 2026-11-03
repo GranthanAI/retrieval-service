@@ -11,6 +11,7 @@ import pytest
 
 from app.clients.file_service_client import PermissionCheckResult
 from app.core import metrics
+from app.core.config import settings
 from app.core.enums import RetrievalScope
 from app.grpc.retrieval_pb2 import GetRelevantChunksRequest, RetrievalStatus
 from app.query import pipeline
@@ -158,9 +159,16 @@ async def test_failed_indexing_is_reported(monkeypatch):
     assert _name(await _run(_req(["d1"]))) == "INDEXING_FAILED"
 
 
-async def test_embedding_outage_is_unavailable(monkeypatch):
+async def test_embedding_outage_is_unavailable_when_the_bm25_fallback_is_off(monkeypatch):
+    # Phase 1 (P1-4) made the BM25 fallback the default; the flag keeps the original behaviour reachable.
+    monkeypatch.setattr(settings, "EMBEDDING_FAILURE_FALLBACK_BM25", False)
     _patch_state(monkeypatch, versions={"d1": 1}, jobs={"d1": ("READY", 4)})
     assert _name(await _run(_req(["d1"]), embed=_Embed(fail=True))) == "UNAVAILABLE"
+
+
+async def test_embedding_outage_with_no_keyword_hits_is_no_match_not_unavailable(monkeypatch):
+    _patch_state(monkeypatch, versions={"d1": 1}, jobs={"d1": ("READY", 4)})
+    assert _name(await _run(_req(["d1"]), embed=_Embed(fail=True))) == "NO_MATCH"
 
 
 async def test_both_search_engines_down_is_unavailable(monkeypatch):

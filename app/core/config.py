@@ -68,7 +68,9 @@ class Settings(BaseSettings):
     MILVUS_PORT: int = 19530
     MILVUS_COLLECTION_NAME: str = "retrieval_document_chunks"
     MILVUS_SEARCH_TOP_N: int = 40
-    MILVUS_SEARCH_NPROBE: int = 16
+    # HNSW search breadth. Sent as `ef` and never below the requested limit (Milvus rejects ef < limit). Replaces the IVF-only
+    # MILVUS_SEARCH_NPROBE, which an HNSW index ignores.
+    MILVUS_HNSW_EF: int = 64
     MILVUS_INDEX_METRIC_TYPE: str = "COSINE"
     MILVUS_CONNECT_TIMEOUT_SECONDS: float = 5.0
     MILVUS_QUERY_TIMEOUT_SECONDS: float = 0.5
@@ -84,6 +86,29 @@ class Settings(BaseSettings):
     MMR_CANDIDATE_POOL_SIZE: int = 40
     MMR_FINAL_TOP_K: int = 6
     MMR_LAMBDA: float = 0.7
+    # Relevance (RRF score) is min-max normalised to 0-1 inside the candidate pool before MMR, and only candidates at or above
+    # this normalised relevance take part in diversification. Set to 0 to diversify over the whole pool.
+    MMR_RELEVANCE_FLOOR: float = 0.5
+    # A candidate whose section heading contains a word pair from the query verbatim ("phase 6") gets one extra rank-1 RRF vote
+    # (1 / (FUSION_RRF_K + 1)) times this factor. 0 disables it.
+    HEADING_MATCH_BOOST: float = 1.0
+    # Candidates whose text overlaps an already-kept, higher-ranked candidate by more than this (Jaccard over word 3-shingles)
+    # are dropped before MMR. 1.0 disables the filter.
+    DEDUPE_JACCARD_THRESHOLD: float = 0.9
+    # With two or more file_ids, every file's best candidate gets a slot in the final set when its normalised relevance is at
+    # or above MMR_RELEVANCE_FLOOR.
+    BALANCE_ACROSS_FILES: bool = True
+    # GetRelevantChunksRequest.top_k is honoured up to this cap; 0 in the request means MMR_FINAL_TOP_K.
+    RETRIEVAL_MAX_TOP_K: int = 20
+    # Phrase boosts on the keyword query (section x5, content x2) so a pasted heading or phrase ranks its section first.
+    OPENSEARCH_PHRASE_BOOST_ENABLED: bool = True
+    OPENSEARCH_SECTION_PHRASE_BOOST: float = 5.0
+    OPENSEARCH_CONTENT_PHRASE_BOOST: float = 2.0
+    # If the query embedding fails, answer from the keyword leg alone instead of returning UNAVAILABLE.
+    EMBEDDING_FAILURE_FALLBACK_BM25: bool = True
+    # Tokenizer used to enforce max_tokens and to fill total_tokens. A proxy for the LLM's own tokenizer (which this service
+    # does not know); falls back to a words/0.75 estimate, with a warning, if it cannot be loaded.
+    TOKEN_COUNT_TOKENIZER_ID: str = "sentence-transformers/all-MiniLM-L6-v2"
     QUERY_PIPELINE_DEADLINE_SECONDS: float = 1.8
 
     # --- Ingestion pipeline tuning ---

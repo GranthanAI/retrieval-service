@@ -1,19 +1,7 @@
 from app.core import metrics
 from app.grpc.retrieval_pb2 import DocumentChunk, GetRelevantChunksResponse, RetrievalStatus
+from app.query import tokens
 from app.query.scoring import FusedCandidate
-
-# No real tokenizer dependency — HLD §18.2 permits "the same tokenizer the
-# target LLM provider uses (or a reasonable proxy)". This proxy matches
-# chunker.py's own words-per-token approximation for consistency across the
-# codebase, not a claim of exactness.
-_WORDS_PER_TOKEN = 0.75
-
-
-def _count_tokens(text: str) -> int:
-    if not text:
-        return 0
-    return max(1, int(len(text.split()) / _WORDS_PER_TOKEN))
-
 
 def empty_response(
     request_id: str,
@@ -85,7 +73,7 @@ def to_proto(
             )
             for c in chunks
         ],
-        total_tokens=sum(_count_tokens(c.content) for c in chunks),
+        total_tokens=sum(tokens.count(c.content) for c in chunks),
         request_id=request_id,
         status=RetrievalStatus.OK,
         requested_count=requested_count,

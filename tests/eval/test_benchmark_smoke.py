@@ -33,7 +33,6 @@ async def test_identifier_lookups_work_in_fake_mode(results):
 
 
 @pytest.mark.asyncio(loop_scope="module")
-@pytest.mark.xfail(strict=True, reason="Phase 1 acceptance: 'what is phase 6 about?' must put the Phase 6 section in the top 3")
 async def test_phase_6_section_is_in_the_top_3(results):
     by_id, _ = results
     rank = metrics.first_relevant_rank(by_id["p6-about"])

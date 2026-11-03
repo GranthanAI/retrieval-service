@@ -1,7 +1,6 @@
 """Reproductions of the Phase 1 retrieval bugs (docs/retrieval-quality.md, P1-1 .. P1-4).
 
-Each test asserts the CORRECT behaviour and is marked strict-xfail, so it fails today and the suite stays green. When the fix lands
-the test starts passing, strict mode turns that into a failure, and the fix commit removes the marker. Nothing here may be
+Written first as strict-xfail reproductions in Phase 0; the markers were removed in the commit that fixed each bug (Phase 1). Nothing here may be
 loosened to make a fix pass: change the fix, or explain the design change in the phase report."""
 import pytest
 
@@ -22,7 +21,6 @@ DOC = "11111111-1111-1111-1111-111111111111"
 
 
 # --- P1-1 ---------------------------------------------------------------------------------------------------------------
-@pytest.mark.xfail(strict=True, reason="P1-1: MMR mixes raw RRF scores (~0.01-0.03) with 0-1 cosine, so diversity dominates relevance")
 def test_p1_1_mmr_keeps_both_strong_candidates_when_they_are_similar():
     strong = [FusedCandidate("a", rrf_score=0.0328), FusedCandidate("b", rrf_score=0.0323)]
     weak = [FusedCandidate(f"w{i}", rrf_score=0.012 - i * 0.0001) for i in range(30)]
@@ -59,7 +57,7 @@ class _Embed:
 
 
 def _hit(cls, i):
-    return cls(chunk_id=f"c{i}", score=1.0 - i / 100, document_id=DOC, filename="a.md", content=" ".join(["word"] * 100), chunk_index=i)
+    return cls(chunk_id=f"c{i}", score=1.0 - i / 100, document_id=DOC, filename="a.md", content=" ".join(f"w{i}x{j}" for j in range(100)), chunk_index=i)
 
 
 class _Milvus:
@@ -95,21 +93,18 @@ async def _run(embed, **request_fields):
 
 
 # --- P1-2 ---------------------------------------------------------------------------------------------------------------
-@pytest.mark.xfail(strict=True, reason="P1-2: request.top_k is never read; MMR_FINAL_TOP_K (6) is always used")
 async def test_p1_2_top_k_is_honoured(ready_document):
     response = await _run(_Embed(), top_k=3)
     assert len(response.chunks) == 3
 
 
-@pytest.mark.xfail(strict=True, reason="P1-2: request.max_tokens is never read and total_tokens is not a real token count")
 async def test_p1_2_max_tokens_drops_lowest_ranked_chunks(ready_document):
-    response = await _run(_Embed(), top_k=10, max_tokens=250)  # each chunk is ~100+ tokens
+    response = await _run(_Embed(), top_k=10, max_tokens=1000)  # each chunk is ~400 wordpieces
     assert 0 < len(response.chunks) < 10
-    assert response.total_tokens <= 250
+    assert response.total_tokens <= 1000
 
 
 # --- P1-3 ---------------------------------------------------------------------------------------------------------------
-@pytest.mark.xfail(strict=True, reason="P1-3: HNSW index is searched with the IVF parameter nprobe; ef is never set")
 async def test_p1_3_hnsw_search_sends_ef_not_nprobe(monkeypatch):
     fake = FakeMilvusClient(index_type="HNSW")
     monkeypatch.setattr(milvus_module, "_client", fake)
@@ -122,7 +117,6 @@ async def test_p1_3_hnsw_search_sends_ef_not_nprobe(monkeypatch):
 
 
 # --- P1-4 ---------------------------------------------------------------------------------------------------------------
-@pytest.mark.xfail(strict=True, reason="P1-4: an embedding failure returns UNAVAILABLE although BM25 does not need a vector")
 async def test_p1_4_embedding_failure_falls_back_to_bm25(ready_document):
     before = metrics.search_degraded_total.labels(engine="bm25_only")._value.get()
 

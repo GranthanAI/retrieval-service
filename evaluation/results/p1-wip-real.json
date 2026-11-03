@@ -1,0 +1,2811 @@
+{
+  "label": "p1-wip",
+  "mode": "real",
+  "embedder": "all-MiniLM-L6-v2",
+  "backend": "live Milvus 127.0.0.1:19530 + OpenSearch 127.0.0.1:9200",
+  "git": "65bb38f",
+  "python": "3.12.3",
+  "ingest": {
+    "chunks": 56,
+    "per_file": {
+      "billing-handbook.pdf": 4,
+      "hld.md": 5,
+      "invoices.csv": 1,
+      "lld.md": 4,
+      "PHASES.md": 38,
+      "runbook.md": 4
+    }
+  },
+  "metrics": {
+    "recall@5": 0.8182,
+    "recall@10": 0.8182,
+    "mrr@10": 0.6242,
+    "ndcg@10": 0.6726,
+    "identifier_exact_recall@5": 1.0,
+    "page_attribution_accuracy": 0.3333,
+    "multi_file_coverage": 1.0,
+    "no_answer_precision": null,
+    "no_answer_recall": 0.0
+  },
+  "by_category": {
+    "csv": {
+      "n": 1,
+      "recall@5": 1.0,
+      "mrr@10": 0.5
+    },
+    "hinglish": {
+      "n": 2,
+      "recall@5": 0.5,
+      "mrr@10": 0.1
+    },
+    "identifier": {
+      "n": 4,
+      "recall@5": 1.0,
+      "mrr@10": 1.0
+    },
+    "multi_file": {
+      "n": 3,
+      "recall@5": 1.0,
+      "mrr@10": 1.0
+    },
+    "page": {
+      "n": 3,
+      "recall@5": 1.0,
+      "mrr@10": 0.4444
+    },
+    "phase": {
+      "n": 3,
+      "recall@5": 0.6667,
+      "mrr@10": 0.2333
+    },
+    "phase_exit": {
+      "n": 2,
+      "recall@5": 0.0,
+      "mrr@10": 0.0
+    },
+    "phase_title": {
+      "n": 2,
+      "recall@5": 1.0,
+      "mrr@10": 1.0
+    },
+    "table": {
+      "n": 2,
+      "recall@5": 1.0,
+      "mrr@10": 1.0
+    }
+  },
+  "counts": {
+    "questions": 27,
+    "answerable": 22,
+    "unanswerable": 5
+  },
+  "questions": [
+    {
+      "id": "p6-about",
+      "category": "phase",
+      "query": "what is phase 6 about?",
+      "status": "OK",
+      "first_relevant_rank": null,
+      "returned": 10,
+      "coverage": null,
+      "top": [
+        {
+          "file": "PHASES.md",
+          "section": "billing-service roadmap",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Phase 5: Invoice generation",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Phase 4: Subscription lifecycle",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Phase 11: Observability",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Phase 1: Repository scaffolding",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Phase 3: Plan catalogue",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Phase 10: Admin API",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Phase 12: Load testing and rollout",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "hld.md",
+          "section": "Delivery phases",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "lld.md",
+          "section": "Webhook handler",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        }
+      ]
+    },
+    {
+      "id": "p6-title",
+      "category": "phase_title",
+      "query": "Phase 6: Payment gateway webhooks",
+      "status": "OK",
+      "first_relevant_rank": 1,
+      "returned": 10,
+      "coverage": null,
+      "top": [
+        {
+          "file": "PHASES.md",
+          "section": "Phase 6: Payment gateway webhooks",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": true
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Tasks",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "hld.md",
+          "section": "Idempotency",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "hld.md",
+          "section": "Delivery phases",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "hld.md",
+          "section": "Overview",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "lld.md",
+          "section": "Webhook handler",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "hld.md",
+          "section": "Failure handling",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Phase 11: Observability",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Phase 10: Admin API",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Phase 8: Dunning and retries",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        }
+      ]
+    },
+    {
+      "id": "p6-exit",
+      "category": "phase_exit",
+      "query": "what are the exit criteria of phase 6?",
+      "status": "OK",
+      "first_relevant_rank": null,
+      "returned": 10,
+      "coverage": null,
+      "top": [
+        {
+          "file": "PHASES.md",
+          "section": "billing-service roadmap",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Exit criteria",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Exit criteria",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Exit criteria",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Phase 6: Payment gateway webhooks",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Phase 12: Load testing and rollout",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Exit criteria",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "hld.md",
+          "section": "Delivery phases",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Exit criteria",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "lld.md",
+          "section": "Retry worker",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        }
+      ]
+    },
+    {
+      "id": "p6-hinglish",
+      "category": "hinglish",
+      "query": "Phase 6 mein kya karna hai?",
+      "status": "OK",
+      "first_relevant_rank": 5,
+      "returned": 10,
+      "coverage": null,
+      "top": [
+        {
+          "file": "PHASES.md",
+          "section": "Phase 5: Invoice generation",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Phase 3: Plan catalogue",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "billing-service roadmap",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Phase 12: Load testing and rollout",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Phase 6: Payment gateway webhooks",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": true
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Phase 8: Dunning and retries",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "lld.md",
+          "section": "Retry worker",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Phase 4: Subscription lifecycle",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Phase 10: Admin API",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Phase 9: Tax calculation",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        }
+      ]
+    },
+    {
+      "id": "p9-hinglish-exit",
+      "category": "hinglish",
+      "query": "Phase 9 ka exit criteria kya hai?",
+      "status": "OK",
+      "first_relevant_rank": null,
+      "returned": 10,
+      "coverage": null,
+      "top": [
+        {
+          "file": "PHASES.md",
+          "section": "billing-service roadmap",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Phase 9: Tax calculation",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Exit criteria",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Exit criteria",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Phase 4: Subscription lifecycle",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Exit criteria",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Exit criteria",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Exit criteria",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "lld.md",
+          "section": "Retry worker",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Exit criteria",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        }
+      ]
+    },
+    {
+      "id": "p3-about",
+      "category": "phase",
+      "query": "what is phase 3 about?",
+      "status": "OK",
+      "first_relevant_rank": 2,
+      "returned": 10,
+      "coverage": null,
+      "top": [
+        {
+          "file": "PHASES.md",
+          "section": "billing-service roadmap",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Phase 3: Plan catalogue",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": true
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Phase 4: Subscription lifecycle",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Phase 5: Invoice generation",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Phase 1: Repository scaffolding",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Phase 10: Admin API",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Phase 11: Observability",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "hld.md",
+          "section": "Delivery phases",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "lld.md",
+          "section": "Retry worker",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "lld.md",
+          "section": "Webhook handler",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        }
+      ]
+    },
+    {
+      "id": "p11-about",
+      "category": "phase",
+      "query": "what happens in phase 11?",
+      "status": "OK",
+      "first_relevant_rank": 5,
+      "returned": 10,
+      "coverage": null,
+      "top": [
+        {
+          "file": "PHASES.md",
+          "section": "Phase 5: Invoice generation",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Phase 4: Subscription lifecycle",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Phase 1: Repository scaffolding",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Phase 12: Load testing and rollout",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Phase 11: Observability",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": true
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Phase 10: Admin API",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Phase 3: Plan catalogue",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "hld.md",
+          "section": "Delivery phases",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "lld.md",
+          "section": "Retry worker",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "lld.md",
+          "section": "Webhook handler",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        }
+      ]
+    },
+    {
+      "id": "p8-title",
+      "category": "phase_title",
+      "query": "Phase 8: Dunning and retries",
+      "status": "OK",
+      "first_relevant_rank": 1,
+      "returned": 10,
+      "coverage": null,
+      "top": [
+        {
+          "file": "PHASES.md",
+          "section": "Phase 8: Dunning and retries",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": true
+        },
+        {
+          "file": "lld.md",
+          "section": "Retry worker",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Phase 12: Load testing and rollout",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Phase 4: Subscription lifecycle",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Phase 1: Repository scaffolding",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "hld.md",
+          "section": "Delivery phases",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Phase 3: Plan catalogue",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "billing-service roadmap",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "hld.md",
+          "section": "Failure handling",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Phase 10: Admin API",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        }
+      ]
+    },
+    {
+      "id": "p10-exit",
+      "category": "phase_exit",
+      "query": "exit criteria for phase 10",
+      "status": "OK",
+      "first_relevant_rank": null,
+      "returned": 10,
+      "coverage": null,
+      "top": [
+        {
+          "file": "PHASES.md",
+          "section": "billing-service roadmap",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Phase 10: Admin API",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Exit criteria",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Exit criteria",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Exit criteria",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "lld.md",
+          "section": "Retry worker",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Phase 4: Subscription lifecycle",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Exit criteria",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Exit criteria",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Exit criteria",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        }
+      ]
+    },
+    {
+      "id": "mf-idempotency",
+      "category": "multi_file",
+      "query": "how do the HLD and the LLD each describe idempotency?",
+      "status": "OK",
+      "first_relevant_rank": 1,
+      "returned": 10,
+      "coverage": null,
+      "top": [
+        {
+          "file": "lld.md",
+          "section": "Idempotency table",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": true
+        },
+        {
+          "file": "hld.md",
+          "section": "Idempotency",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": true
+        },
+        {
+          "file": "PHASES.md",
+          "section": "billing-service roadmap",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "lld.md",
+          "section": "Webhook handler",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "hld.md",
+          "section": "Failure handling",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Phase 12: Load testing and rollout",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Phase 8: Dunning and retries",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "hld.md",
+          "section": "Overview",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Phase 2: Database schema",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Tasks",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        }
+      ]
+    },
+    {
+      "id": "mf-webhook",
+      "category": "multi_file",
+      "query": "what do the roadmap and the LLD say about the webhook handler?",
+      "status": "OK",
+      "first_relevant_rank": 1,
+      "returned": 10,
+      "coverage": null,
+      "top": [
+        {
+          "file": "PHASES.md",
+          "section": "Phase 6: Payment gateway webhooks",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": true
+        },
+        {
+          "file": "lld.md",
+          "section": "Webhook handler",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": true
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Exit criteria",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "hld.md",
+          "section": "Overview",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Phase 8: Dunning and retries",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "lld.md",
+          "section": "Idempotency table",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "billing-service roadmap",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "hld.md",
+          "section": "Delivery phases",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Phase 1: Repository scaffolding",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "hld.md",
+          "section": "Security",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        }
+      ]
+    },
+    {
+      "id": "mf-phases",
+      "category": "multi_file",
+      "query": "compare how the roadmap and the HLD describe the phases",
+      "status": "OK",
+      "first_relevant_rank": 1,
+      "returned": 10,
+      "coverage": null,
+      "top": [
+        {
+          "file": "hld.md",
+          "section": "Delivery phases",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": true
+        },
+        {
+          "file": "PHASES.md",
+          "section": "billing-service roadmap",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": true
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Phase 12: Load testing and rollout",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "hld.md",
+          "section": "Idempotency",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Phase 1: Repository scaffolding",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Phase 3: Plan catalogue",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "hld.md",
+          "section": "Failure handling",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Phase 2: Database schema",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "lld.md",
+          "section": "Retry worker",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Tasks",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        }
+      ]
+    },
+    {
+      "id": "id-retry",
+      "category": "identifier",
+      "query": "what does MAX_RETRY_ATTEMPTS do?",
+      "status": "OK",
+      "first_relevant_rank": 1,
+      "returned": 10,
+      "coverage": null,
+      "top": [
+        {
+          "file": "runbook.md",
+          "section": "Retry configuration",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": true
+        },
+        {
+          "file": "lld.md",
+          "section": "Retry worker",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Exit criteria",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Tasks",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Phase 8: Dunning and retries",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Exit criteria",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "lld.md",
+          "section": "Idempotency table",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "hld.md",
+          "section": "Failure handling",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Phase 10: Admin API",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "runbook.md",
+          "section": "Incident notes",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        }
+      ]
+    },
+    {
+      "id": "id-retry-default",
+      "category": "identifier",
+      "query": "what is the default value of MAX_RETRY_ATTEMPTS?",
+      "status": "OK",
+      "first_relevant_rank": 1,
+      "returned": 10,
+      "coverage": null,
+      "top": [
+        {
+          "file": "runbook.md",
+          "section": "Retry configuration",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": true
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Exit criteria",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Phase 7: Usage metering",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Exit criteria",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Tasks",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "lld.md",
+          "section": "Webhook handler",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Phase 8: Dunning and retries",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "hld.md",
+          "section": "Failure handling",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "lld.md",
+          "section": "Idempotency table",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "billing-handbook.pdf",
+          "section": "Settlement reconciliation",
+          "pages": [
+            3,
+            3
+          ],
+          "relevant": false
+        }
+      ]
+    },
+    {
+      "id": "id-txn",
+      "category": "identifier",
+      "query": "TXN-102394",
+      "status": "OK",
+      "first_relevant_rank": 1,
+      "returned": 10,
+      "coverage": null,
+      "top": [
+        {
+          "file": "runbook.md",
+          "section": "Incident notes",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": true
+        },
+        {
+          "file": "invoices.csv",
+          "section": "Rows 1-8",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Phase 8: Dunning and retries",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "lld.md",
+          "section": "Invoice numbering",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "runbook.md",
+          "section": "Support contacts",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "lld.md",
+          "section": "Idempotency table",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Exit criteria",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "billing-service roadmap",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Exit criteria",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Open items",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        }
+      ]
+    },
+    {
+      "id": "id-path",
+      "category": "identifier",
+      "query": "/api/v1/subscriptions",
+      "status": "OK",
+      "first_relevant_rank": 1,
+      "returned": 10,
+      "coverage": null,
+      "top": [
+        {
+          "file": "runbook.md",
+          "section": "Public endpoints",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": true
+        },
+        {
+          "file": "hld.md",
+          "section": "Overview",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Phase 7: Usage metering",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Exit criteria",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Tasks",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Phase 10: Admin API",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Phase 4: Subscription lifecycle",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Exit criteria",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "hld.md",
+          "section": "Delivery phases",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "hld.md",
+          "section": "Failure handling",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        }
+      ]
+    },
+    {
+      "id": "tbl-storage",
+      "category": "table",
+      "query": "what is the storage limit of the Enterprise plan?",
+      "status": "OK",
+      "first_relevant_rank": 1,
+      "returned": 10,
+      "coverage": null,
+      "top": [
+        {
+          "file": "billing-handbook.pdf",
+          "section": "Pricing plans",
+          "pages": [
+            6,
+            6
+          ],
+          "relevant": true
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Phase 7: Usage metering",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Phase 3: Plan catalogue",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Tasks",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "hld.md",
+          "section": "Overview",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "invoices.csv",
+          "section": "Rows 1-8",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "hld.md",
+          "section": "Delivery phases",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "runbook.md",
+          "section": "Public endpoints",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Tasks",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "lld.md",
+          "section": "Idempotency table",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        }
+      ]
+    },
+    {
+      "id": "tbl-seats",
+      "category": "table",
+      "query": "how many seats does the Team plan include?",
+      "status": "OK",
+      "first_relevant_rank": 1,
+      "returned": 10,
+      "coverage": null,
+      "top": [
+        {
+          "file": "billing-handbook.pdf",
+          "section": "Pricing plans",
+          "pages": [
+            6,
+            6
+          ],
+          "relevant": true
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Phase 3: Plan catalogue",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Phase 5: Invoice generation",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Phase 7: Usage metering",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Phase 12: Load testing and rollout",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "invoices.csv",
+          "section": "Rows 1-8",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "billing-handbook.pdf",
+          "section": "Billing handbook",
+          "pages": [
+            1,
+            1
+          ],
+          "relevant": false
+        },
+        {
+          "file": "runbook.md",
+          "section": "Public endpoints",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "hld.md",
+          "section": "Delivery phases",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "lld.md",
+          "section": "Webhook handler",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        }
+      ]
+    },
+    {
+      "id": "csv-invoice",
+      "category": "csv",
+      "query": "which customer has invoice INV-2006 and what is its status?",
+      "status": "OK",
+      "first_relevant_rank": 2,
+      "returned": 10,
+      "coverage": null,
+      "top": [
+        {
+          "file": "lld.md",
+          "section": "Invoice numbering",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "invoices.csv",
+          "section": "Rows 1-8",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": true
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Tasks",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Phase 5: Invoice generation",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Exit criteria",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "billing-service roadmap",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Phase 8: Dunning and retries",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "hld.md",
+          "section": "Failure handling",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "billing-handbook.pdf",
+          "section": "Billing handbook",
+          "pages": [
+            1,
+            1
+          ],
+          "relevant": false
+        },
+        {
+          "file": "runbook.md",
+          "section": "Incident notes",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        }
+      ]
+    },
+    {
+      "id": "pg-escalate",
+      "category": "page",
+      "query": "after how many days are unmatched payments escalated?",
+      "status": "OK",
+      "first_relevant_rank": 3,
+      "returned": 10,
+      "coverage": null,
+      "top": [
+        {
+          "file": "PHASES.md",
+          "section": "Tasks",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "billing-handbook.pdf",
+          "section": "How billing works",
+          "pages": [
+            2,
+            2
+          ],
+          "relevant": false
+        },
+        {
+          "file": "billing-handbook.pdf",
+          "section": "Settlement reconciliation",
+          "pages": [
+            3,
+            3
+          ],
+          "relevant": true
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Exit criteria",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "lld.md",
+          "section": "Retry worker",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "billing-handbook.pdf",
+          "section": "Billing handbook",
+          "pages": [
+            1,
+            1
+          ],
+          "relevant": false
+        },
+        {
+          "file": "hld.md",
+          "section": "Failure handling",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "billing-service roadmap",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "runbook.md",
+          "section": "Incident notes",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "lld.md",
+          "section": "Invoice numbering",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        }
+      ]
+    },
+    {
+      "id": "pg-step2",
+      "category": "page",
+      "query": "what is step two of the settlement reconciliation?",
+      "status": "OK",
+      "first_relevant_rank": 2,
+      "returned": 10,
+      "coverage": null,
+      "top": [
+        {
+          "file": "billing-handbook.pdf",
+          "section": "Billing handbook",
+          "pages": [
+            1,
+            1
+          ],
+          "relevant": false
+        },
+        {
+          "file": "billing-handbook.pdf",
+          "section": "Settlement reconciliation",
+          "pages": [
+            3,
+            3
+          ],
+          "relevant": true
+        },
+        {
+          "file": "hld.md",
+          "section": "Delivery phases",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "billing-service roadmap",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Phase 1: Repository scaffolding",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Phase 3: Plan catalogue",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Exit criteria",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "lld.md",
+          "section": "Webhook handler",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Tasks",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "runbook.md",
+          "section": "Retry configuration",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        }
+      ]
+    },
+    {
+      "id": "pg-step1",
+      "category": "page",
+      "query": "what is step one of the settlement reconciliation?",
+      "status": "OK",
+      "first_relevant_rank": 2,
+      "returned": 10,
+      "coverage": null,
+      "top": [
+        {
+          "file": "billing-handbook.pdf",
+          "section": "Billing handbook",
+          "pages": [
+            1,
+            1
+          ],
+          "relevant": false
+        },
+        {
+          "file": "billing-handbook.pdf",
+          "section": "Settlement reconciliation",
+          "pages": [
+            3,
+            3
+          ],
+          "relevant": true
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Phase 8: Dunning and retries",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Exit criteria",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "hld.md",
+          "section": "Delivery phases",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Exit criteria",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Phase 1: Repository scaffolding",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "lld.md",
+          "section": "Webhook handler",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Tasks",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "runbook.md",
+          "section": "Public endpoints",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        }
+      ]
+    },
+    {
+      "id": "na-colour",
+      "category": "unanswerable",
+      "query": "what is the CEO's favourite colour?",
+      "status": "OK",
+      "first_relevant_rank": null,
+      "returned": 10,
+      "coverage": null,
+      "top": [
+        {
+          "file": "PHASES.md",
+          "section": "Exit criteria",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "billing-handbook.pdf",
+          "section": "Billing handbook",
+          "pages": [
+            1,
+            1
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Phase 11: Observability",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Phase 3: Plan catalogue",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "hld.md",
+          "section": "Overview",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Exit criteria",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Phase 8: Dunning and retries",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "lld.md",
+          "section": "Webhook handler",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "billing-handbook.pdf",
+          "section": "Pricing plans",
+          "pages": [
+            6,
+            6
+          ],
+          "relevant": false
+        },
+        {
+          "file": "runbook.md",
+          "section": "Support contacts",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        }
+      ]
+    },
+    {
+      "id": "na-k8s",
+      "category": "unanswerable",
+      "query": "how is the Kubernetes autoscaler configured?",
+      "status": "OK",
+      "first_relevant_rank": null,
+      "returned": 10,
+      "coverage": null,
+      "top": [
+        {
+          "file": "runbook.md",
+          "section": "Retry configuration",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "billing-service roadmap",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Phase 1: Repository scaffolding",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Phase 8: Dunning and retries",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "billing-handbook.pdf",
+          "section": "How billing works",
+          "pages": [
+            2,
+            2
+          ],
+          "relevant": false
+        },
+        {
+          "file": "hld.md",
+          "section": "Failure handling",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Phase 12: Load testing and rollout",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "lld.md",
+          "section": "Retry worker",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Phase 6: Payment gateway webhooks",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Exit criteria",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        }
+      ]
+    },
+    {
+      "id": "na-crypto",
+      "category": "unanswerable",
+      "query": "what is the refund policy for cryptocurrency payments?",
+      "status": "OK",
+      "first_relevant_rank": null,
+      "returned": 10,
+      "coverage": null,
+      "top": [
+        {
+          "file": "lld.md",
+          "section": "Retry worker",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Phase 8: Dunning and retries",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "billing-handbook.pdf",
+          "section": "Billing handbook",
+          "pages": [
+            1,
+            1
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Exit criteria",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Tasks",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Phase 10: Admin API",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "billing-handbook.pdf",
+          "section": "Settlement reconciliation",
+          "pages": [
+            3,
+            3
+          ],
+          "relevant": false
+        },
+        {
+          "file": "hld.md",
+          "section": "Failure handling",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Exit criteria",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "runbook.md",
+          "section": "Retry configuration",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        }
+      ]
+    },
+    {
+      "id": "na-football",
+      "category": "unanswerable",
+      "query": "who won the football world cup in 2018?",
+      "status": "OK",
+      "first_relevant_rank": null,
+      "returned": 10,
+      "coverage": null,
+      "top": [
+        {
+          "file": "PHASES.md",
+          "section": "Phase 5: Invoice generation",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "lld.md",
+          "section": "Retry worker",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Phase 1: Repository scaffolding",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Exit criteria",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Tasks",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "hld.md",
+          "section": "Idempotency",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Exit criteria",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Exit criteria",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "runbook.md",
+          "section": "Retry configuration",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "billing-handbook.pdf",
+          "section": "Settlement reconciliation",
+          "pages": [
+            3,
+            3
+          ],
+          "relevant": false
+        }
+      ]
+    },
+    {
+      "id": "na-encryption",
+      "category": "unanswerable",
+      "query": "which algorithm encrypts the database at rest?",
+      "status": "OK",
+      "first_relevant_rank": null,
+      "returned": 10,
+      "coverage": null,
+      "top": [
+        {
+          "file": "PHASES.md",
+          "section": "Phase 2: Database schema",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Exit criteria",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "lld.md",
+          "section": "Webhook handler",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Phase 6: Payment gateway webhooks",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "hld.md",
+          "section": "Failure handling",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "lld.md",
+          "section": "Invoice numbering",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "PHASES.md",
+          "section": "Open items",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "hld.md",
+          "section": "Security",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "runbook.md",
+          "section": "Retry configuration",
+          "pages": [
+            null,
+            null
+          ],
+          "relevant": false
+        },
+        {
+          "file": "billing-handbook.pdf",
+          "section": "How billing works",
+          "pages": [
+            2,
+            2
+          ],
+          "relevant": false
+        }
+      ]
+    }
+  ]
+}
