@@ -24,7 +24,7 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x0fretrieval.proto\x12\tretrieval\"\xe1\x01\n\x18GetRelevantChunksRequest\x12\x0f\n\x07user_id\x18\x01 \x01(\t\x12\x17\n\x0f\x63onversation_id\x18\x02 \x01(\t\x12\r\n\x05query\x18\x03 \x01(\t\x12\r\n\x05top_k\x18\x04 \x01(\x05\x12(\n\x05scope\x18\x05 \x01(\x0e\x32\x19.retrieval.RetrievalScope\x12\x10\n\x08\x66ile_ids\x18\x06 \x03(\t\x12\x1b\n\x13min_relevance_score\x18\x07 \x01(\x02\x12\x12\n\nmax_tokens\x18\x08 \x01(\x05\x12\x10\n\x08trace_id\x18\t \x01(\t\"\xe3\x01\n\rDocumentChunk\x12\x10\n\x08\x63hunk_id\x18\x01 \x01(\t\x12\x0f\n\x07\x63ontent\x18\x02 \x01(\t\x12\x16\n\x0esource_file_id\x18\x03 \x01(\t\x12\x13\n\x0bsource_name\x18\x04 \x01(\t\x12\x17\n\x0frelevance_score\x18\x05 \x01(\x02\x12\x38\n\x08metadata\x18\x06 \x03(\x0b\x32&.retrieval.DocumentChunk.MetadataEntry\x1a/\n\rMetadataEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01\"\xfa\x01\n\x19GetRelevantChunksResponse\x12(\n\x06\x63hunks\x18\x01 \x03(\x0b\x32\x18.retrieval.DocumentChunk\x12\x14\n\x0ctotal_tokens\x18\x02 \x01(\x05\x12\x12\n\nrequest_id\x18\x03 \x01(\t\x12*\n\x06status\x18\x04 \x01(\x0e\x32\x1a.retrieval.RetrievalStatus\x12\x15\n\rstatus_detail\x18\x05 \x01(\t\x12\x17\n\x0frequested_count\x18\x06 \x01(\x05\x12\x18\n\x10\x61uthorized_count\x18\x07 \x01(\x05\x12\x13\n\x0bready_count\x18\x08 \x01(\x05*8\n\x0eRetrievalScope\x12\t\n\x05\x46ILES\x10\x00\x12\x12\n\x0eKNOWLEDGE_BASE\x10\x01\x12\x07\n\x03\x41LL\x10\x02*\x9a\x01\n\x0fRetrievalStatus\x12\x06\n\x02OK\x10\x00\x12\x0c\n\x08NO_MATCH\x10\x01\x12\x0c\n\x08NO_SCOPE\x10\x02\x12\x11\n\rACCESS_DENIED\x10\x03\x12\x0f\n\x0bNOT_INDEXED\x10\x04\x12\x0c\n\x08INDEXING\x10\x05\x12\x13\n\x0fINDEXING_FAILED\x10\x06\x12\x0f\n\x0bUNAVAILABLE\x10\x07\x12\x0b\n\x07TIMEOUT\x10\x08\x32r\n\x10RetrievalService\x12^\n\x11GetRelevantChunks\x12#.retrieval.GetRelevantChunksRequest\x1a$.retrieval.GetRelevantChunksResponseb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x0fretrieval.proto\x12\tretrieval\"\xa7\x02\n\x18GetRelevantChunksRequest\x12\x0f\n\x07user_id\x18\x01 \x01(\t\x12\x17\n\x0f\x63onversation_id\x18\x02 \x01(\t\x12\r\n\x05query\x18\x03 \x01(\t\x12\r\n\x05top_k\x18\x04 \x01(\x05\x12(\n\x05scope\x18\x05 \x01(\x0e\x32\x19.retrieval.RetrievalScope\x12\x10\n\x08\x66ile_ids\x18\x06 \x03(\t\x12\x1b\n\x13min_relevance_score\x18\x07 \x01(\x02\x12\x12\n\nmax_tokens\x18\x08 \x01(\x05\x12\x10\n\x08trace_id\x18\t \x01(\t\x12\x18\n\x0b\x64\x65nse_query\x18\n \x01(\tH\x00\x88\x01\x01\x12\x1a\n\x12previous_chunk_ids\x18\x0b \x03(\tB\x0e\n\x0c_dense_query\"\xe3\x01\n\rDocumentChunk\x12\x10\n\x08\x63hunk_id\x18\x01 \x01(\t\x12\x0f\n\x07\x63ontent\x18\x02 \x01(\t\x12\x16\n\x0esource_file_id\x18\x03 \x01(\t\x12\x13\n\x0bsource_name\x18\x04 \x01(\t\x12\x17\n\x0frelevance_score\x18\x05 \x01(\x02\x12\x38\n\x08metadata\x18\x06 \x03(\x0b\x32&.retrieval.DocumentChunk.MetadataEntry\x1a/\n\rMetadataEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01\"\xc7\x02\n\x19GetRelevantChunksResponse\x12(\n\x06\x63hunks\x18\x01 \x03(\x0b\x32\x18.retrieval.DocumentChunk\x12\x14\n\x0ctotal_tokens\x18\x02 \x01(\x05\x12\x12\n\nrequest_id\x18\x03 \x01(\t\x12*\n\x06status\x18\x04 \x01(\x0e\x32\x1a.retrieval.RetrievalStatus\x12\x15\n\rstatus_detail\x18\x05 \x01(\t\x12\x17\n\x0frequested_count\x18\x06 \x01(\x05\x12\x18\n\x10\x61uthorized_count\x18\x07 \x01(\x05\x12\x13\n\x0bready_count\x18\x08 \x01(\x05\x12\x16\n\ttop_score\x18\t \x01(\x02H\x00\x88\x01\x01\x12%\n\x08\x63overage\x18\n \x01(\x0e\x32\x13.retrieval.CoverageB\x0c\n\n_top_score\"c\n\x18GetDocumentChunksRequest\x12\x0f\n\x07user_id\x18\x01 \x01(\t\x12\x10\n\x08\x66ile_ids\x18\x02 \x03(\t\x12\x12\n\nmax_tokens\x18\x03 \x01(\x05\x12\x10\n\x08trace_id\x18\x04 \x01(\t\"\x8d\x02\n\x19GetDocumentChunksResponse\x12(\n\x06\x63hunks\x18\x01 \x03(\x0b\x32\x18.retrieval.DocumentChunk\x12\x14\n\x0ctotal_tokens\x18\x02 \x01(\x05\x12\x12\n\nrequest_id\x18\x03 \x01(\t\x12*\n\x06status\x18\x04 \x01(\x0e\x32\x1a.retrieval.RetrievalStatus\x12\x15\n\rstatus_detail\x18\x05 \x01(\t\x12\x11\n\ttruncated\x18\x06 \x01(\x08\x12\x17\n\x0frequested_count\x18\x07 \x01(\x05\x12\x18\n\x10\x61uthorized_count\x18\x08 \x01(\x05\x12\x13\n\x0bready_count\x18\t \x01(\x05*8\n\x0eRetrievalScope\x12\t\n\x05\x46ILES\x10\x00\x12\x12\n\x0eKNOWLEDGE_BASE\x10\x01\x12\x07\n\x03\x41LL\x10\x02*\x9a\x01\n\x0fRetrievalStatus\x12\x06\n\x02OK\x10\x00\x12\x0c\n\x08NO_MATCH\x10\x01\x12\x0c\n\x08NO_SCOPE\x10\x02\x12\x11\n\rACCESS_DENIED\x10\x03\x12\x0f\n\x0bNOT_INDEXED\x10\x04\x12\x0c\n\x08INDEXING\x10\x05\x12\x13\n\x0fINDEXING_FAILED\x10\x06\x12\x0f\n\x0bUNAVAILABLE\x10\x07\x12\x0b\n\x07TIMEOUT\x10\x08*D\n\x08\x43overage\x12\x18\n\x14\x43OVERAGE_UNSPECIFIED\x10\x00\x12\n\n\x06STRONG\x10\x01\x12\x08\n\x04WEAK\x10\x02\x12\x08\n\x04NONE\x10\x03\x32\xd2\x01\n\x10RetrievalService\x12^\n\x11GetRelevantChunks\x12#.retrieval.GetRelevantChunksRequest\x1a$.retrieval.GetRelevantChunksResponse\x12^\n\x11GetDocumentChunks\x12#.retrieval.GetDocumentChunksRequest\x1a$.retrieval.GetDocumentChunksResponseb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -33,18 +33,24 @@ if not _descriptor._USE_C_DESCRIPTORS:
   DESCRIPTOR._loaded_options = None
   _globals['_DOCUMENTCHUNK_METADATAENTRY']._loaded_options = None
   _globals['_DOCUMENTCHUNK_METADATAENTRY']._serialized_options = b'8\001'
-  _globals['_RETRIEVALSCOPE']._serialized_start=741
-  _globals['_RETRIEVALSCOPE']._serialized_end=797
-  _globals['_RETRIEVALSTATUS']._serialized_start=800
-  _globals['_RETRIEVALSTATUS']._serialized_end=954
+  _globals['_RETRIEVALSCOPE']._serialized_start=1261
+  _globals['_RETRIEVALSCOPE']._serialized_end=1317
+  _globals['_RETRIEVALSTATUS']._serialized_start=1320
+  _globals['_RETRIEVALSTATUS']._serialized_end=1474
+  _globals['_COVERAGE']._serialized_start=1476
+  _globals['_COVERAGE']._serialized_end=1544
   _globals['_GETRELEVANTCHUNKSREQUEST']._serialized_start=31
-  _globals['_GETRELEVANTCHUNKSREQUEST']._serialized_end=256
-  _globals['_DOCUMENTCHUNK']._serialized_start=259
-  _globals['_DOCUMENTCHUNK']._serialized_end=486
-  _globals['_DOCUMENTCHUNK_METADATAENTRY']._serialized_start=439
-  _globals['_DOCUMENTCHUNK_METADATAENTRY']._serialized_end=486
-  _globals['_GETRELEVANTCHUNKSRESPONSE']._serialized_start=489
-  _globals['_GETRELEVANTCHUNKSRESPONSE']._serialized_end=739
-  _globals['_RETRIEVALSERVICE']._serialized_start=956
-  _globals['_RETRIEVALSERVICE']._serialized_end=1070
+  _globals['_GETRELEVANTCHUNKSREQUEST']._serialized_end=326
+  _globals['_DOCUMENTCHUNK']._serialized_start=329
+  _globals['_DOCUMENTCHUNK']._serialized_end=556
+  _globals['_DOCUMENTCHUNK_METADATAENTRY']._serialized_start=509
+  _globals['_DOCUMENTCHUNK_METADATAENTRY']._serialized_end=556
+  _globals['_GETRELEVANTCHUNKSRESPONSE']._serialized_start=559
+  _globals['_GETRELEVANTCHUNKSRESPONSE']._serialized_end=886
+  _globals['_GETDOCUMENTCHUNKSREQUEST']._serialized_start=888
+  _globals['_GETDOCUMENTCHUNKSREQUEST']._serialized_end=987
+  _globals['_GETDOCUMENTCHUNKSRESPONSE']._serialized_start=990
+  _globals['_GETDOCUMENTCHUNKSRESPONSE']._serialized_end=1259
+  _globals['_RETRIEVALSERVICE']._serialized_start=1547
+  _globals['_RETRIEVALSERVICE']._serialized_end=1757
 # @@protoc_insertion_point(module_scope)

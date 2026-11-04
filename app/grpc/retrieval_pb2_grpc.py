@@ -39,6 +39,11 @@ class RetrievalServiceStub:
                 request_serializer=retrieval__pb2.GetRelevantChunksRequest.SerializeToString,
                 response_deserializer=retrieval__pb2.GetRelevantChunksResponse.FromString,
                 _registered_method=True)
+        self.GetDocumentChunks = channel.unary_unary(
+                '/retrieval.RetrievalService/GetDocumentChunks',
+                request_serializer=retrieval__pb2.GetDocumentChunksRequest.SerializeToString,
+                response_deserializer=retrieval__pb2.GetDocumentChunksResponse.FromString,
+                _registered_method=True)
 
 
 class RetrievalServiceServicer:
@@ -51,6 +56,14 @@ class RetrievalServiceServicer:
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def GetDocumentChunks(self, request, context):
+        """Additive: every chunk of the authorised, current versions of the given files, in document order (for small documents sent in full).
+        Servers that do not implement it answer UNIMPLEMENTED.
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_RetrievalServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -58,6 +71,11 @@ def add_RetrievalServiceServicer_to_server(servicer, server):
                     servicer.GetRelevantChunks,
                     request_deserializer=retrieval__pb2.GetRelevantChunksRequest.FromString,
                     response_serializer=retrieval__pb2.GetRelevantChunksResponse.SerializeToString,
+            ),
+            'GetDocumentChunks': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetDocumentChunks,
+                    request_deserializer=retrieval__pb2.GetDocumentChunksRequest.FromString,
+                    response_serializer=retrieval__pb2.GetDocumentChunksResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -87,6 +105,33 @@ class RetrievalService:
             '/retrieval.RetrievalService/GetRelevantChunks',
             retrieval__pb2.GetRelevantChunksRequest.SerializeToString,
             retrieval__pb2.GetRelevantChunksResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def GetDocumentChunks(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/retrieval.RetrievalService/GetDocumentChunks',
+            retrieval__pb2.GetDocumentChunksRequest.SerializeToString,
+            retrieval__pb2.GetDocumentChunksResponse.FromString,
             options,
             channel_credentials,
             insecure,

@@ -5,6 +5,9 @@ package retrieval;
 service RetrievalService {
   // Retrieve top-k relevant document chunks
   rpc GetRelevantChunks(GetRelevantChunksRequest) returns (GetRelevantChunksResponse);
+  // Additive: every chunk of the authorised, current versions of the given files, in document order (for small documents sent in full).
+  // Servers that do not implement it answer UNIMPLEMENTED.
+  rpc GetDocumentChunks(GetDocumentChunksRequest) returns (GetDocumentChunksResponse);
 }
 
 enum RetrievalScope {
@@ -27,6 +30,15 @@ enum RetrievalStatus {
   TIMEOUT = 8;          // the query deadline was exceeded
 }
 
+// How well the retrieved passages cover the question. COVERAGE_UNSPECIFIED = 0 is what an older server sends, so a newer client
+// treats it as "no signal".
+enum Coverage {
+  COVERAGE_UNSPECIFIED = 0;
+  STRONG = 1;   // at least one passage clearly answers the question
+  WEAK = 2;     // passages were found but none clearly answers it
+  NONE = 3;     // nothing relevant was found
+}
+
 message GetRelevantChunksRequest {
   string user_id = 1;
   string conversation_id = 2;
@@ -37,6 +49,11 @@ message GetRelevantChunksRequest {
   float min_relevance_score = 7;
   int32 max_tokens = 8;
   string trace_id = 9;
+  // Optional. A standalone rewrite of the question in a form that embeds well (e.g. English). When set, the dense leg embeds this
+  // and the keyword leg still uses `query`.
+  optional string dense_query = 10;
+  // Optional. Chunk ids shown in the previous assistant turn. Added as candidates after the authorisation and current-version checks.
+  repeated string previous_chunk_ids = 11;
 }
 
 message DocumentChunk {
@@ -58,4 +75,26 @@ message GetRelevantChunksResponse {
   int32 requested_count = 6;   // distinct document ids in the request
   int32 authorized_count = 7;  // of which the user may read
   int32 ready_count = 8;       // of which have a fully indexed current version
+  // Optional weak-retrieval signal. top_score is the best reranker score (or a rank-derived score when reranking is off).
+  optional float top_score = 9;
+  Coverage coverage = 10;
+}
+
+message GetDocumentChunksRequest {
+  string user_id = 1;
+  repeated string file_ids = 2;
+  int32 max_tokens = 3;   // 0 = no limit; otherwise chunks are returned in document order until the budget is reached
+  string trace_id = 4;
+}
+
+message GetDocumentChunksResponse {
+  repeated DocumentChunk chunks = 1;   // grouped by file in request order, then in document order
+  int32 total_tokens = 2;
+  string request_id = 3;
+  RetrievalStatus status = 4;
+  string status_detail = 5;
+  bool truncated = 6;                  // true when max_tokens cut the text short
+  int32 requested_count = 7;
+  int32 authorized_count = 8;
+  int32 ready_count = 9;
 }

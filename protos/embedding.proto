@@ -5,6 +5,10 @@ package embedding.v1;
 service EmbeddingService {
   rpc GenerateEmbedding (EmbeddingRequest) returns (EmbeddingResponse);
   rpc GenerateEmbeddings (BatchEmbeddingRequest) returns (BatchEmbeddingResponse);
+  // Additive: what a client needs to chunk text the way this model will read it.
+  rpc GetModelInfo (ModelInfoRequest) returns (ModelInfoResponse);
+  // Additive: cross-encoder relevance of each passage to the query. Servers that do not implement it answer UNIMPLEMENTED.
+  rpc Rerank (RerankRequest) returns (RerankResponse);
 }
 
 message EmbeddingRequest {
@@ -29,4 +33,24 @@ message BatchEmbeddingResponse {
 
 message FloatVector {
   repeated float values = 1;
+}
+
+message ModelInfoRequest {}
+
+message ModelInfoResponse {
+  string model = 1;          // same value as EmbeddingResponse.model
+  int32 dimension = 2;
+  int32 max_seq_length = 3;  // tokens the model reads; anything beyond is silently truncated by the model
+  string tokenizer_id = 4;   // Hugging Face id of the tokenizer matching this model, loadable by clients
+  bool normalized = 5;       // vectors are L2-normalised
+}
+
+message RerankRequest {
+  string query = 1;
+  repeated string passages = 2;
+}
+
+message RerankResponse {
+  string model = 1;            // the reranker model that produced the scores
+  repeated float scores = 2;   // one per passage, same order as the request; higher = more relevant; not comparable across models
 }

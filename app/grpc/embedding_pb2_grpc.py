@@ -44,6 +44,16 @@ class EmbeddingServiceStub:
                 request_serializer=embedding__pb2.BatchEmbeddingRequest.SerializeToString,
                 response_deserializer=embedding__pb2.BatchEmbeddingResponse.FromString,
                 _registered_method=True)
+        self.GetModelInfo = channel.unary_unary(
+                '/embedding.v1.EmbeddingService/GetModelInfo',
+                request_serializer=embedding__pb2.ModelInfoRequest.SerializeToString,
+                response_deserializer=embedding__pb2.ModelInfoResponse.FromString,
+                _registered_method=True)
+        self.Rerank = channel.unary_unary(
+                '/embedding.v1.EmbeddingService/Rerank',
+                request_serializer=embedding__pb2.RerankRequest.SerializeToString,
+                response_deserializer=embedding__pb2.RerankResponse.FromString,
+                _registered_method=True)
 
 
 class EmbeddingServiceServicer:
@@ -61,6 +71,20 @@ class EmbeddingServiceServicer:
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def GetModelInfo(self, request, context):
+        """Additive: what a client needs to chunk text the way this model will read it.
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def Rerank(self, request, context):
+        """Additive: cross-encoder relevance of each passage to the query. Servers that do not implement it answer UNIMPLEMENTED.
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_EmbeddingServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -73,6 +97,16 @@ def add_EmbeddingServiceServicer_to_server(servicer, server):
                     servicer.GenerateEmbeddings,
                     request_deserializer=embedding__pb2.BatchEmbeddingRequest.FromString,
                     response_serializer=embedding__pb2.BatchEmbeddingResponse.SerializeToString,
+            ),
+            'GetModelInfo': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetModelInfo,
+                    request_deserializer=embedding__pb2.ModelInfoRequest.FromString,
+                    response_serializer=embedding__pb2.ModelInfoResponse.SerializeToString,
+            ),
+            'Rerank': grpc.unary_unary_rpc_method_handler(
+                    servicer.Rerank,
+                    request_deserializer=embedding__pb2.RerankRequest.FromString,
+                    response_serializer=embedding__pb2.RerankResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -129,6 +163,60 @@ class EmbeddingService:
             '/embedding.v1.EmbeddingService/GenerateEmbeddings',
             embedding__pb2.BatchEmbeddingRequest.SerializeToString,
             embedding__pb2.BatchEmbeddingResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def GetModelInfo(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/embedding.v1.EmbeddingService/GetModelInfo',
+            embedding__pb2.ModelInfoRequest.SerializeToString,
+            embedding__pb2.ModelInfoResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def Rerank(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/embedding.v1.EmbeddingService/Rerank',
+            embedding__pb2.RerankRequest.SerializeToString,
+            embedding__pb2.RerankResponse.FromString,
             options,
             channel_credentials,
             insecure,
