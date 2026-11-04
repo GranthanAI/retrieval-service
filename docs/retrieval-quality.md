@@ -170,10 +170,64 @@ Done:
 * Harness: real-mode runs raise the Milvus/OpenSearch timeouts to 10 s and count questions that ran on one engine only
   (a 0.5 s Milvus timeout silently degraded some queries and invalidated a first sweep).
 
-Open (not yet run, so no numbers are claimed here):
-* HEADING_MATCH_BOOST at 0 vs 1.0, per category, main and held-out. Default stays 1.0 only if no held-out category drops;
-  otherwise it becomes 0. Re-evaluate after the Phase 3 reranker either way.
-* Recall@5 vs Recall@8 (request `top_k` 5 / 6 / 8), main and held-out. DECISION OPEN: what llm-service should send
-  (it currently sends top_k=5, max_tokens=4000, so Phase 1 now returns 5 chunks instead of 6). llm-service is unchanged.
-* Pre-change baseline (65bb38f) on the new 80 + 33 question sets, with the corrected harness.
-Run: `make eval MODE=real EVAL_ARGS="--sets main,heldout --label p1-sweep --config default: --config boost0:HEADING_MATCH_BOOST=0 --config k5:top_k=5 --config k8:top_k=8"`
+### Results on the 80-question main set and 33-question held-out set (real mode, MiniLM, live Milvus + OpenSearch)
+
+Raw: `evaluation/results/p1-sweep-real.json` (Phase 1 code) and `old65bb38f-real.json` (code before Phase 1). Zero questions ran on a
+single engine in either run. These supersede the 27-question numbers above. Counts are shown because one main-set question moves a
+metric by 1.4 points and one held-out question by 3.4. Held-out gold with several evidences scores fractionally (hence 25.17/29).
+
+Before (65bb38f) vs after (Phase 1), request top_k=10:
+
+| Metric | Main before | Main after | Held-out before | Held-out after |
+|---|---|---|---|---|
+| Recall@5 | 0.500 (36/72) | 0.889 (64/72) | 0.741 (21.5/29) | 0.868 (25.17/29) |
+| Recall@8 | 0.500 (36/72) | 0.917 (66/72) | 0.741 | 0.902 (26.17/29) |
+| Recall@10 | 0.500 (36/72) | 0.931 (67/72) | 0.741 | 0.902 |
+| MRR@10 | 0.539 | 0.789 | 0.793 | 0.842 |
+| nDCG@10 | 0.500 | 0.815 | 0.753 | 0.843 |
+| Identifier recall@5 | 8/8 | 8/8 | n/a | n/a |
+| Page attribution (all page questions) | 10/16 | 12/16 | 2/5 | 3/5 |
+| Multi-file coverage | 4/8 | 7/8 | 0.5/1 | 0.5/1 |
+| No-answer recall | 0/8 | 0/8 | 0/4 | 0/4 |
+
+Page attribution: the earlier 0.0 to 0.333 was retrieval (no PDF chunk was retrieved at baseline), not the parser; it is still limited
+by the section-start page bug (Phase 2).
+
+### HEADING_MATCH_BOOST: 0 vs 1.0 (Recall@5 / MRR@10 / nDCG@10)
+
+Main set (tuning set; the boost was designed against it):
+
+| Category (n) | Boost 0 | Boost 1.0 |
+|---|---|---|
+| phase (8) | 0.500 / 0.380 / 0.466 | 1.000 / 1.000 / 1.000 |
+| phase_title (8) | 1.000 / 0.854 / 0.891 | 1.000 / 1.000 / 1.000 |
+| phase_exit (8) | 0.250 / 0.104 / 0.170 | 0.375 / 0.184 / 0.287 |
+| hinglish (8) | 0.625 / 0.478 / 0.596 | 0.875 / 0.802 / 0.848 |
+| page (8) | 1.000 / 0.750 / 0.816 | 1.000 / 0.875 / 0.908 |
+| csv, identifier, multi_file, table (8 each) | identical | identical |
+| overall (72) | 0.792 (57/72) / 0.645 / 0.692 | 0.889 (64/72) / 0.789 / 0.815 |
+
+Held-out set: every category is identical with the boost at 0 and at 1.0 (body 9, csv 2, hinglish 4, multi_file 1, page 1,
+paraphrase 5, table 3, typo 4; overall Recall@5 25.17/29, MRR 0.842, nDCG 0.843 either way). No category drops, so by the agreed rule the
+default stays **1.0**. Caveat: the held-out questions deliberately avoid heading words, so the boost never fires there. That is evidence
+of no harm on paraphrased and body-answer questions, not evidence of benefit. The benefit is measured only on the main set, which the
+boost was designed against. **Re-evaluate after the Phase 3 reranker** (it may make the boost redundant) and when the held-out set has
+questions that name a heading.
+
+### Request top_k (llm-service currently sends top_k=5, max_tokens=4000): DECISION OPEN
+
+Recall of the returned set when the request asks for k chunks (Phase 1 honours top_k; before it, 6 were always returned):
+
+| Request top_k | Main Recall@k | Main MRR | Held-out Recall@k | Held-out MRR |
+|---|---|---|---|---|
+| 5 (llm-service today) | 0.847 (61/72) | 0.772 | 0.891 (25.83/29) | 0.845 |
+| 6 | 0.847 (61/72) at @5 | 0.772 | 0.891 at @5 | 0.845 |
+| 8 | 0.889 (64/72) | 0.784 | 0.891 (25.83/29) | 0.843 |
+| 10 | 0.931 (67/72) | 0.789 | 0.902 (26.17/29) | 0.842 |
+
+Reading: 5 to 8 chunks adds 3 questions on main (61 to 64) and none on held-out; 10 adds 3 more on main and 1/3 of a question on
+held-out. Cost is more prompt tokens (about 100-250 each at today's chunk size; chunks shrink in Phase 2). Not decided: whether
+llm-service should send 8 (or 10). `max_tokens=4000` is the binding limit either way. llm-service is unchanged.
+
+Remaining known gaps: `phase_exit` (0.375 Recall@5; the Exit-criteria chunk has no phase number until Phase 2 adds heading paths) and
+`csv` (MRR 0.31; the 40-row chunks are near-identical tables, Phase 2 row groups).
