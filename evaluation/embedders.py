@@ -33,6 +33,17 @@ class FakeEmbedder:
     async def embed_chunks(self, texts: list[str]) -> list[list[float]]:
         return [self._vec(t) for t in texts]
 
+    def enable_reranker(self) -> "FakeEmbedder":
+        """A deterministic stand-in cross-encoder for CI: the share of query words (4+ letters) found in the passage, as a 0-1 score."""
+
+        async def rerank(query: str, passages: list[str], timeout: float) -> list[float]:
+            words = {w for w in re.findall(r"\w+", query.lower()) if len(w) > 3}
+            return [(len(words & set(re.findall(r"\w+", p.lower()))) / len(words)) if words else 0.0 for p in passages]
+
+        self.rerank = rerank
+        self.reranker_name = "fake-lexical-overlap"
+        return self
+
 
 class RealEmbedder:
     """all-MiniLM-L6-v2 loaded locally through sentence-transformers, configured like embedding-service (normalised vectors, no
@@ -52,6 +63,21 @@ class RealEmbedder:
 
     def _encode(self, texts: list[str]) -> list[list[float]]:
         return self._model.encode(texts, normalize_embeddings=True, batch_size=32, show_progress_bar=False).tolist()
+
+    def enable_reranker(self, model: str) -> "RealEmbedder":
+        """In-process cross-encoder (sentence-transformers CrossEncoder, CPU, max_length 512), the same call embedding-service's Rerank
+        makes. Scores are its predict() output (a 0-1 probability for single-label models)."""
+        from sentence_transformers import CrossEncoder
+
+        ce = CrossEncoder(model, device="cpu", max_length=512)
+        self.reranker_name = model
+
+        async def rerank(query: str, passages: list[str], timeout: float) -> list[float]:
+            scores = await asyncio.to_thread(lambda: ce.predict([(query, p) for p in passages], batch_size=16, show_progress_bar=False))
+            return [float(s) for s in scores]
+
+        self.rerank = rerank
+        return self
 
     async def embed_query(self, text: str) -> list[float]:
         return (await asyncio.to_thread(self._encode, [text]))[0]

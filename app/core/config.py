@@ -105,8 +105,8 @@ class Settings(BaseSettings):
     RERANK_LEG_TOP_N: int = 50
     # Neighbour expansion: attach the previous/next chunk of the same section to each selected chunk while max_tokens allows.
     EXPAND_NEIGHBOURS: bool = False
-    # Weak-retrieval signal (response.top_score / response.coverage). With reranking: thresholds on the reranker score (sigmoid of the
-    # model logit, 0-1). Without it: thresholds on a rank-derived score (the best candidate's RRF score divided by the maximum possible,
+    # Weak-retrieval signal (response.top_score / response.coverage). With reranking: thresholds on the reranker's own score (a 0-1
+    # probability for the default model; per-model). Without it: thresholds on a rank-derived score (the best candidate's RRF score divided by the maximum possible,
     # i.e. rank 1 in both legs = 1.0). Calibrated on the main set's unanswerable questions: see docs/retrieval-quality.md.
     COVERAGE_ENABLED: bool = False   # flipped on after calibration on the benchmark (see docs); uncalibrated thresholds must not reach the prompt
     COVERAGE_RANK_STRONG_MIN: float = 0.55

@@ -63,6 +63,7 @@ def main(argv: list[str] | None = None) -> int:
     mode.add_argument("--real", action="store_true", help="all-MiniLM-L6-v2 via sentence-transformers; live stores when reachable")
     ap.add_argument("--stores", choices=["auto", "fake", "real"], default="auto", help="--real only: force the store backend")
     ap.add_argument("--generation", default="1", help="comma list of index generations to build and evaluate: 1 (v1 parser/chunker/analyzer), 2 (v2)")
+    ap.add_argument("--reranker", help="attach an in-process cross-encoder (a Hugging Face model id, or `fake`) so configs can set RERANK_ENABLED=true")
     ap.add_argument("--sets", default="main", help="comma list of: main, heldout")
     ap.add_argument("--config", action="append", default=[], help="name:KEY=VALUE[,KEY=VALUE]  (repeatable; default: the current settings)")
     ap.add_argument("--default-timeouts", action="store_true", help="--real: keep the service's 0.5 s Milvus/OpenSearch timeouts and report how often dense search degrades")
@@ -82,10 +83,14 @@ def main(argv: list[str] | None = None) -> int:
         from evaluation.embedders import FakeEmbedder
 
         embedder, stores, mode_name = FakeEmbedder(), "fake", "fake"
+        if args.reranker:
+            embedder.enable_reranker()
     else:
         from evaluation.embedders import RealEmbedder
 
         embedder, mode_name = RealEmbedder(), "real"
+        if args.reranker:
+            embedder.enable_reranker(args.reranker)
         if args.stores == "auto":
             ok, why = harness.stores_reachable()
             stores = "real" if ok else "fake"

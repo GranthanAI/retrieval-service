@@ -263,7 +263,8 @@ async def _previous_candidates(request, milvus_repository, current_versions: dic
 
 
 async def _rerank(embedding_client, query: str, candidates: list) -> bool:
-    """Scores `candidates` in place (rerank_score = sigmoid of the model logit). False (and a metric) if it timed out or failed."""
+    """Scores `candidates` in place (rerank_score = the reranker's own score, used as is: only its order and the per-model thresholds in the
+    settings matter). False (and a metric) if it timed out or failed."""
     if not candidates:
         return False
     try:
@@ -275,7 +276,7 @@ async def _rerank(embedding_client, query: str, candidates: list) -> bool:
         logger.warning("pipeline.rerank_failed", error=type(exc).__name__)
         return False
     for c, score in zip(candidates, scores):
-        c.rerank_score = coverage.sigmoid(score)
+        c.rerank_score = score
     return True
 
 

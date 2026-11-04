@@ -1,18 +1,13 @@
 """The weak-retrieval signal: how well do the returned passages cover the question?
 
-With the cross-encoder on, `top_score` is the best reranker score (sigmoid of the model's logit, 0-1) among the selected passages.
+With the cross-encoder on, `top_score` is the best reranker score (the model's own scale; embedding-service returns sentence-transformers'
+CrossEncoder output, which is a 0-1 probability for the default multilingual model) among the selected passages.
 With it off there is no relevance model, so the signal is derived from RANKS: the best selected candidate's RRF score divided by the
 largest possible (rank 1 in both legs), which is 1.0 when both engines put the same chunk first and falls as it slips down either
 list. Thresholds are settings, calibrated on the benchmark (docs/retrieval-quality.md)."""
-import math
-
 from app.core.config import settings
 from app.grpc.retrieval_pb2 import Coverage
 from app.query.scoring import FusedCandidate
-
-
-def sigmoid(x: float) -> float:
-    return 1.0 / (1.0 + math.exp(-max(-60.0, min(60.0, x))))
 
 
 def rank_score(c: FusedCandidate) -> float:
