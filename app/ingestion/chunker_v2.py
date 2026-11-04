@@ -93,9 +93,12 @@ class _SectionChunker:
     def _emit(self, body: str, *, page_start, page_end, block_type: str, location: str | None) -> None:
         content = f"{self.prefix}\n{body}"
         if self.counter.count(content) > self.max_len:      # the sum of piece counts drifted from the joined count: split again
-            for part in self.counter.split(body, max(1, self.room - 2)):
-                self._emit(part, page_start=page_start, page_end=page_end, block_type=block_type, location=location)
-            return
+            parts = self.counter.split(body, max(1, self.room - 2))
+            if len(parts) > 1:
+                for part in parts:
+                    self._emit(part, page_start=page_start, page_end=page_end, block_type=block_type, location=location)
+                return
+            # cannot be made smaller: emit it and let the final check in chunk_v2 fail loudly (never loop, never truncate silently)
         self.out.append(Chunk(
             chunk_index=len(self.out), content=content, page_number=page_start, section=self.section.heading,
             heading_path=list(self.path), page_start=page_start, page_end=page_end, block_type=block_type, location=location))
