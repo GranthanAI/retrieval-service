@@ -62,6 +62,7 @@ def main(argv: list[str] | None = None) -> int:
     mode.add_argument("--fake", action="store_true", help="deterministic hash embedder, in-memory stores (CI)")
     mode.add_argument("--real", action="store_true", help="all-MiniLM-L6-v2 via sentence-transformers; live stores when reachable")
     ap.add_argument("--stores", choices=["auto", "fake", "real"], default="auto", help="--real only: force the store backend")
+    ap.add_argument("--generation", default="1", help="comma list of index generations to build and evaluate: 1 (v1 parser/chunker/analyzer), 2 (v2)")
     ap.add_argument("--sets", default="main", help="comma list of: main, heldout")
     ap.add_argument("--config", action="append", default=[], help="name:KEY=VALUE[,KEY=VALUE]  (repeatable; default: the current settings)")
     ap.add_argument("--default-timeouts", action="store_true", help="--real: keep the service's 0.5 s Milvus/OpenSearch timeouts and report how often dense search degrades")
@@ -95,18 +96,29 @@ def main(argv: list[str] | None = None) -> int:
 
     set_names = [n.strip() for n in args.sets.split(",") if n.strip()]
     configs = [_parse_config(c) for c in args.config] or [Config()]
-    out, stats, backend = asyncio.run(harness.run_benchmark(embedder, stores, _questions(set_names), configs, default_timeouts=args.default_timeouts))
+    out: dict = {}
+    stats_by_gen: dict = {}
+    for g in [int(x) for x in args.generation.split(",")]:
+        res, stats, backend = asyncio.run(harness.run_benchmark(embedder, stores, _questions(set_names), configs,
+                                                                default_timeouts=args.default_timeouts, generation=g))
+        stats_by_gen[g] = stats
+        for cfg_name, per_set in res.items():
+            out[f"g{g}/{cfg_name}"] = per_set
 
     base = json.loads(args.compare.read_text()) if args.compare else None
     print(f"\nmode={mode_name} embedder={embedder.name} backend={backend}")
-    print(f"corpus: {stats.files} files, {stats.chunks} chunks ({stats.seconds}s to ingest)")
     record = {}
-    for cfg in configs:
+    for g, stats in stats_by_gen.items():
+        toks = sorted(stats.tokens_per_chunk or [])
+        extra = f"; tokens/chunk p50={toks[len(toks) // 2]} max={toks[-1]}" if toks else ""
+        print(f"generation {g}: {stats.files} files, {stats.chunks} chunks ({stats.seconds}s to ingest){extra}")
+    for g in stats_by_gen:
+      for cfg in configs:
         for set_name in set_names:
-            results = out[cfg.name][set_name]
+            results = out[f"g{g}/{cfg.name}"][set_name]
             summary = metrics.summarise(results)
-            print(f"\n=== config={cfg.name} overrides={cfg.overrides or {}} top_k={cfg.top_k} set={set_name} {summary.counts} ===")
-            b = (base or {}).get("runs", {}).get(f"{cfg.name}/{set_name}", {}).get("metrics") if base else None
+            print(f"\n=== generation={g} config={cfg.name} overrides={cfg.overrides or {}} top_k={cfg.top_k} set={set_name} {summary.counts} ===")
+            b = (base or {}).get("runs", {}).get(f"g{g}/{cfg.name}/{set_name}", {}).get("metrics") if base else None
             for k in TABLE:
                 line = f"{k:<28}{summary.show(k):<22}"
                 if b and b.get(k) is not None and summary.metrics[k] is not None:
@@ -126,7 +138,7 @@ def main(argv: list[str] | None = None) -> int:
                                "returned": len(r.chunks), "coverage": r.coverage})
                 if args.verbose and set_name == "main":
                     print(f"  {r.question.id:<22} first_rel_rank={rank} returned={len(r.chunks)} status={r.status}")
-            record[f"{cfg.name}/{set_name}"] = {
+            record[f"g{g}/{cfg.name}/{set_name}"] = {
                 "overrides": cfg.overrides or {}, "top_k": cfg.top_k, "metrics": summary.metrics,
                 "fractions": {k: list(v) for k, v in summary.fractions.items()}, "by_category": summary.by_category, "counts": summary.counts, "degraded_questions": n_degraded,
                 "questions": detail if set_name == "main" else [{"id": d["id"], "category": d["category"]} for d in detail],  # no per-question outcomes for held-out
@@ -142,7 +154,7 @@ def main(argv: list[str] | None = None) -> int:
     path = RESULTS / f"{args.label}-{mode_name}.json"
     path.write_text(json.dumps({
         "label": args.label, "mode": mode_name, "embedder": embedder.name, "backend": backend, "git": _git("rev-parse", "--short", "HEAD"),
-        "python": platform.python_version(), "ingest": {"chunks": stats.chunks, "per_file": stats.chunks_per_file}, "runs": record,
+        "python": platform.python_version(), "ingest": {f"g{g}": {"chunks": s.chunks, "per_file": s.chunks_per_file} for g, s in stats_by_gen.items()}, "runs": record,
     }, indent=2) + "\n")
     print(f"\nwrote {path}")
     return 0

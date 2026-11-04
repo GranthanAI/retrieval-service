@@ -65,6 +65,13 @@ HELDOUT = [
     H("mf-paging", "multi_file", "which documents talk about alerts or paging, and what do they say",
       [("runbook.md", "pages the on-call engineer when invoice generation is more than 60 minutes behind schedule"), task(11, 1)],
       expected=["runbook.md", "PHASES.md"]),
+    # phase_exit-like: asked without "phase" or "exit criteria" (added after Phase 2 was first measured, written before seeing their results)
+    H("pe-webhook", "phase_exit", "when can the team call the webhook stage finished", [exit_(6, 0), exit_(6, 1)]),
+    H("pe-tax", "phase_exit", "what has to be true before the tax stage can be closed", [exit_(9)]),
+    H("pe-admin", "phase_exit", "how do we know the admin stage is done", [exit_(10)]),
+    H("pe-loadtest", "phase_exit", "load testing wali stage kab complete maani jaati hai", [exit_(12)]),
+    H("pe-dunning", "phase_exit", "what must the dunning stage achieve to count as complete", [exit_(8)]),
+    H("pe-schema", "phase_exit", "database schema wali stage ko khatam karne ke liye kya check karna hai", [exit_(2)]),
     # unanswerable
     H("na-region", "unanswerable", "which cloud region hosts the database?"),
     H("na-ceo", "unanswerable", "what is the name of the chief executive?"),

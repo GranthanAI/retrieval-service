@@ -13,6 +13,8 @@ class FakeEmbedder:
 
     name = "fake-hash-384"
     dimension = DIM
+    max_seq_length = 256                                            # same shape as the real model, so chunker v2 sizes chunks identically
+    tokenizer_id = "sentence-transformers/all-MiniLM-L6-v2"
 
     @staticmethod
     def _vec(text: str) -> list[float]:
@@ -38,6 +40,7 @@ class RealEmbedder:
 
     name = "all-MiniLM-L6-v2"
     dimension = DIM
+    tokenizer_id = "sentence-transformers/all-MiniLM-L6-v2"
 
     def __init__(self, model: str = "sentence-transformers/all-MiniLM-L6-v2") -> None:
         try:

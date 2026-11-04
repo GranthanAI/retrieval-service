@@ -21,12 +21,15 @@ from app.clients.file_service_client import PermissionCheckResult
 from app.core.config import settings
 from app.core.enums import RetrievalScope
 from app.grpc.retrieval_pb2 import GetRelevantChunksRequest, RetrievalStatus
-from app.ingestion import chunk_identity, chunker, parser
+from app.ingestion import build, parser
+from app.ingestion.tokenization import ModelProfile, load_counter
 from app.models.chunk_record import ChunkRecord
 from app.query import pipeline
 from app.repositories.document_current_version_repository import DocumentCurrentVersionRepository
 from app.repositories.ingestion_job_repository import IngestionJobRepository
+from app.stores import generations
 from app.stores import milvus_repository as milvus_module
+from app.stores.generations import GenerationInfo
 from app.stores import opensearch_repository as opensearch_module
 from app.stores.milvus_repository import MilvusRepository
 from app.stores.opensearch_repository import OpenSearchRepository
@@ -88,7 +91,7 @@ def stores_reachable() -> tuple[bool, str]:
 
 
 @contextmanager
-def backend(stores: str, default_timeouts: bool = False):
+def backend(stores: str, default_timeouts: bool = False, info: GenerationInfo | None = None):
     """Yields (milvus_repo, opensearch_repo, description). `stores` is 'fake' or 'real'."""
     run_id = uuid.uuid4().hex[:8]
     saved = (settings.MILVUS_COLLECTION_NAME, settings.OPENSEARCH_INDEX_NAME, milvus_module._client, opensearch_module._client)
@@ -105,8 +108,15 @@ def backend(stores: str, default_timeouts: bool = False):
             settings.MILVUS_COLLECTION_NAME = f"eval_chunks_{run_id}"
             settings.OPENSEARCH_INDEX_NAME = f"eval_chunks_{run_id}"
             milvus_module._client = opensearch_module._client = None
-            _load_script("provision_milvus_collection").main()
-            _load_script("provision_opensearch_index").main()
+            # Created EXPLICITLY from the versioned schema of the generation being evaluated, never by a first write.
+            version = info.schema_version if info else "1"
+            from opensearchpy import OpenSearch  # noqa: PLC0415
+            from pymilvus import MilvusClient  # noqa: PLC0415
+
+            _load_script("provision_milvus_collection").create_collection(
+                MilvusClient(uri=f"http://{settings.MILVUS_HOST}:{settings.MILVUS_PORT}"), settings.MILVUS_COLLECTION_NAME, version)
+            _load_script("provision_opensearch_index").create_index(
+                OpenSearch(hosts=settings.OPENSEARCH_HOSTS.split(",")), settings.OPENSEARCH_INDEX_NAME, version)
             try:
                 yield MilvusRepository(), OpenSearchRepository(), f"live Milvus {settings.MILVUS_HOST}:{settings.MILVUS_PORT} + OpenSearch {settings.OPENSEARCH_HOSTS}"
             finally:
@@ -158,28 +168,33 @@ class IngestStats:
     seconds: float
     chunks_per_file: dict[str, int]
     chunk_texts: dict[str, list[str]]
+    tokens_per_chunk: list[int] | None = None
+
+
+def profile_info(generation: int, milvus_collection: str = "", opensearch_index: str = "") -> GenerationInfo:
+    """What each benchmarked generation is: 1 = parser/chunker/analyzer v1 (the index as it was before Phase 2), 2 = v2 of all three."""
+    v = "1" if generation == 1 else "2"
+    return GenerationInfo(generation, milvus_collection, opensearch_index, parser_version=v, chunker_version=v, analyzer_version=v,
+                          embedding_model="all-MiniLM-L6-v2", embedding_dimension=384, status="building")
 
 
 async def ingest(corpus: dict[str, bytes], embedder, milvus: MilvusRepository, opensearch: OpenSearchRepository) -> IngestStats:
     """Same steps as `orchestrator._process` (parse, chunk, derive ids, embed, build ChunkRecords, write both stores), minus
     Postgres/MinIO/Kafka. Phase 2 changes those steps; keep this in lock-step (or extract the shared function) when it lands."""
-    start, per_file, texts = time.perf_counter(), {}, {}
+    start, per_file, texts, tokens_per_chunk = time.perf_counter(), {}, {}, []
     for filename, raw in corpus.items():
+        info = generations.current()
         parsed = _parse(raw, filename)
-        chunks = chunker.chunk(parsed)
-        ids = [chunk_identity.derive_chunk_id(doc_id(filename), CONTENT_VERSION, c.chunk_index) for c in chunks]
-        vectors = await embedder.embed_chunks([c.content for c in chunks])
-        records = [
-            ChunkRecord(chunk_id=cid, document_id=doc_id(filename), content_version=CONTENT_VERSION, chunk_index=c.chunk_index,
-                        owner_id=OWNER, conversation_id=None, filename=filename, page_number=c.page_number, section=c.section,
-                        content=c.content, embedding=v)
-            for c, cid, v in zip(chunks, ids, vectors)
-        ]
+        chunks = build.chunk_parsed(parsed, filename, info)
+        vectors = await embedder.embed_chunks([c.content for c in chunks])      # exactly the text that is indexed
+        records = build.make_records(chunks, vectors, document_id=doc_id(filename), content_version=CONTENT_VERSION, owner_id=OWNER,
+                                     conversation_id=None, filename=filename, info=info)
         await milvus.upsert_chunks(records)
         await opensearch.upsert_chunks(records)
         per_file[filename] = len(records)
         texts[filename] = [metrics.norm(c.content) for c in chunks]
-    return IngestStats(len(corpus), sum(per_file.values()), round(time.perf_counter() - start, 2), per_file, texts)
+        tokens_per_chunk.extend(build.runtime.counter.count(c.content) for c in chunks if build.runtime.counter)
+    return IngestStats(len(corpus), sum(per_file.values()), round(time.perf_counter() - start, 2), per_file, texts, tokens_per_chunk)
 
 
 def missing_gold(questions: list[Question], chunk_texts: dict[str, list[str]]) -> list[str]:
@@ -259,7 +274,7 @@ def _timed(milvus: MilvusRepository) -> None:
 
 
 async def run_benchmark(embedder, stores: str, sets: dict[str, list[Question]], configs: list[Config] | None = None, files: list[str] | None = None,
-                        default_timeouts: bool = False):
+                        default_timeouts: bool = False, generation: int = 1):
     """Indexes the corpus ONCE, then answers every question set under every config.
     Returns ({config name: {set name: [QuestionResult]}}, ingest stats, backend description). `files` limits the corpus (tests use the
     Markdown files only, which avoids the Docling parse); every question's gold evidence must then lie inside it."""
@@ -267,7 +282,14 @@ async def run_benchmark(embedder, stores: str, sets: dict[str, list[Question]], 
     corpus = {n: b for n, b in fixture_files().items() if files is None or n in files}
     all_questions = [q for qs in sets.values() for q in qs]
     out: dict[str, dict[str, list[metrics.QuestionResult]]] = {}
-    with backend(stores, default_timeouts) as (milvus, opensearch, description), patched_state(list(corpus)):
+    info = profile_info(generation)
+    if info.chunker_version != "1":
+        # chunker v2 sizes chunks with the embedding model's own tokenizer and max_seq_length (from GetModelInfo in production)
+        build.runtime.profile = ModelProfile(embedder.name, embedder.dimension, embedder.max_seq_length, embedder.tokenizer_id)
+        build.runtime.counter = load_counter(embedder.tokenizer_id)
+    with backend(stores, default_timeouts, info) as (milvus, opensearch, description), patched_state(list(corpus)), \
+            generations.use(GenerationInfo(**{**info.__dict__, "milvus_collection": settings.MILVUS_COLLECTION_NAME,
+                                              "opensearch_index": settings.OPENSEARCH_INDEX_NAME})):
         stats = await ingest(corpus, embedder, milvus, opensearch)
         _timed(milvus)
         if bad := missing_gold(all_questions, stats.chunk_texts):

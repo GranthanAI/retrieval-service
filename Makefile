@@ -1,4 +1,4 @@
-.PHONY: help sync infra infra-down infra-status db-create db-migrate db-revision proto run run-worker run-all test eval eval-real lint clean
+.PHONY: help generation-status generation-bootstrap generation-create reindex activate sync infra infra-down infra-status db-create db-migrate db-revision proto run run-worker run-all test eval eval-real lint clean
 
 all: help
 
@@ -19,6 +19,9 @@ help:
 	@echo "  make eval        - Offline retrieval benchmark, fake embedder (CI). MODE=real for all-MiniLM-L6-v2 + live stores"
 	@echo "                     options: EVAL_ARGS=\"--label p1 --compare evaluation/results/baseline-real.json -v\""
 	@echo "  make eval-real   - Same as: make eval MODE=real (needs: uv sync --group eval)"
+	@echo "  make generation-status / generation-bootstrap / generation-create GENERATION=N"
+	@echo "  make reindex GENERATION=N   - re-process every READY document version into generation N (the active generation is not touched)"
+	@echo "  make activate GENERATION=N  - switch queries to N only if coverage is complete and the benchmark is not worse (ADD ARGS=--dry-run to check only)"
 	@echo "  make clean       - Remove virtual environment (.venv) and byte caches"
 
 sync:
@@ -80,6 +83,22 @@ eval:
 
 eval-real:
 	$(MAKE) eval MODE=real
+
+# Index generations (scripts/generation.py). `activate` is never run by CI or by agents against a shared environment.
+generation-status:
+	uv run python scripts/generation.py status
+
+generation-bootstrap:
+	uv run python scripts/generation.py bootstrap
+
+generation-create:
+	uv run python scripts/generation.py create $(GENERATION)
+
+reindex:
+	uv run python scripts/generation.py reindex $(GENERATION)
+
+activate:
+	uv run --group eval python scripts/generation.py activate $(GENERATION) $(ARGS)
 
 clean:
 	rm -rf .venv
