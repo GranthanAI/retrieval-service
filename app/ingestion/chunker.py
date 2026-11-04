@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from app.core.config import settings
 from app.ingestion.parser import ParsedDocument, ParsedSection
@@ -19,9 +19,15 @@ class Chunk:
     """
 
     chunk_index: int
-    content: str
+    content: str                       # the string that is embedded AND indexed (v2: heading-path prefix + body)
     page_number: int | None
     section: str | None
+    # Added by chunker v2; v1 and the transcript chunker leave the defaults.
+    heading_path: list[str] = field(default_factory=list)
+    page_start: int | None = None
+    page_end: int | None = None
+    block_type: str = "text"           # text | table
+    location: str | None = None        # structural location when there are no pages: "Lines a-b", "Rows a-b", "Slide n"
 
 
 def _tokens_to_words(tokens: int) -> int:

@@ -11,7 +11,7 @@ import tempfile
 from pathlib import Path
 
 from app.core.config import settings
-from app.ingestion.parsed import ParsedDocument, ParsedSection, ParserError
+from app.ingestion.parsed import ParsedBlock, ParsedDocument, ParsedSection, ParserError
 
 _LINES_PER_SECTION = 120
 _CHARS_PER_SECTION = 8_000
@@ -57,29 +57,98 @@ def parse_text(raw: bytes, name: str) -> ParsedDocument:
         blocks.append((start, len(lines), "\n".join(buf)))
     blocks = [(a, b, body.strip("\n")) for a, b, body in blocks if body.strip()]
     if len(blocks) == 1:                                     # fits in one block: no "Lines 1-N" label needed
-        return ParsedDocument([ParsedSection(heading=None, page_number=None, text=blocks[0][2])])
-    return ParsedDocument([ParsedSection(heading=f"Lines {a + 1}-{b}", page_number=None, text=body) for a, b, body in blocks])
+        a, b, body = blocks[0]
+        return ParsedDocument([ParsedSection(heading=None, page_number=None, text=body, location=f"Lines {a + 1}-{b}",
+                                             blocks=[ParsedBlock(body, kind="code" if _looks_like_code(name) else "text")])])
+    return ParsedDocument([
+        ParsedSection(heading=f"Lines {a + 1}-{b}", page_number=None, text=body, location=f"Lines {a + 1}-{b}",
+                      blocks=[ParsedBlock(body, kind="code" if _looks_like_code(name) else "text")])
+        for a, b, body in blocks
+    ])
+
+
+_TABLE_SEPARATOR = re.compile(r"^\s*\|?\s*:?-{3,}:?\s*(\|\s*:?-{3,}:?\s*)*\|?\s*$")
+
+
+def _looks_like_code(name: str) -> bool:
+    return name.lower().rsplit(".", 1)[-1] not in ("txt", "md", "markdown", "rst", "text", "log", "csv", "tsv")
+
+
+def _md_blocks(lines: list[tuple[int, str]]) -> list[ParsedBlock]:
+    """Splits a section body into paragraphs, fenced code and pipe tables. A table is a run of lines starting with `|` whose second
+    line is a separator row; it becomes one `table` block (header + separator + body rows) so the chunker can keep it whole."""
+    blocks: list[ParsedBlock] = []
+    i, n = 0, len(lines)
+    para: list[str] = []
+
+    def flush_para() -> None:
+        text = "\n".join(para).strip()
+        if text:
+            blocks.append(ParsedBlock(text))
+        para.clear()
+
+    while i < n:
+        line = lines[i][1]
+        if _FENCE.match(line):
+            flush_para()
+            j = i + 1
+            while j < n and not _FENCE.match(lines[j][1]):
+                j += 1
+            code = "\n".join(l for _, l in lines[i:min(j + 1, n)]).strip()
+            if code:
+                blocks.append(ParsedBlock(code, kind="code"))
+            i = j + 1
+            continue
+        if line.lstrip().startswith("|") and i + 1 < n and _TABLE_SEPARATOR.match(lines[i + 1][1]):
+            flush_para()
+            j = i + 2
+            while j < n and lines[j][1].lstrip().startswith("|"):
+                j += 1
+            header = lines[i][1].strip() + "\n" + lines[i + 1][1].strip()
+            rows = [l.strip() for _, l in lines[i + 2:j]]
+            blocks.append(ParsedBlock("\n".join([header] + rows), kind="table", header=header, rows=rows))
+            i = j
+            continue
+        if not line.strip():
+            flush_para()
+        else:
+            para.append(line)
+        i += 1
+    flush_para()
+    return blocks
 
 
 def parse_markdown(raw: bytes, name: str) -> ParsedDocument:
+    """Sections split at every ATX heading. Each carries `heading` (deepest), `heading_path` (the whole hierarchy), `blocks`, and
+    `location` (the line range of its body: Markdown has no pages, so a structural location is used instead)."""
     text = decode_text(raw, name)
     sections: list[ParsedSection] = []
-    heading, parts, in_fence = None, [], False
+    stack: list[tuple[int, str]] = []
+    heading: str | None = None
+    buf: list[tuple[int, str]] = []
+    in_fence = False
 
     def flush() -> None:
-        body = "\n".join(parts).strip()
+        body = "\n".join(l for _, l in buf).strip()
         if body:
-            sections.append(ParsedSection(heading=heading, page_number=None, text=body))
+            filled = [no for no, l in buf if l.strip()]
+            sections.append(ParsedSection(
+                heading=heading, page_number=None, text=body, heading_path=[t for _, t in stack], blocks=_md_blocks(buf),
+                location=f"Lines {filled[0]}-{filled[-1]}"))
 
-    for line in text.split("\n"):
+    for no, line in enumerate(text.split("\n"), start=1):
         if _FENCE.match(line):
             in_fence = not in_fence
         match = None if in_fence else _ATX_HEADING.match(line)
         if match:
             flush()
-            heading, parts = match.group(2).strip(), []
+            level, title = len(match.group(1)), match.group(2).strip()
+            while stack and stack[-1][0] >= level:
+                stack.pop()
+            stack.append((level, title))
+            heading, buf = title, []
         else:
-            parts.append(line)
+            buf.append((no, line))
     flush()
     return ParsedDocument(sections)
 
@@ -111,7 +180,8 @@ def parse_csv(raw: bytes, name: str, delimiter: str = ",") -> ParsedDocument:
         return "\n".join(lines)
 
     if not body:
-        return ParsedDocument([ParsedSection(heading=None, page_number=None, text=render([]))])
+        only = render([])
+        return ParsedDocument([ParsedSection(heading=None, page_number=None, text=only, blocks=[ParsedBlock(only, kind="table", header=only)])])
     sections: list[ParsedSection] = []
     total = 0
     for first in range(0, len(body), _ROWS_PER_SECTION):
@@ -121,7 +191,11 @@ def parse_csv(raw: bytes, name: str, delimiter: str = ",") -> ParsedDocument:
         if total > settings.PARSE_MAX_TEXT_CHARS:
             sections.append(ParsedSection(None, None, f"[Only the first {first} of {len(body)} rows were indexed.]"))
             break
-        sections.append(ParsedSection(heading=f"Rows {first + 1}-{first + len(chunk_rows)}", page_number=None, text=rendered))
+        header_lines = rendered.split("\n")[:2]
+        loc = f"Rows {first + 1}-{first + len(chunk_rows)}"
+        sections.append(ParsedSection(
+            heading=loc, page_number=None, text=rendered, location=loc,
+            blocks=[ParsedBlock(rendered, kind="table", header="\n".join(header_lines), rows=rendered.split("\n")[2:], row_offset=first + 1)]))
     return ParsedDocument(sections)
 
 

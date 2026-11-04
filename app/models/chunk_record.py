@@ -26,3 +26,10 @@ class ChunkRecord:
     section: str | None
     content: str
     embedding: list[float]
+    # Added with index generation 2 (chunker v2). `content` is the exact text that was embedded and indexed (heading path + body).
+    heading_path: str | None = None     # "h1 › h2 › h3" (without the filename)
+    page_start: int | None = None
+    page_end: int | None = None
+    block_type: str = "text"
+    location: str | None = None         # "Lines a-b", "Rows a-b", "Slide n" for formats without pages
+    generation: int = 1

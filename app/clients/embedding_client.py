@@ -5,6 +5,7 @@ from app.core.config import settings
 from app.core.exceptions import EmbeddingModelMismatchError
 from app.core.logging import get_logger
 from app.grpc import embedding_pb2, embedding_pb2_grpc
+from app.ingestion.tokenization import ModelProfile
 
 logger = get_logger(__name__)
 
@@ -44,6 +45,12 @@ class EmbeddingClient:
         if self._channel is not None:
             await self._channel.close()
             self._channel = None
+
+    async def get_model_info(self) -> ModelProfile:
+        """embedding-service's model, dimension, max_seq_length and tokenizer id (GetModelInfo), for chunking the way the model reads."""
+        stub = embedding_pb2_grpc.EmbeddingServiceStub(self._get_channel())
+        response = await stub.GetModelInfo(embedding_pb2.ModelInfoRequest(), timeout=settings.EMBEDDING_INGESTION_TIMEOUT_SECONDS)
+        return ModelProfile(response.model, response.dimension, response.max_seq_length, response.tokenizer_id)
 
     async def embed_query(self, text: str) -> list[float]:
         """Single call, ON the query path — EMBEDDING_QUERY_TIMEOUT_SECONDS,

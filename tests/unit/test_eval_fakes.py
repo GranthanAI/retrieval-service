@@ -40,6 +40,6 @@ def test_filter_scope_is_strict():
 def test_exact_subfield_keeps_identifiers_whole_and_splits_parts():
     c = _client()
     whole = c.search("i", {"size": 5, "query": {"multi_match": {"query": "MAX_RETRY_ATTEMPTS", "fields": ["content.exact"]}}})
-    assert _ids(whole)[0] == "1"  # whole token + parts match; documents sharing only the part "retry" rank below
+    assert _ids(whole) == ["1"]  # the query side keeps the identifier whole: documents sharing only the part "retry" do not match
     part = c.search("i", {"size": 5, "query": {"multi_match": {"query": "attempts", "fields": ["content.exact"]}}})
     assert _ids(part) == ["1"]

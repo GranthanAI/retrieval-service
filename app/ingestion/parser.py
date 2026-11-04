@@ -16,7 +16,7 @@ _PDF_PIPELINE_OPTIONS = PdfPipelineOptions(do_ocr=False, do_table_structure=True
 
 # The data classes live in parsed.py (the text/archive parsers need them without importing this module); re-exported so existing
 # imports of ParsedDocument / ParsedSection / ParserError from here keep working.
-from app.ingestion.parsed import ParsedDocument, ParsedSection, ParserError  # noqa: E402,F401
+from app.ingestion.parsed import ParsedBlock, ParsedDocument, ParsedSection, ParserError  # noqa: E402,F401
 
 
 _HEADING_LABELS = {DocItemLabel.SECTION_HEADER, DocItemLabel.TITLE}
@@ -49,32 +49,60 @@ def _parse_docling(raw_bytes: bytes, filename: str) -> ParsedDocument:
     except Exception as exc:
         raise ParserError(f"failed to parse {filename!r}: {exc}") from exc
 
+    ext = filename.lower().rsplit(".", 1)[-1]
+    paged = ext == "pdf"          # only PDFs have real pages; a .docx page_no would be a layout artefact, so it is never used
+    slides = ext == "pptx"        # for slides the page_no is the slide number: a structural location, not a page
+
     sections: list[ParsedSection] = []
+    stack: list[tuple[int, str]] = []          # (level, title): the heading hierarchy above the current position
     current_heading: str | None = None
-    current_page: int | None = None
-    current_text_parts: list[str] = []
+    blocks: list[ParsedBlock] = []
+
+    def _page(item) -> int | None:
+        prov = getattr(item, "prov", None)
+        return prov[0].page_no if prov else None
 
     def _flush() -> None:
-        text = "\n\n".join(part for part in current_text_parts if part.strip())
-        if text.strip():
-            sections.append(ParsedSection(heading=current_heading, page_number=current_page, text=text))
+        parts = [b.text for b in blocks if b.text.strip()]
+        if not parts:
+            return
+        pages = [b.page for b in blocks if b.page is not None]
+        loc = None
+        if slides and pages:
+            loc = f"Slide {min(pages)}" if min(pages) == max(pages) else f"Slides {min(pages)}-{max(pages)}"
+        sections.append(ParsedSection(
+            heading=current_heading, page_number=pages[0] if (paged and pages) else None, text="\n\n".join(parts),
+            heading_path=[t for _, t in stack], blocks=list(blocks), location=loc))
 
     for item, _level in document.iterate_items():
-        page_no = item.prov[0].page_no if getattr(item, "prov", None) else None
+        page_no = _page(item)
+        page = page_no if paged else None
+        loc = f"Slide {page_no}" if (slides and page_no is not None) else None
 
         if item.label in _HEADING_LABELS:
             _flush()
-            current_heading = item.text if isinstance(item, TextItem) else None
-            current_page = page_no
-            current_text_parts = []
+            title = item.text if isinstance(item, TextItem) else None
+            current_heading = title
+            if title:
+                level = 1 if item.label == DocItemLabel.TITLE else max(1, int(getattr(item, "level", 1) or 1))
+                if item.label != DocItemLabel.TITLE and any(l == 0 for l, _ in stack):
+                    level += 1          # content headings sit below a document title
+                while stack and stack[-1][0] >= level:
+                    stack.pop()
+                stack.append((0 if item.label == DocItemLabel.TITLE else level, title))
+            blocks = []
         elif isinstance(item, TableItem):
-            current_text_parts.append(item.export_to_markdown(document))
-            if current_page is None:
-                current_page = page_no
+            md = item.export_to_markdown(document)
+            lines = [ln for ln in md.split("\n") if ln.strip()]
+            caption = None
+            try:
+                caption = item.caption_text(document) or None
+            except Exception:  # noqa: BLE001 - captions are optional metadata
+                pass
+            header = "\n".join(lines[:2]) if len(lines) >= 2 else md
+            blocks.append(ParsedBlock(md, page=page, kind="table", caption=caption, header=header, rows=lines[2:], location=loc))
         elif item.label in _BODY_LABELS and isinstance(item, TextItem):
-            current_text_parts.append(item.text)
-            if current_page is None:
-                current_page = page_no
+            blocks.append(ParsedBlock(item.text, page=page, kind="code" if item.label == DocItemLabel.CODE else "text", location=loc))
 
     _flush()
 

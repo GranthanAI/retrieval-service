@@ -22,6 +22,11 @@ class DenseSearchHit:
     page_number: int | None = None
     section: str | None = None
     chunk_index: int = 0
+    heading_path: str | None = None
+    page_start: int | None = None
+    page_end: int | None = None
+    block_type: str | None = None
+    location: str | None = None
 
 
 @dataclass(frozen=True)
@@ -37,3 +42,8 @@ class BM25SearchHit:
     page_number: int | None = None
     section: str | None = None
     chunk_index: int = 0
+    heading_path: str | None = None
+    page_start: int | None = None
+    page_end: int | None = None
+    block_type: str | None = None
+    location: str | None = None

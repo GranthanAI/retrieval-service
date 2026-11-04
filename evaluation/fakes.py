@@ -33,13 +33,23 @@ def _english(text: str) -> list[str]:
     return [_stem(t) for t in _standard(text) if t not in _STOPWORDS]
 
 
+_EXACT_SPLIT = re.compile(r"[\s;:()\[\]\"'<>!?|]+")
+
+
+def _exact_tokens(text: str) -> list[str]:
+    return [t for t in (re.sub(r"[.,]+$", "", raw) for raw in _EXACT_SPLIT.split(text)) if t]
+
+
+def _exact_search(text: str) -> list[str]:
+    """Query side of the `.exact` sub-field: identifiers exactly as typed, lowercased, so MAX_RETRY_ATTEMPTS matches that token only."""
+    return [t.lower() for t in _exact_tokens(text)]
+
+
 def _exact(text: str) -> list[str]:
-    """Identifiers kept whole (MAX_RETRY_ATTEMPTS, TXN-102394, /api/v1/x) plus their snake_case / camelCase parts."""
+    """Index side of `.exact`: the whole identifier (MAX_RETRY_ATTEMPTS, TXN-102394, /api/v1/x) AND its snake_case / camelCase / hyphen /
+    slash parts (word_delimiter_graph with preserve_original)."""
     out: list[str] = []
-    for raw in re.findall(r"[\w\-/.{}]+", text):
-        raw = raw.strip(".-")
-        if not raw:
-            continue
+    for raw in _exact_tokens(text):
         out.append(raw.lower())
         for part in re.split(r"[_\-/.{}]+|(?<=[a-z])(?=[A-Z])", raw):
             if part and part.lower() != raw.lower():
@@ -48,11 +58,17 @@ def _exact(text: str) -> list[str]:
 
 
 _ANALYZERS = {"standard": _standard, "english": _english, "exact": _exact}
+_SEARCH_ANALYZERS = {"standard": _standard, "english": _english, "exact": _exact_search}
 
 
 def _analyze(field: str, text: str) -> list[str]:
     sub = field.split(".", 1)[1] if "." in field else "standard"
     return _ANALYZERS[sub](text)
+
+
+def _analyze_query(field: str, text: str) -> list[str]:
+    sub = field.split(".", 1)[1] if "." in field else "standard"
+    return _SEARCH_ANALYZERS[sub](text)
 
 
 # --------------------------------------------------------------------------------------------------------------------------
@@ -68,9 +84,9 @@ class FakeOpenSearchClient:
             return True
 
         def get_mapping(self, index):
-            from app.stores.index_schema import REQUIRED_OPENSEARCH_TYPES
+            from app.stores.index_schema import SCHEMA_V2, opensearch_body
 
-            return {index: {"mappings": {"properties": {k: {"type": v} for k, v in REQUIRED_OPENSEARCH_TYPES.items()}}}}
+            return {index: {"mappings": opensearch_body(SCHEMA_V2)["mappings"]}}
 
     def __init__(self) -> None:
         self.indices = self._Indices()
@@ -142,13 +158,13 @@ class FakeOpenSearchClient:
             for f in spec["fields"]:
                 name, _, boost = f.partition("^")
                 boost = float(boost or 1)
-                s = boost * sum(self._bm25(name, cid, t) for t in set(_analyze(name, spec["query"])))
+                s = boost * sum(self._bm25(name, cid, t) for t in set(_analyze_query(name, spec["query"])))
                 best = max(best, s)
             return best if best > 0 else None
         if kind == "match_phrase":
             (name, v), = spec.items()
             boost = float(v.get("boost", 1)) if isinstance(v, dict) else 1.0
-            phrase = _analyze(name, v["query"] if isinstance(v, dict) else v)
+            phrase = _analyze_query(name, v["query"] if isinstance(v, dict) else v)
             toks = self._field_stats(name)[1][cid]
             n = len(phrase)
             if n and any(toks[i:i + n] == phrase for i in range(len(toks) - n + 1)):
@@ -213,6 +229,9 @@ class FakeMilvusClient:
     def query(self, collection_name, filter, output_fields, consistency_level=None):
         ids = set(re.findall(r'"([^"]+)"', filter))
         return [{f: r[f] for f in output_fields} for cid, r in self.rows.items() if cid in ids]
+
+    def has_collection(self, name):
+        return True
 
     def list_collections(self):
         return ["fake"]

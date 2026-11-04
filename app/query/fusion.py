@@ -13,6 +13,11 @@ def _new_candidate(chunk_id: str, hit: DenseSearchHit | BM25SearchHit) -> FusedC
         page_number=hit.page_number,
         section=hit.section,
         chunk_index=hit.chunk_index,
+        heading_path=hit.heading_path,
+        page_start=hit.page_start,
+        page_end=hit.page_end,
+        block_type=hit.block_type,
+        location=hit.location,
     )
 
 

@@ -64,6 +64,10 @@ class Settings(BaseSettings):
     FILE_SERVICE_SERVICE_CREDENTIAL: str = ""
 
     # --- Milvus (shared cluster, dedicated collection) ---
+    # --- Index generations (app/stores/generations.py) ---
+    GENERATION_REFRESH_SECONDS: float = 30.0       # how quickly a running process notices `make activate`
+    OPENSEARCH_ACTIVE_ALIAS: str = "retrieval_document_chunks_active"   # reads go through this alias once a generation is activated
+
     MILVUS_HOST: str = "localhost"
     MILVUS_PORT: int = 19530
     MILVUS_COLLECTION_NAME: str = "retrieval_document_chunks"
@@ -128,6 +132,10 @@ class Settings(BaseSettings):
     CHUNK_TARGET_TOKENS: int = 450
     CHUNK_MAX_TOKENS: int = 600
     CHUNK_OVERLAP_TOKENS: int = 60
+    # Chunker v2 (index generation 2+), in tokens of the embedding model. Maximum = model max_seq_length - CHUNK_MAX_MARGIN_V2.
+    CHUNK_TARGET_TOKENS_V2: int = 200
+    CHUNK_OVERLAP_TOKENS_V2: int = 30
+    CHUNK_MAX_MARGIN_V2: int = 16
     RECONCILIATION_ENABLED: bool = True
     RECONCILIATION_INTERVAL_SECONDS: int = 300
 

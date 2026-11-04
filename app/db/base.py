@@ -7,4 +7,4 @@ class Base(DeclarativeBase):
 
 # Imported here (not in app/models/__init__.py) so Alembic's env.py only
 # needs `from app.db.base import Base` to see every table via Base.metadata.
-from app.models import document_current_version, ingestion_job, outbox_event, processed_event  # noqa: E402,F401
+from app.models import document_current_version, index_generation, ingestion_job, outbox_event, processed_event  # noqa: E402,F401

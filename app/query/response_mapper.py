@@ -3,6 +3,25 @@ from app.grpc.retrieval_pb2 import DocumentChunk, GetRelevantChunksResponse, Ret
 from app.query import tokens
 from app.query.scoring import FusedCandidate
 
+def _metadata(c: FusedCandidate) -> dict[str, str]:
+    """The three original keys always; the generation-2 keys only when the chunk has them (additive, old callers ignore them)."""
+    md = {
+        "page_number": str(c.page_number) if c.page_number is not None else "",
+        "section": c.section or "",
+        "chunk_index": str(c.chunk_index),
+    }
+    if c.heading_path:
+        md["heading_path"] = c.heading_path
+    if c.page_start is not None:
+        md["page_start"] = str(c.page_start)
+        md["page_end"] = str(c.page_end if c.page_end is not None else c.page_start)
+    if c.block_type:
+        md["block_type"] = c.block_type
+    if c.location:
+        md["location"] = c.location
+    return md
+
+
 def empty_response(
     request_id: str,
     status: int = RetrievalStatus.NO_MATCH,
@@ -65,11 +84,7 @@ def to_proto(
                 source_file_id=c.document_id,
                 source_name=c.filename,
                 relevance_score=c.rrf_score,
-                metadata={
-                    "page_number": str(c.page_number) if c.page_number is not None else "",
-                    "section": c.section or "",
-                    "chunk_index": str(c.chunk_index),
-                },
+                metadata=_metadata(c),
             )
             for c in chunks
         ],

@@ -64,6 +64,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--stores", choices=["auto", "fake", "real"], default="auto", help="--real only: force the store backend")
     ap.add_argument("--sets", default="main", help="comma list of: main, heldout")
     ap.add_argument("--config", action="append", default=[], help="name:KEY=VALUE[,KEY=VALUE]  (repeatable; default: the current settings)")
+    ap.add_argument("--default-timeouts", action="store_true", help="--real: keep the service's 0.5 s Milvus/OpenSearch timeouts and report how often dense search degrades")
     ap.add_argument("--label", default="run", help="prefix of the result file name")
     ap.add_argument("--compare", type=pathlib.Path, help="a previous result JSON to print deltas against (first config, main set)")
     ap.add_argument("--verbose", "-v", action="store_true", help="one line per question (main set only)")
@@ -94,7 +95,7 @@ def main(argv: list[str] | None = None) -> int:
 
     set_names = [n.strip() for n in args.sets.split(",") if n.strip()]
     configs = [_parse_config(c) for c in args.config] or [Config()]
-    out, stats, backend = asyncio.run(harness.run_benchmark(embedder, stores, _questions(set_names), configs))
+    out, stats, backend = asyncio.run(harness.run_benchmark(embedder, stores, _questions(set_names), configs, default_timeouts=args.default_timeouts))
 
     base = json.loads(args.compare.read_text()) if args.compare else None
     print(f"\nmode={mode_name} embedder={embedder.name} backend={backend}")
@@ -131,6 +132,12 @@ def main(argv: list[str] | None = None) -> int:
                 "questions": detail if set_name == "main" else [{"id": d["id"], "category": d["category"]} for d in detail],  # no per-question outcomes for held-out
             }
 
+    if args.default_timeouts and harness.DENSE_SEARCH_MS:
+        lat = sorted(ms for ms, _ in harness.DENSE_SEARCH_MS)
+        failed = sum(f for _, f in harness.DENSE_SEARCH_MS)
+        print(f"\nMilvus dense search with default timeouts: {len(lat)} searches, {failed} failed ({100 * failed / len(lat):.1f}%); "
+              f"latency ms p50={_pct(lat, 50):.0f} p95={_pct(lat, 95):.0f} p99={_pct(lat, 99):.0f} max={lat[-1]:.0f}")
+        record["_milvus_search"] = {"searches": len(lat), "failed": failed, "p50": _pct(lat, 50), "p95": _pct(lat, 95), "p99": _pct(lat, 99), "max": lat[-1]}
     RESULTS.mkdir(exist_ok=True)
     path = RESULTS / f"{args.label}-{mode_name}.json"
     path.write_text(json.dumps({

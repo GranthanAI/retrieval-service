@@ -18,9 +18,12 @@ from app.events.ingestion_pool import BoundedIngestionPool
 from app.events.producers.processing_status_producer import start_producer, stop_producer
 from app.grpc.retrieval_servicer import RetrievalServicer
 from app.grpc.server import start_server, stop_server
+from app.ingestion import build
 from app.query import tokens
+from app.stores import generations
 from app.stores.milvus_repository import MilvusRepository
 from app.stores.opensearch_repository import OpenSearchRepository
+from app.workers.generation_refresher import refresh_once, run_generation_refresher
 from app.workers.outbox_worker import run_outbox_worker
 from app.workers.reconciliation_worker import run_reconciliation_worker
 
@@ -46,6 +49,7 @@ async def _startup_api(app: FastAPI) -> None:
     """
     app.state.db_engine = get_engine()
     session_factory = get_session_factory()
+    await refresh_once(session_factory)           # which generation is active (legacy generation 1 until one is registered)
     await _verify_opensearch_mapping()
     await asyncio.to_thread(tokens.warm)  # tokenizer for max_tokens/total_tokens: downloaded here, never inside a request
 
@@ -62,6 +66,8 @@ async def _startup_api(app: FastAPI) -> None:
         opensearch_repository=OpenSearchRepository(),
     )
     app.state.grpc_server = await start_server(servicer)
+    app.state.api_generation_stop = asyncio.Event()
+    app.state.api_generation_task = asyncio.create_task(run_generation_refresher(session_factory, app.state.api_generation_stop))
 
     logger.info("lifespan.api.startup")
 
@@ -76,6 +82,14 @@ async def _startup_worker(app: FastAPI) -> None:
 
     embedding_client = EmbeddingClient()
     app.state.embedding_client = embedding_client
+
+    await refresh_once(session_factory)
+    try:
+        await build.ensure_model_profile(embedding_client)    # model name check + the tokenizer chunker v2 sizes chunks with
+    except Exception as exc:  # noqa: BLE001
+        if generations.current().chunker_version != "1":
+            raise                                              # the active generation cannot be built without it: refuse to start
+        logger.warning("lifespan.worker.model_profile_unavailable", error=str(exc))
 
     pool = BoundedIngestionPool(session_factory, embedding_client)
     await pool.start()
@@ -104,6 +118,8 @@ async def _startup_worker(app: FastAPI) -> None:
             lambda se: run_reconciliation_worker(session_factory, pool, embedding_client, se),
         )
 
+    _spawn("generation_refresher", lambda se: run_generation_refresher(session_factory, se))
+
     app.state.worker_stop_events = stop_events
     app.state.worker_tasks = tasks
 
@@ -131,6 +147,8 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     finally:
         logger.info("retrieval_service.shutdown.begin")
         if settings.DEPLOYMENT_MODE in ("api", "all"):
+            app.state.api_generation_stop.set()
+            await app.state.api_generation_task
             await stop_server(app.state.grpc_server)
             await app.state.api_embedding_client.close()
             await app.state.file_service_client.close()

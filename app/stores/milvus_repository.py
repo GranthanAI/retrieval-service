@@ -4,6 +4,9 @@ from pymilvus import MilvusClient
 
 from app.core.config import settings
 from app.models.chunk_record import ChunkRecord
+from app.stores import generations
+from app.stores.generations import GenerationInfo
+from app.stores.index_schema import SCHEMA_V1, milvus_output_fields
 from app.stores.types import DenseSearchHit
 
 # Sentinel encoding for Milvus's optional fields — see
@@ -29,7 +32,25 @@ def _get_client() -> MilvusClient:
     return _client
 
 
-def _to_row(record: ChunkRecord) -> dict:
+def _page(value: int | None) -> int | None:
+    return value if value is not None and value != _ABSENT_PAGE_NUMBER else None
+
+
+def _to_row(record: ChunkRecord, schema_version: str = SCHEMA_V1) -> dict:
+    row = _base_row(record)
+    if schema_version != SCHEMA_V1:
+        row.update({
+            "heading_path": record.heading_path or _ABSENT_VARCHAR,
+            "page_start": record.page_start if record.page_start is not None else _ABSENT_PAGE_NUMBER,
+            "page_end": record.page_end if record.page_end is not None else _ABSENT_PAGE_NUMBER,
+            "block_type": record.block_type,
+            "location": record.location or _ABSENT_VARCHAR,
+            "generation": record.generation,
+        })
+    return row
+
+
+def _base_row(record: ChunkRecord) -> dict:
     return {
         "chunk_id": record.chunk_id,
         "document_id": record.document_id,
@@ -63,16 +84,17 @@ class MilvusRepository:
         if not records:
             return
 
-        rows = [_to_row(r) for r in records]
+        info = generations.current()
+        rows = [_to_row(r, info.schema_version) for r in records]
 
         def _upsert() -> None:
             client = _get_client()
-            client.upsert(collection_name=settings.MILVUS_COLLECTION_NAME, data=rows)
+            client.upsert(collection_name=info.milvus_collection, data=rows)
             # Without an explicit flush, a search/query immediately after
             # this call can miss the just-written rows (segment growth is
             # async) — every other store operation below asks for
             # consistency_level="Strong" for the same reason.
-            client.flush(collection_name=settings.MILVUS_COLLECTION_NAME)
+            client.flush(collection_name=info.milvus_collection)
 
         await asyncio.to_thread(_upsert)
 
@@ -89,6 +111,7 @@ class MilvusRepository:
         if not current_versions:
             return []
 
+        info = generations.current()
         clauses = [
             f'(document_id == "{doc_id}" and content_version == {version})'
             for doc_id, version in current_versions.items()
@@ -97,7 +120,7 @@ class MilvusRepository:
 
         def _search() -> list[DenseSearchHit]:
             results = _get_client().search(
-                collection_name=settings.MILVUS_COLLECTION_NAME,
+                collection_name=info.milvus_collection,
                 data=[query_vector],
                 anns_field="embedding",
                 search_params={
@@ -106,7 +129,7 @@ class MilvusRepository:
                 },
                 limit=top_n,
                 filter=filter_expr,
-                output_fields=["chunk_id", "document_id", "filename", "content", "page_number", "section", "chunk_index"],
+                output_fields=["chunk_id"] + [f for f in milvus_output_fields(info.schema_version) if f != "chunk_id"],
                 timeout=settings.MILVUS_QUERY_TIMEOUT_SECONDS,
                 consistency_level="Strong",
             )
@@ -119,6 +142,7 @@ class MilvusRepository:
                 # convention OpenSearch's hits already use natively.
                 page_number = entity["page_number"]
                 section = entity["section"]
+                v2 = info.schema_version != SCHEMA_V1
                 hits.append(
                     DenseSearchHit(
                         chunk_id=entity["chunk_id"],
@@ -129,6 +153,11 @@ class MilvusRepository:
                         page_number=page_number if page_number != _ABSENT_PAGE_NUMBER else None,
                         section=section if section != _ABSENT_VARCHAR else None,
                         chunk_index=entity["chunk_index"],
+                        heading_path=(entity.get("heading_path") or None) if v2 else None,
+                        page_start=_page(entity.get("page_start")) if v2 else None,
+                        page_end=_page(entity.get("page_end")) if v2 else None,
+                        block_type=(entity.get("block_type") or None) if v2 else None,
+                        location=(entity.get("location") or None) if v2 else None,
                     )
                 )
             return hits
@@ -145,9 +174,11 @@ class MilvusRepository:
         quoted = ", ".join(f'"{cid}"' for cid in chunk_ids)
         filter_expr = f"chunk_id in [{quoted}]"
 
+        collection = generations.current().milvus_collection
+
         def _query() -> dict[str, list[float]]:
             rows = _get_client().query(
-                collection_name=settings.MILVUS_COLLECTION_NAME,
+                collection_name=collection,
                 filter=filter_expr,
                 output_fields=["chunk_id", "embedding"],
                 consistency_level="Strong",
@@ -162,14 +193,18 @@ class MilvusRepository:
         scope, HLD §8.2/§21).
         """
 
+        collections = [g.milvus_collection for g in generations.all_live()]   # a deleted file must vanish from every live generation
+
         def _delete() -> None:
             client = _get_client()
-            client.delete(collection_name=settings.MILVUS_COLLECTION_NAME, filter=f'document_id == "{document_id}"')
-            client.flush(collection_name=settings.MILVUS_COLLECTION_NAME)
+            for collection in collections:
+                if client.has_collection(collection):
+                    client.delete(collection_name=collection, filter=f'document_id == "{document_id}"')
+                    client.flush(collection_name=collection)
 
         await asyncio.to_thread(_delete)
 
     async def ping(self) -> None:
         """Reachability probe for /health/ready (api mode) — raises if
         Milvus is unreachable."""
-        await asyncio.to_thread(_get_client().has_collection, settings.MILVUS_COLLECTION_NAME)
+        await asyncio.to_thread(_get_client().has_collection, generations.current().milvus_collection)

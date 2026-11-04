@@ -10,7 +10,7 @@ from app.core import metrics
 from app.core.config import settings
 from app.core.enums import IngestionStatus, StageStatus
 from app.core.logging import get_logger
-from app.ingestion import chunk_identity, chunker, downloader
+from app.ingestion import build, downloader
 from app.ingestion import transcript as transcript_module
 from app.ingestion import parser as parser_module
 from app.ingestion.embedder import embed_batch
@@ -19,6 +19,7 @@ from app.ingestion.indexer import write as index_write
 from app.models.chunk_record import ChunkRecord
 from app.repositories.ingestion_job_repository import IngestionJobRepository
 from app.repositories.outbox_repository import OutboxRepository
+from app.stores import generations
 
 logger = get_logger(__name__)
 
@@ -129,11 +130,15 @@ async def _run(
         await _fail(session_factory, document_id, content_version, error_code="PARSER_ERROR", error_message=str(exc))
         return
 
-    with metrics.ingestion_stage_duration_seconds.labels(stage="chunk").time():
-        chunks = transcript_module.chunk_transcript(transcript_doc) if transcript_doc is not None else chunker.chunk(parsed)
-        chunk_ids = [
-            chunk_identity.derive_chunk_id(str(document_id), content_version, c.chunk_index) for c in chunks
-        ]
+    info = generations.current()
+    try:
+        with metrics.ingestion_stage_duration_seconds.labels(stage="chunk").time():
+            chunks = (transcript_module.chunk_transcript(transcript_doc) if transcript_doc is not None
+                      else build.chunk_parsed(parsed, filename, info))
+    except Exception as exc:  # noqa: BLE001 - a chunker invariant (e.g. a chunk over the model's limit) must fail the file visibly
+        logger.warning("orchestrator.chunking_failed", document_id=str(document_id), error=str(exc))
+        await _fail(session_factory, document_id, content_version, error_code="CHUNKER_ERROR", error_message=str(exc))
+        return
 
     if not chunks:
         # Parsing succeeded but produced no text (e.g. a scanned/image-only PDF, or an empty file).
@@ -168,22 +173,9 @@ async def _run(
         )
         return
 
-    records = [
-        ChunkRecord(
-            chunk_id=chunk_id,
-            document_id=str(document_id),
-            content_version=content_version,
-            chunk_index=c.chunk_index,
-            owner_id=str(owner_id),
-            conversation_id=str(conversation_id) if conversation_id else None,
-            filename=filename,
-            page_number=c.page_number,
-            section=c.section,
-            content=c.content,
-            embedding=vector,
-        )
-        for c, chunk_id, vector in zip(chunks, chunk_ids, vectors)
-    ]
+    records = build.make_records(
+        chunks, vectors, document_id=str(document_id), content_version=content_version, owner_id=str(owner_id),
+        conversation_id=str(conversation_id) if conversation_id else None, filename=filename, info=info)
 
     with metrics.ingestion_stage_duration_seconds.labels(stage="index").time():
         index_result = await index_write(records, IndexTarget.BOTH)
@@ -291,8 +283,13 @@ async def _recover(
         logger.warning("orchestrator.recovery_download_or_parse_failed", document_id=str(document_id), error=str(exc))
         return
 
-    chunks = transcript_module.chunk_transcript(transcript_doc) if transcript_doc is not None else chunker.chunk(parsed)
-    chunk_ids = [chunk_identity.derive_chunk_id(str(document_id), content_version, c.chunk_index) for c in chunks]
+    info = generations.current()
+    try:
+        chunks = (transcript_module.chunk_transcript(transcript_doc) if transcript_doc is not None
+                  else build.chunk_parsed(parsed, filename, info))
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("orchestrator.recovery_chunking_failed", document_id=str(document_id), error=str(exc))
+        return
 
     try:
         vectors = await embed_batch(embedding_client, chunks)
@@ -300,22 +297,9 @@ async def _recover(
         logger.warning("orchestrator.recovery_embedding_failed", document_id=str(document_id), error=str(exc))
         return
 
-    records = [
-        ChunkRecord(
-            chunk_id=chunk_id,
-            document_id=str(document_id),
-            content_version=content_version,
-            chunk_index=c.chunk_index,
-            owner_id=str(owner_id),
-            conversation_id=str(conversation_id) if conversation_id else None,
-            filename=filename,
-            page_number=c.page_number,
-            section=c.section,
-            content=c.content,
-            embedding=vector,
-        )
-        for c, chunk_id, vector in zip(chunks, chunk_ids, vectors)
-    ]
+    records = build.make_records(
+        chunks, vectors, document_id=str(document_id), content_version=content_version, owner_id=str(owner_id),
+        conversation_id=str(conversation_id) if conversation_id else None, filename=filename, info=info)
 
     index_result = await index_write(records, target)
 

@@ -30,6 +30,7 @@ VARCHAR fields, `-1` for `page_number`) rather than `None` — see that
 module's own docstring for the encoding contract.
 """
 
+import argparse
 import pathlib
 import sys
 
@@ -38,69 +39,57 @@ sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1]))  # so `uv r
 from pymilvus import DataType, MilvusClient
 
 from app.core.config import settings
+from app.stores import generations
+from app.stores.index_schema import SCHEMA_V1, milvus_fields
 
 
-def _build_schema(client: MilvusClient):
-    """LLD §4's exact field list, except `conversation_id`/`page_number`/
-    `section` are NOT declared nullable — see this module's docstring for
-    why that's a deliberate, verified deviation, not an oversight.
+def _build_schema(client: MilvusClient, schema_version: str = SCHEMA_V1):
+    """LLD §4's exact field list (schema 1), except `conversation_id`/`page_number`/`section` are NOT declared nullable (see this module's
+    docstring). Schema 2 (index generation 2+) adds heading_path, page_start, page_end, block_type, location and generation. The field
+    lists live in app/stores/index_schema.py so the application and this script cannot disagree.
 
-    `chunk_id` is VARCHAR, not Milvus's auto-increment int64 — it stores the
-    string form of the deterministic uuid5 chunk identity (HLD §11), which
-    is what makes both the Milvus write and the MMR candidate-embedding
-    fetch (HLD §18.1, a primary-key `get` by this same id) work without a
-    secondary lookup index.
+    `chunk_id` is VARCHAR, not Milvus's auto-increment int64 — it stores the string form of the deterministic uuid5 chunk identity
+    (HLD §11), which is what makes both the Milvus write and the MMR candidate-embedding fetch (HLD §18.1, a primary-key `get` by this
+    same id) work without a secondary lookup index.
     """
     schema = client.create_schema(auto_id=False, enable_dynamic_field=False)
-    schema.add_field(field_name="chunk_id", datatype=DataType.VARCHAR, max_length=64, is_primary=True)
-    schema.add_field(field_name="document_id", datatype=DataType.VARCHAR, max_length=36)
-    schema.add_field(field_name="content_version", datatype=DataType.INT32)
-    schema.add_field(field_name="chunk_index", datatype=DataType.INT32)
-    schema.add_field(field_name="owner_id", datatype=DataType.VARCHAR, max_length=36)
-    schema.add_field(field_name="conversation_id", datatype=DataType.VARCHAR, max_length=36)
-    schema.add_field(field_name="filename", datatype=DataType.VARCHAR, max_length=512)
-    schema.add_field(field_name="page_number", datatype=DataType.INT32)
-    schema.add_field(field_name="section", datatype=DataType.VARCHAR, max_length=512)
-    schema.add_field(field_name="content", datatype=DataType.VARCHAR, max_length=8192)
-    schema.add_field(field_name="embedding", datatype=DataType.FLOAT_VECTOR, dim=settings.EMBEDDING_DIMENSION_EXPECTED)
+    for name, dtype, kwargs in milvus_fields(schema_version, settings.EMBEDDING_DIMENSION_EXPECTED):
+        schema.add_field(field_name=name, datatype=getattr(DataType, dtype), **kwargs)
     return schema
 
 
-def main() -> None:
-    client = MilvusClient(uri=f"http://{settings.MILVUS_HOST}:{settings.MILVUS_PORT}")
-
-    if client.has_collection(settings.MILVUS_COLLECTION_NAME):
-        print(f"Collection '{settings.MILVUS_COLLECTION_NAME}' already exists — nothing to do.")
-        return
-
-    schema = _build_schema(client)
-
+def create_collection(client: MilvusClient, name: str, schema_version: str = SCHEMA_V1) -> bool:
+    """Creates collection `name` explicitly (HNSW index on `embedding`, scalar indexes on document_id and content_version) and loads it.
+    Returns False if it already exists."""
+    if client.has_collection(name):
+        return False
     index_params = client.prepare_index_params()
     # HNSW on `embedding`, metric_type per settings (HLD §13, LLD §4).
-    index_params.add_index(
-        field_name="embedding",
-        index_type="HNSW",
-        metric_type=settings.MILVUS_INDEX_METRIC_TYPE,
-        params={"M": 16, "efConstruction": 200},
-    )
-    # Scalar indexes on document_id AND content_version — both fields
-    # participate in the SAME query-time filter clause (HLD §13.3's
-    # current-version-only fix), not just document_id alone.
+    index_params.add_index(field_name="embedding", index_type="HNSW", metric_type=settings.MILVUS_INDEX_METRIC_TYPE,
+                           params={"M": 16, "efConstruction": 200})
+    # Scalar indexes on document_id AND content_version — both fields participate in the SAME query-time filter clause
+    # (HLD §13.3's current-version-only fix), not just document_id alone.
     index_params.add_index(field_name="document_id")
     index_params.add_index(field_name="content_version")
+    client.create_collection(collection_name=name, schema=_build_schema(client, schema_version), index_params=index_params)
+    client.load_collection(name)
+    return True
 
-    client.create_collection(
-        collection_name=settings.MILVUS_COLLECTION_NAME,
-        schema=schema,
-        index_params=index_params,
-    )
-    client.load_collection(settings.MILVUS_COLLECTION_NAME)
 
-    print(
-        f"Collection '{settings.MILVUS_COLLECTION_NAME}' created with "
-        f"HNSW/{settings.MILVUS_INDEX_METRIC_TYPE} index on `embedding`, "
-        "scalar indexes on `document_id` and `content_version`."
-    )
+def main(argv: list[str] | None = None) -> None:
+    ap = argparse.ArgumentParser(description="Create a Milvus collection explicitly (never by a first write).")
+    ap.add_argument("--generation", type=int, help="index generation N: creates <MILVUS_COLLECTION_NAME>_gN (schema 2)")
+    args = ap.parse_args(argv)
+    client = MilvusClient(uri=f"http://{settings.MILVUS_HOST}:{settings.MILVUS_PORT}")
+    if args.generation and args.generation > 1:
+        name, version = generations.names_for(args.generation)[0], "2"
+    else:
+        name, version = settings.MILVUS_COLLECTION_NAME, SCHEMA_V1
+    if create_collection(client, name, version):
+        print(f"Collection '{name}' created (schema {version}) with HNSW/{settings.MILVUS_INDEX_METRIC_TYPE} index on `embedding`, "
+              "scalar indexes on `document_id` and `content_version`.")
+    else:
+        print(f"Collection '{name}' already exists — nothing to do.")
 
 
 if __name__ == "__main__":

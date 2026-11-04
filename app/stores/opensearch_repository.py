@@ -4,7 +4,8 @@ from opensearchpy import OpenSearch
 
 from app.core.config import settings
 from app.core.exceptions import IndexMappingError, IndexMissingError
-from app.stores.index_schema import mapping_problems
+from app.stores import generations
+from app.stores.index_schema import SCHEMA_V1, keyword_query_fields, mapping_problems
 from app.models.chunk_record import ChunkRecord
 from app.stores.types import BM25SearchHit
 
@@ -20,6 +21,16 @@ def _get_client() -> OpenSearch:
     if _client is None:
         _client = OpenSearch(hosts=settings.OPENSEARCH_HOSTS.split(","))
     return _client
+
+
+def _document(r: ChunkRecord, schema_version: str) -> dict:
+    """The indexed document of a generation-2+ chunk. `content` is exactly the text that was embedded (heading path + body)."""
+    return {
+        "chunk_id": r.chunk_id, "document_id": r.document_id, "content_version": r.content_version, "chunk_index": r.chunk_index,
+        "owner_id": r.owner_id, "conversation_id": r.conversation_id, "filename": r.filename, "page_number": r.page_number,
+        "section": r.section, "content": r.content, "heading_path": r.heading_path, "page_start": r.page_start,
+        "page_end": r.page_end, "block_type": r.block_type, "location": r.location, "generation": r.generation,
+    }
 
 
 class OpenSearchRepository:
@@ -39,19 +50,23 @@ class OpenSearchRepository:
         if not records:
             return
 
+        info = generations.current()
+        index = info.opensearch_index
+
         def _bulk_upsert() -> None:
             client = _get_client()
             # Never let a write create the index: a bulk into a missing index auto-creates it with dynamic mapping.
-            if not client.indices.exists(index=settings.OPENSEARCH_INDEX_NAME):
+            if not client.indices.exists(index=index):
                 raise IndexMissingError(
-                    f"OpenSearch index {settings.OPENSEARCH_INDEX_NAME!r} does not exist; provision it with "
-                    "scripts/provision_opensearch_index.py (writes never create it)"
+                    f"OpenSearch index {index!r} does not exist; provision it with "
+                    "scripts/provision_opensearch_index.py or scripts/generation.py create (writes never create it)"
                 )
             actions: list[dict] = []
             for r in records:
-                actions.append({"index": {"_index": settings.OPENSEARCH_INDEX_NAME, "_id": r.chunk_id}})
+                actions.append({"index": {"_index": index, "_id": r.chunk_id}})
                 actions.append(
-                    {
+                    _document(r, info.schema_version)
+                    if info.schema_version != SCHEMA_V1 else {
                         "chunk_id": r.chunk_id,
                         "document_id": r.document_id,
                         "content_version": r.content_version,
@@ -103,11 +118,13 @@ class OpenSearchRepository:
                 {"match_phrase": {"content": {"query": query_text, "boost": settings.OPENSEARCH_CONTENT_PHRASE_BOOST}}},
             ]
         body = {"size": top_n, "query": {"bool": bool_query}}
+        info = generations.current()
+        bool_query["must"]["multi_match"]["fields"] = keyword_query_fields(info.schema_version)
 
         def _search() -> list[BM25SearchHit]:
             client = _get_client()
             response = client.search(
-                index=settings.OPENSEARCH_INDEX_NAME,
+                index=info.opensearch_read_target,
                 body=body,
                 request_timeout=settings.OPENSEARCH_QUERY_TIMEOUT_SECONDS,
             )
@@ -121,6 +138,11 @@ class OpenSearchRepository:
                     page_number=hit["_source"]["page_number"],
                     section=hit["_source"]["section"],
                     chunk_index=hit["_source"]["chunk_index"],
+                    heading_path=hit["_source"].get("heading_path"),
+                    page_start=hit["_source"].get("page_start"),
+                    page_end=hit["_source"].get("page_end"),
+                    block_type=hit["_source"].get("block_type"),
+                    location=hit["_source"].get("location"),
                 )
                 for hit in response["hits"]["hits"]
             ]
@@ -128,13 +150,13 @@ class OpenSearchRepository:
         return await asyncio.to_thread(_search)
 
     async def delete_by_document_id(self, document_id: str) -> None:
+        indexes = [g.opensearch_index for g in generations.all_live()]   # a deleted file must vanish from every live generation
+
         def _delete() -> None:
             client = _get_client()
-            client.delete_by_query(
-                index=settings.OPENSEARCH_INDEX_NAME,
-                body={"query": {"term": {"document_id": document_id}}},
-                refresh=True,
-            )
+            for index in indexes:
+                if client.indices.exists(index=index):
+                    client.delete_by_query(index=index, body={"query": {"term": {"document_id": document_id}}}, refresh=True)
 
         await asyncio.to_thread(_delete)
 
@@ -142,12 +164,14 @@ class OpenSearchRepository:
         """Raises IndexMissingError / IndexMappingError (listing every difference) unless the index exists with the mapping the
         application requires. Used by startup and by /health/ready."""
 
+        info = generations.current()
+
         def _verify() -> None:
             client = _get_client()
-            index = settings.OPENSEARCH_INDEX_NAME
+            index = info.opensearch_read_target
             if not client.indices.exists(index=index):
                 raise IndexMissingError(f"OpenSearch index {index!r} does not exist; run scripts/provision_opensearch_index.py")
-            problems = mapping_problems(client.indices.get_mapping(index=index), index)
+            problems = mapping_problems(client.indices.get_mapping(index=index), index, schema_version=info.schema_version)
             if problems:
                 raise IndexMappingError(
                     f"OpenSearch index {index!r} has the wrong mapping ({'; '.join(problems)}). It was probably created by a first "

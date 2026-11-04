@@ -88,7 +88,7 @@ def stores_reachable() -> tuple[bool, str]:
 
 
 @contextmanager
-def backend(stores: str):
+def backend(stores: str, default_timeouts: bool = False):
     """Yields (milvus_repo, opensearch_repo, description). `stores` is 'fake' or 'real'."""
     run_id = uuid.uuid4().hex[:8]
     saved = (settings.MILVUS_COLLECTION_NAME, settings.OPENSEARCH_INDEX_NAME, milvus_module._client, opensearch_module._client)
@@ -100,7 +100,8 @@ def backend(stores: str):
         else:
             # The service's 0.5 s query timeouts are a latency SLO, not something to measure here: a timeout silently degrades the
             # query to one engine and would contaminate the quality numbers. Degradations are counted per question anyway.
-            settings.MILVUS_QUERY_TIMEOUT_SECONDS = settings.OPENSEARCH_QUERY_TIMEOUT_SECONDS = 10.0
+            if not default_timeouts:
+                settings.MILVUS_QUERY_TIMEOUT_SECONDS = settings.OPENSEARCH_QUERY_TIMEOUT_SECONDS = 10.0
             settings.MILVUS_COLLECTION_NAME = f"eval_chunks_{run_id}"
             settings.OPENSEARCH_INDEX_NAME = f"eval_chunks_{run_id}"
             milvus_module._client = opensearch_module._client = None
@@ -238,7 +239,27 @@ def applied(overrides: dict | None):
         yield
 
 
-async def run_benchmark(embedder, stores: str, sets: dict[str, list[Question]], configs: list[Config] | None = None, files: list[str] | None = None):
+DENSE_SEARCH_MS: list[tuple[float, bool]] = []  # (elapsed ms, failed) for every Milvus search made by the queries of a run
+
+
+def _timed(milvus: MilvusRepository) -> None:
+    original = milvus.search
+
+    async def search(*a, **kw):
+        t0 = time.perf_counter()
+        try:
+            result = await original(*a, **kw)
+        except BaseException:
+            DENSE_SEARCH_MS.append(((time.perf_counter() - t0) * 1000, True))
+            raise
+        DENSE_SEARCH_MS.append(((time.perf_counter() - t0) * 1000, False))
+        return result
+
+    milvus.search = search
+
+
+async def run_benchmark(embedder, stores: str, sets: dict[str, list[Question]], configs: list[Config] | None = None, files: list[str] | None = None,
+                        default_timeouts: bool = False):
     """Indexes the corpus ONCE, then answers every question set under every config.
     Returns ({config name: {set name: [QuestionResult]}}, ingest stats, backend description). `files` limits the corpus (tests use the
     Markdown files only, which avoids the Docling parse); every question's gold evidence must then lie inside it."""
@@ -246,8 +267,9 @@ async def run_benchmark(embedder, stores: str, sets: dict[str, list[Question]], 
     corpus = {n: b for n, b in fixture_files().items() if files is None or n in files}
     all_questions = [q for qs in sets.values() for q in qs]
     out: dict[str, dict[str, list[metrics.QuestionResult]]] = {}
-    with backend(stores) as (milvus, opensearch, description), patched_state(list(corpus)):
+    with backend(stores, default_timeouts) as (milvus, opensearch, description), patched_state(list(corpus)):
         stats = await ingest(corpus, embedder, milvus, opensearch)
+        _timed(milvus)
         if bad := missing_gold(all_questions, stats.chunk_texts):
             raise SystemExit("gold evidence not found in any indexed chunk (fix the questions or the fixtures):" + "".join("\n  " + b for b in bad))
         for cfg in configs:
