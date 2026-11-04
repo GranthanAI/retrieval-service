@@ -9,6 +9,7 @@ import uuid
 
 import pytest
 
+from app.core.config import settings
 from app.models.chunk_record import ChunkRecord
 from app.stores.milvus_repository import MilvusRepository
 from app.stores.opensearch_repository import OpenSearchRepository
@@ -38,6 +39,15 @@ def _make_record(
     )
 
 
+@pytest.fixture(autouse=True)
+def generous_store_timeouts(monkeypatch):
+    """These tests check correctness against a shared dev Milvus/OpenSearch, not the latency SLO. At the service's 0.5 s query timeout the
+    Milvus roundtrip test was flaky (a search right after an upsert+flush can take longer on a busy dev machine, a timeout fails the
+    test for a reason unrelated to what it asserts). Production defaults are unchanged."""
+    monkeypatch.setattr(settings, "MILVUS_QUERY_TIMEOUT_SECONDS", 10.0)
+    monkeypatch.setattr(settings, "OPENSEARCH_QUERY_TIMEOUT_SECONDS", 10.0)
+
+
 @pytest.fixture
 def milvus_repo() -> MilvusRepository:
     return MilvusRepository()
@@ -48,6 +58,7 @@ def opensearch_repo() -> OpenSearchRepository:
     return OpenSearchRepository()
 
 
+@pytest.mark.live_milvus
 class TestMilvusRepository:
     @pytest.mark.asyncio
     async def test_upsert_search_get_delete_roundtrip(self, milvus_repo: MilvusRepository) -> None:

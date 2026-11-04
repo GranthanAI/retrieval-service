@@ -144,3 +144,39 @@ async def test_the_guard_is_sensitive_to_scope_in_should(live):
     }
     leaked = {h["_id"] for h in client.search(index=settings.OPENSEARCH_INDEX_NAME, body=regressed)["hits"]["hits"]}
     assert ids["outsider"] in leaked
+
+
+@pytest.mark.asyncio(loop_scope="module")
+async def test_an_index_created_by_a_first_write_is_detected():
+    """The environment bug that broke 7 integration tests: indexing a document into a missing index auto-creates it with dynamic
+    mapping (document_id becomes text). verify_mapping must report that clearly."""
+    from app.core.exceptions import IndexMappingError
+
+    client = OpenSearch(hosts=settings.OPENSEARCH_HOSTS.split(","))
+    index = f"it_dynamic_{uuid.uuid4().hex[:8]}"
+    saved = (settings.OPENSEARCH_INDEX_NAME, os_module._client)
+    try:
+        client.index(index=index, id="1", body={"document_id": str(uuid.uuid4()), "content_version": 1, "content": "x"}, refresh=True)
+        settings.OPENSEARCH_INDEX_NAME, os_module._client = index, None
+        with pytest.raises(IndexMappingError, match="document_id"):
+            await OpenSearchRepository().verify_mapping()
+    finally:
+        client.indices.delete(index=index, ignore_unavailable=True)
+        settings.OPENSEARCH_INDEX_NAME, os_module._client = saved
+
+
+@pytest.mark.asyncio(loop_scope="module")
+async def test_a_write_to_a_missing_index_does_not_create_it():
+    from app.core.exceptions import IndexMissingError
+
+    client = OpenSearch(hosts=settings.OPENSEARCH_HOSTS.split(","))
+    index = f"it_missing_{uuid.uuid4().hex[:8]}"
+    saved = (settings.OPENSEARCH_INDEX_NAME, os_module._client)
+    settings.OPENSEARCH_INDEX_NAME, os_module._client = index, None
+    try:
+        with pytest.raises(IndexMissingError):
+            await OpenSearchRepository().upsert_chunks([_record(str(uuid.uuid4()), 1, 0, "s", "c")])
+        assert not client.indices.exists(index=index)
+    finally:
+        client.indices.delete(index=index, ignore_unavailable=True)
+        settings.OPENSEARCH_INDEX_NAME, os_module._client = saved

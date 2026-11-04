@@ -8,6 +8,11 @@ Never imported by `app/`. Idempotent: skips creation if the index already
 exists.
 """
 
+import pathlib
+import sys
+
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1]))  # so `uv run python scripts/<this>.py` finds `app`
+
 from opensearchpy import OpenSearch
 
 from app.core.config import settings

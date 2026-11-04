@@ -27,7 +27,8 @@ async def readiness(response: Response) -> dict[str, object]:
 
     if not all(checks.values()):
         response.status_code = status.HTTP_503_SERVICE_UNAVAILABLE
-        return {"status": "not_ready", "checks": checks}
+        errors = {n: dependency_checks.last_errors[n] for n, ok in checks.items() if not ok and n in dependency_checks.last_errors}
+        return {"status": "not_ready", "checks": checks, "errors": errors}
     return {"status": "ready", "checks": checks}
 
 

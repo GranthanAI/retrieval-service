@@ -14,11 +14,17 @@ from app.stores.opensearch_repository import OpenSearchRepository
 logger = get_logger(__name__)
 
 
+# Why each dependency last failed its check (name -> message); surfaced by /health/ready so "not ready" says what to fix.
+last_errors: dict[str, str] = {}
+
+
 async def _within_timeout(name: str, awaitable: Awaitable[object]) -> bool:
     try:
         await asyncio.wait_for(awaitable, timeout=settings.HEALTH_CHECK_TIMEOUT_SECONDS)
+        last_errors.pop(name, None)
         return True
     except Exception as exc:
+        last_errors[name] = f"{type(exc).__name__}: {exc}"
         logger.warning("health.ready.check_failed", dependency=name, error=str(exc))
         return False
 
@@ -36,7 +42,12 @@ async def check_milvus() -> bool:
 
 
 async def check_opensearch() -> bool:
-    return await _within_timeout("opensearch", OpenSearchRepository().ping())
+    async def _ping_and_verify() -> None:
+        repo = OpenSearchRepository()
+        await repo.ping()
+        await repo.verify_mapping()  # a reachable index with the wrong mapping makes every scoped query return nothing
+
+    return await _within_timeout("opensearch", _ping_and_verify())
 
 
 async def check_minio() -> bool:

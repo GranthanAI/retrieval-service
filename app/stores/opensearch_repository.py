@@ -3,6 +3,8 @@ import asyncio
 from opensearchpy import OpenSearch
 
 from app.core.config import settings
+from app.core.exceptions import IndexMappingError, IndexMissingError
+from app.stores.index_schema import mapping_problems
 from app.models.chunk_record import ChunkRecord
 from app.stores.types import BM25SearchHit
 
@@ -39,6 +41,12 @@ class OpenSearchRepository:
 
         def _bulk_upsert() -> None:
             client = _get_client()
+            # Never let a write create the index: a bulk into a missing index auto-creates it with dynamic mapping.
+            if not client.indices.exists(index=settings.OPENSEARCH_INDEX_NAME):
+                raise IndexMissingError(
+                    f"OpenSearch index {settings.OPENSEARCH_INDEX_NAME!r} does not exist; provision it with "
+                    "scripts/provision_opensearch_index.py (writes never create it)"
+                )
             actions: list[dict] = []
             for r in records:
                 actions.append({"index": {"_index": settings.OPENSEARCH_INDEX_NAME, "_id": r.chunk_id}})
@@ -129,6 +137,24 @@ class OpenSearchRepository:
             )
 
         await asyncio.to_thread(_delete)
+
+    async def verify_mapping(self) -> None:
+        """Raises IndexMissingError / IndexMappingError (listing every difference) unless the index exists with the mapping the
+        application requires. Used by startup and by /health/ready."""
+
+        def _verify() -> None:
+            client = _get_client()
+            index = settings.OPENSEARCH_INDEX_NAME
+            if not client.indices.exists(index=index):
+                raise IndexMissingError(f"OpenSearch index {index!r} does not exist; run scripts/provision_opensearch_index.py")
+            problems = mapping_problems(client.indices.get_mapping(index=index), index)
+            if problems:
+                raise IndexMappingError(
+                    f"OpenSearch index {index!r} has the wrong mapping ({'; '.join(problems)}). It was probably created by a first "
+                    "write. Delete it and run scripts/provision_opensearch_index.py."
+                )
+
+        await asyncio.to_thread(_verify)
 
     async def ping(self) -> None:
         """Reachability probe for /health/ready (api mode). `info()` raises

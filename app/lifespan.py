@@ -7,6 +7,7 @@ from fastapi import FastAPI
 from app.clients.embedding_client import EmbeddingClient
 from app.clients.file_service_client import FileServiceClient
 from app.core.config import settings
+from app.core.exceptions import IndexMappingError, IndexMissingError
 from app.core.logging import get_logger
 from app.db.postgres import dispose_engine, get_engine
 from app.db.session import get_session_factory
@@ -17,12 +18,24 @@ from app.events.ingestion_pool import BoundedIngestionPool
 from app.events.producers.processing_status_producer import start_producer, stop_producer
 from app.grpc.retrieval_servicer import RetrievalServicer
 from app.grpc.server import start_server, stop_server
+from app.query import tokens
 from app.stores.milvus_repository import MilvusRepository
 from app.stores.opensearch_repository import OpenSearchRepository
 from app.workers.outbox_worker import run_outbox_worker
 from app.workers.reconciliation_worker import run_reconciliation_worker
 
 logger = get_logger(__name__)
+
+
+async def _verify_opensearch_mapping() -> None:
+    """Refuse to start against an OpenSearch index whose mapping is wrong (every scoped query would silently return nothing). An
+    unreachable OpenSearch is not fatal here: readiness reports it and the service recovers when it returns."""
+    try:
+        await OpenSearchRepository().verify_mapping()
+    except (IndexMappingError, IndexMissingError):
+        raise
+    except Exception as exc:  # noqa: BLE001 - unreachable, not misconfigured
+        logger.warning("lifespan.opensearch_mapping_check_skipped", error=str(exc))
 
 
 async def _startup_api(app: FastAPI) -> None:
@@ -33,6 +46,8 @@ async def _startup_api(app: FastAPI) -> None:
     """
     app.state.db_engine = get_engine()
     session_factory = get_session_factory()
+    await _verify_opensearch_mapping()
+    await asyncio.to_thread(tokens.warm)  # tokenizer for max_tokens/total_tokens: downloaded here, never inside a request
 
     embedding_client = EmbeddingClient()
     app.state.api_embedding_client = embedding_client

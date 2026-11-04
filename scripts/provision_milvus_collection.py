@@ -30,6 +30,11 @@ VARCHAR fields, `-1` for `page_number`) rather than `None` — see that
 module's own docstring for the encoding contract.
 """
 
+import pathlib
+import sys
+
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1]))  # so `uv run python scripts/<this>.py` finds `app`
+
 from pymilvus import DataType, MilvusClient
 
 from app.core.config import settings

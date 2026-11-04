@@ -38,3 +38,6 @@ eval = [
 asyncio_mode = "auto"
 testpaths = ["tests"]
 python_files = ["test_*.py"]
+markers = [
+    "live_milvus: talks to the shared dev Milvus (slow: about 20 s per test because of flush + strong consistency). Skip with -m 'not live_milvus'. Timeouts are raised for these tests; they assert correctness, not latency.",
+]
