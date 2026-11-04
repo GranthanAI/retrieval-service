@@ -61,7 +61,19 @@ def _analyze(field: str, text: str) -> list[str]:
 class FakeOpenSearchClient:
     K1, B = 1.2, 0.75
 
+    class _Indices:
+        """Just enough of client.indices for the repository's existence/mapping guard: the fake index always exists, correctly mapped."""
+
+        def exists(self, index):
+            return True
+
+        def get_mapping(self, index):
+            from app.stores.index_schema import REQUIRED_OPENSEARCH_TYPES
+
+            return {index: {"mappings": {"properties": {k: {"type": v} for k, v in REQUIRED_OPENSEARCH_TYPES.items()}}}}
+
     def __init__(self) -> None:
+        self.indices = self._Indices()
         self.docs: dict[str, dict] = {}
         self.queries: list[dict] = []  # request bodies seen, for tests
         self._stats: dict[str, tuple[dict[str, Counter], dict[str, list[str]], float, dict[str, int]]] = {}
