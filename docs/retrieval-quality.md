@@ -231,3 +231,37 @@ llm-service should send 8 (or 10). `max_tokens=4000` is the binding limit either
 
 Remaining known gaps: `phase_exit` (0.375 Recall@5; the Exit-criteria chunk has no phase number until Phase 2 adds heading paths) and
 `csv` (MRR 0.31; the 40-row chunks are near-identical tables, Phase 2 row groups).
+
+## Step 0 (before Phases 2-6): decisions and measurements
+
+Working mode from here: everything is committed to `main` in each repo (no feature branches), pushed after each completed step.
+
+* **top_k: DECIDED = 8.** llm-service will send `top_k=8` from a config value (Phase 5; llm-service is unchanged until then). On the
+  80/33-question sets (Phase 1 code), Recall@k of the returned set: top_k=5 61/72 main, 25.83/29 held-out; top_k=8 64/72 and
+  25.83/29; top_k=10 67/72 and 26.17/29. Re-check 5/8/10 after Phase 2, because chunk sizes change.
+* **Dev index.** The 7 integration failures (store layer x3, orchestrator, reconciliation x2, kafka) were caused by the shared dev
+  index `retrieval_document_chunks` having been created by a first write (dynamic mapping: `document_id` as `text`, so the `term` scope
+  filter matched nothing). It was deleted and re-provisioned from the real mapping; the suite then passed. Recurrence is prevented by
+  (1) `OpenSearchRepository.verify_mapping()` at API startup (the process refuses to start on a wrong mapping) and in `/health/ready`
+  (503 with an `errors` field naming the wrong fields), (2) writes check that the index exists and raise `IndexMissingError` instead of
+  letting OpenSearch auto-create it, (3) tests: `tests/unit/test_index_guard.py` and the live
+  `tests/integration/test_opensearch_scope_live.py::test_an_index_created_by_a_first_write_is_detected`.
+  Operational hardening for any OpenSearch cluster: set `action.auto_create_index` so that application indexes are not auto-created,
+  e.g. `PUT _cluster/settings {"persistent": {"action.auto_create_index": "-retrieval_*,+*"}}`.
+* **Milvus timeout (`MILVUS_QUERY_TIMEOUT_SECONDS`, default 0.5 s, unchanged).** Benchmark run with the default timeouts
+  (`python -m evaluation.run --real --sets main,heldout --default-timeouts`): 119 dense searches, 0 failed (0.0%); latency p50 229 ms,
+  p95 337 ms, p99 353 ms, max 418 ms. The slowest search used 84% of the budget. In an earlier sweep on a busier machine 3 of about 560
+  searches timed out (about 0.5%), and each silently degraded that query to keyword-only. Recommendation: raise it to 1.0 s. The
+  query pipeline deadline is 1.8 s; embedding (0.4 s) and the search legs overlap only partly, so 1.0 s still fits. Not changed.
+  `get_by_chunk_ids` (candidate embeddings for MMR) has no timeout of its own and should get one when the default is revisited.
+  The flaky Milvus roundtrip test was fixed: store tests now raise the timeouts (they check correctness, not latency) and carry a
+  `live_milvus` marker (about 20 s per test; deselect with `-m "not live_milvus"`).
+* **No-answer recall is an explicit Phase 3 target.** Today it is 0/8 on main and 0/4 on held-out. Target: well above 0 without lowering
+  answerable Recall@5 by more than 2 points.
+* **`phase_exit` acceptance (Phase 2).** After heading paths, `phase_exit` Recall@5 must reach >= 0.8 on generation 2 (main: 3/8 today),
+  and the held-out questions of the same kind are reported separately.
+* **Benchmark.** Held-out set now has 6 more multi-file questions (7 in total).
+* **Contracts (additive).** `embedding.proto`: `GetModelInfo`, `Rerank`. `retrieval.proto`: request `dense_query` (optional) and
+  `previous_chunk_ids`; response `top_score` (optional) and `coverage` (enum `COVERAGE_UNSPECIFIED/STRONG/WEAK/NONE`); new RPC
+  `GetDocumentChunks`. Until each server implements them they answer UNIMPLEMENTED or ignore the fields. Deploy order:
+  embedding-service, retrieval-service, memory-service, llm-service. `tests/unit/test_proto_parity.py` keeps the vendored copies identical.
