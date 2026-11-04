@@ -12,8 +12,8 @@ new index generation, behaviour changes behind a flag with a documented default,
 | Phase | Topic | Branch | Status |
 |---|---|---|---|
 | 0 | Offline benchmark (`evaluation/`, `make eval`) | main (`65bb38f`, pushed) | **Done** |
-| 1 | Query-time fixes (MMR, request fields, HNSW `ef`, embed fallback, phrase boosts, dedupe, per-file balance) | main (local commit, not pushed) | **Done, awaiting review** |
-| 2 | Index generations, tokenizer-aware chunking, heading paths, provenance, tables, analyzers | | Not started |
+| 1 | Query-time fixes (MMR, request fields, HNSW `ef`, embed fallback, phrase boosts, dedupe, per-file balance) | main (pushed) | **Done** |
+| 2 | Index generations, tokenizer-aware chunking, heading paths, provenance, tables, analyzers | main (pushed) | **Done; generation 2 built and measured, NOT activated** |
 | 3 | Reranker, neighbour expansion, weak-retrieval signal | | Not started |
 | 4 | embedding-service performance under load | | Not started |
 | 5 | llm-service / memory-service: query rewrite, previous chunks, full-text for small docs, anchors, feedback logging | | Not started |
@@ -265,3 +265,78 @@ Working mode from here: everything is committed to `main` in each repo (no featu
   `previous_chunk_ids`; response `top_score` (optional) and `coverage` (enum `COVERAGE_UNSPECIFIED/STRONG/WEAK/NONE`); new RPC
   `GetDocumentChunks`. Until each server implements them they answer UNIMPLEMENTED or ignore the fields. Deploy order:
   embedding-service, retrieval-service, memory-service, llm-service. `tests/unit/test_proto_parity.py` keeps the vendored copies identical.
+
+## Phase 2 (index generations, chunker v2, heading paths, provenance, tables, analyzers): results
+
+Nothing is activated. Generation 1 stays the active (legacy, un-suffixed) index everywhere; generation 2 exists only in the benchmark's
+throwaway indexes and as code. Activation is `make activate GENERATION=2` and is the owner's decision.
+
+### What changed
+| Area | Change |
+|---|---|
+| Generations | `index_generations` + `generation_documents` tables (Alembic `a7c3e91f2b64`: parser/chunker/embedding model+dimension/analyzer versions, status building/active/retired, created_at). Names `<base>_g<N>` for the Milvus collection and the OpenSearch index. Reads go through an OpenSearch alias (`OPENSEARCH_ACTIVE_ALIAS`) and the DB pointer; writes go to the active generation. Until a row exists the service uses the legacy names (generation 1), so applying the migration changes nothing at runtime. |
+| Explicit creation | `scripts/provision_*.py --generation N` and `scripts/generation.py create N` create the collection/index from the versioned schema in `app/stores/index_schema.py`. A write into a missing index raises; nothing under `app/` creates an index. |
+| Tooling | `make generation-status / generation-bootstrap / generation-create GENERATION=N / reindex GENERATION=N / activate GENERATION=N` (`scripts/generation.py`). `reindex` re-processes every READY current version into N without touching the active generation and records coverage; `activate` refuses unless coverage is complete AND Recall@5, MRR@10 and nDCG@10 on both sets are not worse than the active generation (`--dry-run` checks only). `retire` keeps data; `drop --yes` deletes it. |
+| Chunker v2 | Sized in the embedding model's own tokens (`GetModelInfo` gives name, dimension, max_seq_length and tokenizer id; the tokenizer is loaded locally; the model name is validated against `EMBEDDING_MODEL_EXPECTED`). Target 200, overlap 30, hard maximum `max_seq_length - 16` including the heading-path prefix. Split order: paragraph, line, sentence, token window. Every chunk is re-counted and ingestion fails (`CHUNKER_ERROR`) if one exceeds the maximum. |
+| Heading path | Markdown and Docling parsers keep the whole hierarchy. Every chunk's embedded AND indexed text starts with `<filename> › h1 › h2 › h3`; `section` stays the deepest heading; `heading_path` is stored and returned in the response metadata. |
+| Provenance | Page per block; a new chunk starts when the page changes and the chunk is over half the target, otherwise `page_start`/`page_end`. Pages only for PDFs; slides and line/row ranges are `location`; no page is ever invented. |
+| Tables | Never split mid-row. A table under the maximum is one chunk; larger ones become row groups repeating prefix, caption and header, `block_type=table`. CSV follows the same rule with `Rows a-b` locations. |
+| Keyword mapping | `content`/`section`: `standard` + `.english` + `.exact` (identifiers kept whole at query time, split into snake_case/camelCase/hyphen/slash parts at index time); `filename.keyword`. Query fields: `content, content.english, content.exact^2, section^1.5, section.english, filename^2`, with the Phase 1 phrase boosts and the scope `filter`. |
+| One embedding path | `app/ingestion/build.py` is the only path from parsed document to records for the orchestrator, `make reindex` and the benchmark; the vector is computed from `chunk.content`, the exact string indexed. |
+
+### Benchmark: generation 1 vs generation 2 (real: MiniLM, live Milvus + OpenSearch, throwaway indexes created from each generation's schema; 0 degraded queries)
+Raw: `evaluation/results/p2-real.json`. Request top_k=10 unless stated. Held-out now has 45 questions (41 answerable), including six
+"exit criteria"-like ones phrased without "phase" or "exit criteria" (written before they were run).
+
+| Metric | Main g1 | Main g2 | Held-out g1 | Held-out g2 |
+|---|---|---|---|---|
+| Recall@5 | 0.889 (64/72) | 0.993 (71.5/72) | 0.809 (33.17/41) | 0.915 (37.5/41) |
+| Recall@10 | 0.931 (67/72) | 0.993 (71.5/72) | 0.870 (35.67/41) | 0.951 (39/41) |
+| MRR@10 | 0.789 | 0.875 | 0.726 | 0.738 |
+| nDCG@10 | 0.815 | 0.900 | 0.744 | 0.779 |
+| Identifier exact recall@5 | 8/8 | 8/8 | n/a | n/a |
+| Page attribution (all page questions) | 12/16 | 16/16 | 3/5 | 4/5 |
+| Multi-file coverage | 7/8 | 7.5/8 | 5/7 | 7/7 |
+| No-answer recall | 0/8 | 0/8 | 0/4 | 0/4 |
+
+Acceptance: `phase_exit` Recall@5 >= 0.8 on generation 2: **main 8/8 (was 3/8), held-out 6/6**. Met.
+
+Per category, Recall@5 / MRR@10 / nDCG@10, generation 1 -> generation 2:
+
+| Set / category (n) | Generation 1 | Generation 2 |
+|---|---|---|
+| main phase_exit (8) | 0.375 / 0.184 / 0.287 | 1.000 / 0.521 / 0.640 |
+| main csv (8) | 0.875 / 0.306 / 0.447 | 1.000 / 0.498 / 0.621 |
+| main hinglish (8) | 0.875 / 0.802 / 0.848 | 1.000 / 0.917 / 0.938 |
+| main page (8) | 1.000 / 0.875 / 0.908 | 1.000 / 0.938 / 0.954 |
+| main multi_file (8) | 0.875 / 1.000 / 0.888 | 0.938 / 1.000 / 0.952 |
+| main phase, phase_title, identifier, table (8 each) | 1.000 / 1.000 / 1.000 (table 1.000/0.938/0.954) | 1.000 / 1.000 / 1.000 |
+| held-out phase_exit (6) | 0.833 / 0.417 / 0.490 | 1.000 / 0.514 / 0.605 |
+| held-out multi_file (7) | 0.500 / 0.549 / 0.533 | 0.786 / 0.726 / 0.732 |
+| held-out csv (2) | 0.500 / 0.208 / 0.393 | 1.000 / 0.292 / 0.465 |
+| held-out paraphrase (5) | 0.733 / 0.700 / 0.706 | 0.800 / 0.700 / 0.743 |
+| held-out body (9) | 1.000 / 1.000 / 1.000 | 1.000 / 0.944 / 0.959 **(MRR, nDCG lower)** |
+| held-out hinglish (4) | 1.000 / 1.000 / 0.969 | 1.000 / 0.750 / 0.821 **(MRR, nDCG lower)** |
+| held-out typo (4), page (1), table (3) | unchanged | unchanged |
+
+Two held-out categories rank slightly worse on generation 2 (Recall@5 is unchanged at 1.0): `hinglish` MRR 1.00 to 0.75 (one question's
+answer moved from rank 1 to a lower rank) and `body` MRR 1.00 to 0.94. Nothing was tuned against the held-out set. No default was
+changed (generation 2 is not active), so this is a finding for the activation decision, not a blocker I acted on.
+
+### top_k 5 / 8 / 10 re-check on generation 2 (Recall@k of the returned set)
+| | top_k=5 | top_k=8 | top_k=10 |
+|---|---|---|---|
+| Main g1 | 0.847 (61/72) | 0.889 (64/72) | 0.931 (67/72) |
+| Main g2 | 0.979 (70.5/72) | 0.979 (70.5/72) | 0.993 (71.5/72) |
+| Held-out g1 | 0.764 (31.33/41) | 0.825 (33.83/41) | 0.870 (35.67/41) |
+| Held-out g2 | 0.772 (31.67/41) | 0.919 (37.67/41) | 0.951 (39/41) |
+
+On generation 2, 8 versus 5 is worth 6 held-out questions (31.67 to 37.67 of 41) and nothing on main; 10 versus 8 adds 1.33 held-out and
+1 main. This supports the decision top_k=8 (llm-service, Phase 5). Chunks are smaller in generation 2 (about 46 tokens median, at most
+224 against a 240 limit), so 8 chunks cost fewer prompt tokens than 8 did before.
+
+### Not verified / open
+* Generation 2 has not been built in the shared dev environment from real documents (`make generation-bootstrap/create/reindex`): the
+  running dev embedding-service does not yet serve `GetModelInfo`; to be done at final integration after it is restarted.
+* The Docling heading-level logic is covered by the benchmark PDF only (all its headings are the same size, so it exercises one level).
+* The Docling table-caption and slide-location paths have no test document in the fixtures.

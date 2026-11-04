@@ -1,0 +1,6588 @@
+{
+  "label": "p2",
+  "mode": "real",
+  "embedder": "all-MiniLM-L6-v2",
+  "backend": "live Milvus 127.0.0.1:19530 + OpenSearch 127.0.0.1:9200",
+  "git": "fd1218e",
+  "python": "3.12.3",
+  "ingest": {
+    "g1": {
+      "chunks": 74,
+      "per_file": {
+        "billing-handbook.pdf": 4,
+        "hld.md": 8,
+        "invoices.csv": 2,
+        "lld.md": 7,
+        "onboarding.md": 6,
+        "PHASES.md": 38,
+        "runbook.md": 9
+      }
+    },
+    "g2": {
+      "chunks": 80,
+      "per_file": {
+        "billing-handbook.pdf": 6,
+        "hld.md": 8,
+        "invoices.csv": 6,
+        "lld.md": 7,
+        "onboarding.md": 6,
+        "PHASES.md": 38,
+        "runbook.md": 9
+      }
+    }
+  },
+  "runs": {
+    "g1/default/main": {
+      "overrides": {},
+      "top_k": 10,
+      "metrics": {
+        "recall@5": 0.8889,
+        "recall@8": 0.9167,
+        "recall@10": 0.9306,
+        "mrr@10": 0.7895,
+        "ndcg@10": 0.8147,
+        "identifier_exact_recall@5": 1.0,
+        "page_attribution_accuracy": 0.75,
+        "page_given_retrieved": 0.75,
+        "multi_file_coverage": 0.875,
+        "no_answer_precision": null,
+        "no_answer_recall": 0.0
+      },
+      "fractions": {
+        "recall@5": [
+          64.0,
+          72
+        ],
+        "recall@8": [
+          66.0,
+          72
+        ],
+        "recall@10": [
+          67.0,
+          72
+        ],
+        "mrr@10": [
+          56.8417,
+          72
+        ],
+        "ndcg@10": [
+          58.6596,
+          72
+        ],
+        "identifier_exact_recall@5": [
+          8.0,
+          8
+        ],
+        "page_attribution_accuracy": [
+          12.0,
+          16
+        ],
+        "page_given_retrieved": [
+          12.0,
+          16
+        ],
+        "multi_file_coverage": [
+          7.0,
+          8
+        ],
+        "no_answer_precision": [
+          0,
+          0
+        ],
+        "no_answer_recall": [
+          0.0,
+          8
+        ]
+      },
+      "by_category": {
+        "csv": {
+          "n": 8,
+          "recall@5": 0.875,
+          "recall@5_sum": 7.0,
+          "mrr@10": 0.3063,
+          "ndcg@10": 0.4474
+        },
+        "hinglish": {
+          "n": 8,
+          "recall@5": 0.875,
+          "recall@5_sum": 7.0,
+          "mrr@10": 0.8021,
+          "ndcg@10": 0.8484
+        },
+        "identifier": {
+          "n": 8,
+          "recall@5": 1.0,
+          "recall@5_sum": 8.0,
+          "mrr@10": 1.0,
+          "ndcg@10": 1.0
+        },
+        "multi_file": {
+          "n": 8,
+          "recall@5": 0.875,
+          "recall@5_sum": 7.0,
+          "mrr@10": 1.0,
+          "ndcg@10": 0.8879
+        },
+        "page": {
+          "n": 8,
+          "recall@5": 1.0,
+          "recall@5_sum": 8.0,
+          "mrr@10": 0.875,
+          "ndcg@10": 0.9077
+        },
+        "phase": {
+          "n": 8,
+          "recall@5": 1.0,
+          "recall@5_sum": 8.0,
+          "mrr@10": 1.0,
+          "ndcg@10": 1.0
+        },
+        "phase_exit": {
+          "n": 8,
+          "recall@5": 0.375,
+          "recall@5_sum": 3.0,
+          "mrr@10": 0.1844,
+          "ndcg@10": 0.2871
+        },
+        "phase_title": {
+          "n": 8,
+          "recall@5": 1.0,
+          "recall@5_sum": 8.0,
+          "mrr@10": 1.0,
+          "ndcg@10": 1.0
+        },
+        "table": {
+          "n": 8,
+          "recall@5": 1.0,
+          "recall@5_sum": 8.0,
+          "mrr@10": 0.9375,
+          "ndcg@10": 0.9539
+        }
+      },
+      "counts": {
+        "questions": 80,
+        "answerable": 72,
+        "unanswerable": 8
+      },
+      "degraded_questions": 0,
+      "questions": [
+        {
+          "id": "p6-about",
+          "category": "phase",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p3-about",
+          "category": "phase",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p11-about",
+          "category": "phase",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p1-about",
+          "category": "phase",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p2-about",
+          "category": "phase",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p4-about",
+          "category": "phase",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p7-about",
+          "category": "phase",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p12-about",
+          "category": "phase",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p6-title",
+          "category": "phase_title",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p8-title",
+          "category": "phase_title",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p1-title",
+          "category": "phase_title",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p4-title",
+          "category": "phase_title",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p9-title",
+          "category": "phase_title",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p10-title",
+          "category": "phase_title",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p12-title",
+          "category": "phase_title",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p5-title",
+          "category": "phase_title",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p6-exit",
+          "category": "phase_exit",
+          "status": "OK",
+          "first_relevant_rank": null,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p10-exit",
+          "category": "phase_exit",
+          "status": "OK",
+          "first_relevant_rank": null,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p1-exit",
+          "category": "phase_exit",
+          "status": "OK",
+          "first_relevant_rank": 2,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p4-exit",
+          "category": "phase_exit",
+          "status": "OK",
+          "first_relevant_rank": 2,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p7-exit",
+          "category": "phase_exit",
+          "status": "OK",
+          "first_relevant_rank": 10,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p12-exit",
+          "category": "phase_exit",
+          "status": "OK",
+          "first_relevant_rank": 8,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p3-exit",
+          "category": "phase_exit",
+          "status": "OK",
+          "first_relevant_rank": 4,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p8-exit",
+          "category": "phase_exit",
+          "status": "OK",
+          "first_relevant_rank": null,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p6-hinglish",
+          "category": "hinglish",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p9-hinglish-exit",
+          "category": "hinglish",
+          "status": "OK",
+          "first_relevant_rank": 4,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p4-hinglish",
+          "category": "hinglish",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p11-hinglish",
+          "category": "hinglish",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p8-hinglish",
+          "category": "hinglish",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p2-hinglish-exit",
+          "category": "hinglish",
+          "status": "OK",
+          "first_relevant_rank": 6,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "retry-hinglish",
+          "category": "hinglish",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "enterprise-hinglish",
+          "category": "hinglish",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "mf-idempotency",
+          "category": "multi_file",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "mf-webhook",
+          "category": "multi_file",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "mf-phases",
+          "category": "multi_file",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "mf-retry",
+          "category": "multi_file",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "mf-money",
+          "category": "multi_file",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "mf-dunning",
+          "category": "multi_file",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "mf-retry-limit",
+          "category": "multi_file",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "mf-support",
+          "category": "multi_file",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "id-retry",
+          "category": "identifier",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "id-retry-default",
+          "category": "identifier",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "id-txn",
+          "category": "identifier",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "id-path",
+          "category": "identifier",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "id-alert",
+          "category": "identifier",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "id-ratelimit",
+          "category": "identifier",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "id-currency",
+          "category": "identifier",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "id-table",
+          "category": "identifier",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "tbl-storage",
+          "category": "table",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "tbl-seats",
+          "category": "table",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "tbl-starter-price",
+          "category": "table",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "tbl-starter-storage",
+          "category": "table",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "tbl-enterprise-seats",
+          "category": "table",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "tbl-team-price",
+          "category": "table",
+          "status": "OK",
+          "first_relevant_rank": 2,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "tbl-team-storage",
+          "category": "table",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "tbl-enterprise-price",
+          "category": "table",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "csv-invoice",
+          "category": "csv",
+          "status": "OK",
+          "first_relevant_rank": 2,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "csv-2003",
+          "category": "csv",
+          "status": "OK",
+          "first_relevant_rank": 3,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "csv-2017",
+          "category": "csv",
+          "status": "OK",
+          "first_relevant_rank": 3,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "csv-2033",
+          "category": "csv",
+          "status": "OK",
+          "first_relevant_rank": 4,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "csv-2041",
+          "category": "csv",
+          "status": "OK",
+          "first_relevant_rank": 2,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "csv-2052",
+          "category": "csv",
+          "status": "OK",
+          "first_relevant_rank": null,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "csv-2058",
+          "category": "csv",
+          "status": "OK",
+          "first_relevant_rank": 3,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "csv-2007",
+          "category": "csv",
+          "status": "OK",
+          "first_relevant_rank": 5,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "pg-escalate",
+          "category": "page",
+          "status": "OK",
+          "first_relevant_rank": 2,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "pg-step2",
+          "category": "page",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "pg-step1",
+          "category": "page",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "pg-step3",
+          "category": "page",
+          "status": "OK",
+          "first_relevant_rank": 2,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "pg-archive",
+          "category": "page",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "pg-settle",
+          "category": "page",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "pg-audience",
+          "category": "page",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "pg-plans",
+          "category": "page",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "na-colour",
+          "category": "unanswerable",
+          "status": "OK",
+          "first_relevant_rank": null,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "na-k8s",
+          "category": "unanswerable",
+          "status": "OK",
+          "first_relevant_rank": null,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "na-crypto",
+          "category": "unanswerable",
+          "status": "OK",
+          "first_relevant_rank": null,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "na-football",
+          "category": "unanswerable",
+          "status": "OK",
+          "first_relevant_rank": null,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "na-encryption",
+          "category": "unanswerable",
+          "status": "OK",
+          "first_relevant_rank": null,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "na-upload",
+          "category": "unanswerable",
+          "status": "OK",
+          "first_relevant_rank": null,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "na-vendor",
+          "category": "unanswerable",
+          "status": "OK",
+          "first_relevant_rank": null,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "na-employees",
+          "category": "unanswerable",
+          "status": "OK",
+          "first_relevant_rank": null,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        }
+      ]
+    },
+    "g1/default/heldout": {
+      "overrides": {},
+      "top_k": 10,
+      "metrics": {
+        "recall@5": 0.8089,
+        "recall@8": 0.8577,
+        "recall@10": 0.8699,
+        "mrr@10": 0.7258,
+        "ndcg@10": 0.7438,
+        "identifier_exact_recall@5": null,
+        "page_attribution_accuracy": 0.6,
+        "page_given_retrieved": 0.75,
+        "multi_file_coverage": 0.7143,
+        "no_answer_precision": null,
+        "no_answer_recall": 0.0
+      },
+      "fractions": {
+        "recall@5": [
+          33.1667,
+          41
+        ],
+        "recall@8": [
+          35.1667,
+          41
+        ],
+        "recall@10": [
+          35.6667,
+          41
+        ],
+        "mrr@10": [
+          29.7595,
+          41
+        ],
+        "ndcg@10": [
+          30.4952,
+          41
+        ],
+        "identifier_exact_recall@5": [
+          0,
+          0
+        ],
+        "page_attribution_accuracy": [
+          3.0,
+          5
+        ],
+        "page_given_retrieved": [
+          3.0,
+          4
+        ],
+        "multi_file_coverage": [
+          5.0,
+          7
+        ],
+        "no_answer_precision": [
+          0,
+          0
+        ],
+        "no_answer_recall": [
+          0.0,
+          4
+        ]
+      },
+      "by_category": {
+        "body": {
+          "n": 9,
+          "recall@5": 1.0,
+          "recall@5_sum": 9.0,
+          "mrr@10": 1.0,
+          "ndcg@10": 1.0
+        },
+        "csv": {
+          "n": 2,
+          "recall@5": 0.5,
+          "recall@5_sum": 1.0,
+          "mrr@10": 0.2083,
+          "ndcg@10": 0.3934
+        },
+        "hinglish": {
+          "n": 4,
+          "recall@5": 1.0,
+          "recall@5_sum": 4.0,
+          "mrr@10": 1.0,
+          "ndcg@10": 0.9693
+        },
+        "multi_file": {
+          "n": 7,
+          "recall@5": 0.5,
+          "recall@5_sum": 3.5,
+          "mrr@10": 0.549,
+          "ndcg@10": 0.5331
+        },
+        "page": {
+          "n": 1,
+          "recall@5": 1.0,
+          "recall@5_sum": 1.0,
+          "mrr@10": 1.0,
+          "ndcg@10": 1.0
+        },
+        "paraphrase": {
+          "n": 5,
+          "recall@5": 0.7333,
+          "recall@5_sum": 3.6667,
+          "mrr@10": 0.7,
+          "ndcg@10": 0.7061
+        },
+        "phase_exit": {
+          "n": 6,
+          "recall@5": 0.8333,
+          "recall@5_sum": 5.0,
+          "mrr@10": 0.4167,
+          "ndcg@10": 0.4896
+        },
+        "table": {
+          "n": 3,
+          "recall@5": 0.6667,
+          "recall@5_sum": 2.0,
+          "mrr@10": 0.5,
+          "ndcg@10": 0.5436
+        },
+        "typo": {
+          "n": 4,
+          "recall@5": 1.0,
+          "recall@5_sum": 4.0,
+          "mrr@10": 1.0,
+          "ndcg@10": 1.0
+        }
+      },
+      "counts": {
+        "questions": 45,
+        "answerable": 41,
+        "unanswerable": 4
+      },
+      "degraded_questions": 0,
+      "questions": [
+        {
+          "id": "h-stage6",
+          "category": "paraphrase"
+        },
+        {
+          "id": "h-tax-stage",
+          "category": "paraphrase"
+        },
+        {
+          "id": "h-replay",
+          "category": "paraphrase"
+        },
+        {
+          "id": "h-monitoring-stage",
+          "category": "paraphrase"
+        },
+        {
+          "id": "h-floats",
+          "category": "paraphrase"
+        },
+        {
+          "id": "h-typo-reminder",
+          "category": "typo"
+        },
+        {
+          "id": "h-typo-unmatched",
+          "category": "typo"
+        },
+        {
+          "id": "h-typo-backup",
+          "category": "typo"
+        },
+        {
+          "id": "h-typo-trial",
+          "category": "typo"
+        },
+        {
+          "id": "h-hi-loadtest",
+          "category": "hinglish"
+        },
+        {
+          "id": "h-hi-backup",
+          "category": "hinglish"
+        },
+        {
+          "id": "h-hi-signature",
+          "category": "hinglish"
+        },
+        {
+          "id": "h-hi-refund",
+          "category": "hinglish"
+        },
+        {
+          "id": "h-body-rate",
+          "category": "body"
+        },
+        {
+          "id": "h-body-retention",
+          "category": "body"
+        },
+        {
+          "id": "h-body-invite",
+          "category": "body"
+        },
+        {
+          "id": "h-body-escalation",
+          "category": "body"
+        },
+        {
+          "id": "h-body-hours",
+          "category": "body"
+        },
+        {
+          "id": "h-body-pagesize",
+          "category": "body"
+        },
+        {
+          "id": "h-body-errors",
+          "category": "body"
+        },
+        {
+          "id": "h-body-poll",
+          "category": "body"
+        },
+        {
+          "id": "h-body-sla",
+          "category": "body"
+        },
+        {
+          "id": "h-tbl-biggest",
+          "category": "table"
+        },
+        {
+          "id": "h-tbl-middle",
+          "category": "table"
+        },
+        {
+          "id": "h-tbl-cheapest",
+          "category": "table"
+        },
+        {
+          "id": "h-csv-refund",
+          "category": "csv"
+        },
+        {
+          "id": "h-csv-fabrikam",
+          "category": "csv"
+        },
+        {
+          "id": "h-pg-bank",
+          "category": "page"
+        },
+        {
+          "id": "h-mf-ceiling",
+          "category": "multi_file"
+        },
+        {
+          "id": "h-mf-retry-charges",
+          "category": "multi_file"
+        },
+        {
+          "id": "h-mf-contact",
+          "category": "multi_file"
+        },
+        {
+          "id": "h-mf-money-layers",
+          "category": "multi_file"
+        },
+        {
+          "id": "h-mf-late-payers",
+          "category": "multi_file"
+        },
+        {
+          "id": "h-mf-new-customer",
+          "category": "multi_file"
+        },
+        {
+          "id": "h-mf-paging",
+          "category": "multi_file"
+        },
+        {
+          "id": "h-pe-webhook",
+          "category": "phase_exit"
+        },
+        {
+          "id": "h-pe-tax",
+          "category": "phase_exit"
+        },
+        {
+          "id": "h-pe-admin",
+          "category": "phase_exit"
+        },
+        {
+          "id": "h-pe-loadtest",
+          "category": "phase_exit"
+        },
+        {
+          "id": "h-pe-dunning",
+          "category": "phase_exit"
+        },
+        {
+          "id": "h-pe-schema",
+          "category": "phase_exit"
+        },
+        {
+          "id": "h-na-region",
+          "category": "unanswerable"
+        },
+        {
+          "id": "h-na-ceo",
+          "category": "unanswerable"
+        },
+        {
+          "id": "h-na-password",
+          "category": "unanswerable"
+        },
+        {
+          "id": "h-na-logo",
+          "category": "unanswerable"
+        }
+      ]
+    },
+    "g1/k5/main": {
+      "overrides": {},
+      "top_k": 5,
+      "metrics": {
+        "recall@5": 0.8472,
+        "recall@8": 0.8472,
+        "recall@10": 0.8472,
+        "mrr@10": 0.772,
+        "ndcg@10": 0.7822,
+        "identifier_exact_recall@5": 1.0,
+        "page_attribution_accuracy": 0.75,
+        "page_given_retrieved": 0.8,
+        "multi_file_coverage": 0.875,
+        "no_answer_precision": null,
+        "no_answer_recall": 0.0
+      },
+      "fractions": {
+        "recall@5": [
+          61.0,
+          72
+        ],
+        "recall@8": [
+          61.0,
+          72
+        ],
+        "recall@10": [
+          61.0,
+          72
+        ],
+        "mrr@10": [
+          55.5833,
+          72
+        ],
+        "ndcg@10": [
+          56.3198,
+          72
+        ],
+        "identifier_exact_recall@5": [
+          8.0,
+          8
+        ],
+        "page_attribution_accuracy": [
+          12.0,
+          16
+        ],
+        "page_given_retrieved": [
+          12.0,
+          15
+        ],
+        "multi_file_coverage": [
+          7.0,
+          8
+        ],
+        "no_answer_precision": [
+          0,
+          0
+        ],
+        "no_answer_recall": [
+          0.0,
+          8
+        ]
+      },
+      "by_category": {
+        "csv": {
+          "n": 8,
+          "recall@5": 0.875,
+          "recall@5_sum": 7.0,
+          "mrr@10": 0.3229,
+          "ndcg@10": 0.4616
+        },
+        "hinglish": {
+          "n": 8,
+          "recall@5": 0.75,
+          "recall@5_sum": 6.0,
+          "mrr@10": 0.75,
+          "ndcg@10": 0.75
+        },
+        "identifier": {
+          "n": 8,
+          "recall@5": 1.0,
+          "recall@5_sum": 8.0,
+          "mrr@10": 1.0,
+          "ndcg@10": 1.0
+        },
+        "multi_file": {
+          "n": 8,
+          "recall@5": 0.875,
+          "recall@5_sum": 7.0,
+          "mrr@10": 1.0,
+          "ndcg@10": 0.8879
+        },
+        "page": {
+          "n": 8,
+          "recall@5": 0.875,
+          "recall@5_sum": 7.0,
+          "mrr@10": 0.8125,
+          "ndcg@10": 0.8289
+        },
+        "phase": {
+          "n": 8,
+          "recall@5": 1.0,
+          "recall@5_sum": 8.0,
+          "mrr@10": 1.0,
+          "ndcg@10": 1.0
+        },
+        "phase_exit": {
+          "n": 8,
+          "recall@5": 0.25,
+          "recall@5_sum": 2.0,
+          "mrr@10": 0.125,
+          "ndcg@10": 0.1577
+        },
+        "phase_title": {
+          "n": 8,
+          "recall@5": 1.0,
+          "recall@5_sum": 8.0,
+          "mrr@10": 1.0,
+          "ndcg@10": 1.0
+        },
+        "table": {
+          "n": 8,
+          "recall@5": 1.0,
+          "recall@5_sum": 8.0,
+          "mrr@10": 0.9375,
+          "ndcg@10": 0.9539
+        }
+      },
+      "counts": {
+        "questions": 80,
+        "answerable": 72,
+        "unanswerable": 8
+      },
+      "degraded_questions": 0,
+      "questions": [
+        {
+          "id": "p6-about",
+          "category": "phase",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p3-about",
+          "category": "phase",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p11-about",
+          "category": "phase",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p1-about",
+          "category": "phase",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p2-about",
+          "category": "phase",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p4-about",
+          "category": "phase",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p7-about",
+          "category": "phase",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p12-about",
+          "category": "phase",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p6-title",
+          "category": "phase_title",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p8-title",
+          "category": "phase_title",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p1-title",
+          "category": "phase_title",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p4-title",
+          "category": "phase_title",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p9-title",
+          "category": "phase_title",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p10-title",
+          "category": "phase_title",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p12-title",
+          "category": "phase_title",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p5-title",
+          "category": "phase_title",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p6-exit",
+          "category": "phase_exit",
+          "status": "OK",
+          "first_relevant_rank": null,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p10-exit",
+          "category": "phase_exit",
+          "status": "OK",
+          "first_relevant_rank": null,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p1-exit",
+          "category": "phase_exit",
+          "status": "OK",
+          "first_relevant_rank": 2,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p4-exit",
+          "category": "phase_exit",
+          "status": "OK",
+          "first_relevant_rank": 2,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p7-exit",
+          "category": "phase_exit",
+          "status": "OK",
+          "first_relevant_rank": null,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p12-exit",
+          "category": "phase_exit",
+          "status": "OK",
+          "first_relevant_rank": null,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p3-exit",
+          "category": "phase_exit",
+          "status": "OK",
+          "first_relevant_rank": null,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p8-exit",
+          "category": "phase_exit",
+          "status": "OK",
+          "first_relevant_rank": null,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p6-hinglish",
+          "category": "hinglish",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p9-hinglish-exit",
+          "category": "hinglish",
+          "status": "OK",
+          "first_relevant_rank": null,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p4-hinglish",
+          "category": "hinglish",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p11-hinglish",
+          "category": "hinglish",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p8-hinglish",
+          "category": "hinglish",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p2-hinglish-exit",
+          "category": "hinglish",
+          "status": "OK",
+          "first_relevant_rank": null,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "retry-hinglish",
+          "category": "hinglish",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "enterprise-hinglish",
+          "category": "hinglish",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "mf-idempotency",
+          "category": "multi_file",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "mf-webhook",
+          "category": "multi_file",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "mf-phases",
+          "category": "multi_file",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "mf-retry",
+          "category": "multi_file",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "mf-money",
+          "category": "multi_file",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "mf-dunning",
+          "category": "multi_file",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "mf-retry-limit",
+          "category": "multi_file",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "mf-support",
+          "category": "multi_file",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "id-retry",
+          "category": "identifier",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "id-retry-default",
+          "category": "identifier",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "id-txn",
+          "category": "identifier",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "id-path",
+          "category": "identifier",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "id-alert",
+          "category": "identifier",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "id-ratelimit",
+          "category": "identifier",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "id-currency",
+          "category": "identifier",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "id-table",
+          "category": "identifier",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "tbl-storage",
+          "category": "table",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "tbl-seats",
+          "category": "table",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "tbl-starter-price",
+          "category": "table",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "tbl-starter-storage",
+          "category": "table",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "tbl-enterprise-seats",
+          "category": "table",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "tbl-team-price",
+          "category": "table",
+          "status": "OK",
+          "first_relevant_rank": 2,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "tbl-team-storage",
+          "category": "table",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "tbl-enterprise-price",
+          "category": "table",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "csv-invoice",
+          "category": "csv",
+          "status": "OK",
+          "first_relevant_rank": 2,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "csv-2003",
+          "category": "csv",
+          "status": "OK",
+          "first_relevant_rank": 3,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "csv-2017",
+          "category": "csv",
+          "status": "OK",
+          "first_relevant_rank": 3,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "csv-2033",
+          "category": "csv",
+          "status": "OK",
+          "first_relevant_rank": 4,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "csv-2041",
+          "category": "csv",
+          "status": "OK",
+          "first_relevant_rank": 2,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "csv-2052",
+          "category": "csv",
+          "status": "OK",
+          "first_relevant_rank": null,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "csv-2058",
+          "category": "csv",
+          "status": "OK",
+          "first_relevant_rank": 3,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "csv-2007",
+          "category": "csv",
+          "status": "OK",
+          "first_relevant_rank": 3,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "pg-escalate",
+          "category": "page",
+          "status": "OK",
+          "first_relevant_rank": 2,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "pg-step2",
+          "category": "page",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "pg-step1",
+          "category": "page",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "pg-step3",
+          "category": "page",
+          "status": "OK",
+          "first_relevant_rank": null,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "pg-archive",
+          "category": "page",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "pg-settle",
+          "category": "page",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "pg-audience",
+          "category": "page",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "pg-plans",
+          "category": "page",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "na-colour",
+          "category": "unanswerable",
+          "status": "OK",
+          "first_relevant_rank": null,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "na-k8s",
+          "category": "unanswerable",
+          "status": "OK",
+          "first_relevant_rank": null,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "na-crypto",
+          "category": "unanswerable",
+          "status": "OK",
+          "first_relevant_rank": null,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "na-football",
+          "category": "unanswerable",
+          "status": "OK",
+          "first_relevant_rank": null,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "na-encryption",
+          "category": "unanswerable",
+          "status": "OK",
+          "first_relevant_rank": null,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "na-upload",
+          "category": "unanswerable",
+          "status": "OK",
+          "first_relevant_rank": null,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "na-vendor",
+          "category": "unanswerable",
+          "status": "OK",
+          "first_relevant_rank": null,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "na-employees",
+          "category": "unanswerable",
+          "status": "OK",
+          "first_relevant_rank": null,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        }
+      ]
+    },
+    "g1/k5/heldout": {
+      "overrides": {},
+      "top_k": 5,
+      "metrics": {
+        "recall@5": 0.7642,
+        "recall@8": 0.7642,
+        "recall@10": 0.7642,
+        "mrr@10": 0.7114,
+        "ndcg@10": 0.7014,
+        "identifier_exact_recall@5": null,
+        "page_attribution_accuracy": 0.6,
+        "page_given_retrieved": 0.75,
+        "multi_file_coverage": 0.4286,
+        "no_answer_precision": null,
+        "no_answer_recall": 0.0
+      },
+      "fractions": {
+        "recall@5": [
+          31.3333,
+          41
+        ],
+        "recall@8": [
+          31.3333,
+          41
+        ],
+        "recall@10": [
+          31.3333,
+          41
+        ],
+        "mrr@10": [
+          29.1667,
+          41
+        ],
+        "ndcg@10": [
+          28.7587,
+          41
+        ],
+        "identifier_exact_recall@5": [
+          0,
+          0
+        ],
+        "page_attribution_accuracy": [
+          3.0,
+          5
+        ],
+        "page_given_retrieved": [
+          3.0,
+          4
+        ],
+        "multi_file_coverage": [
+          3.0,
+          7
+        ],
+        "no_answer_precision": [
+          0,
+          0
+        ],
+        "no_answer_recall": [
+          0.0,
+          4
+        ]
+      },
+      "by_category": {
+        "body": {
+          "n": 9,
+          "recall@5": 1.0,
+          "recall@5_sum": 9.0,
+          "mrr@10": 1.0,
+          "ndcg@10": 1.0
+        },
+        "csv": {
+          "n": 2,
+          "recall@5": 1.0,
+          "recall@5_sum": 2.0,
+          "mrr@10": 0.25,
+          "ndcg@10": 0.4307
+        },
+        "hinglish": {
+          "n": 4,
+          "recall@5": 1.0,
+          "recall@5_sum": 4.0,
+          "mrr@10": 1.0,
+          "ndcg@10": 0.9799
+        },
+        "multi_file": {
+          "n": 7,
+          "recall@5": 0.4286,
+          "recall@5_sum": 3.0,
+          "mrr@10": 0.5476,
+          "ndcg@10": 0.4171
+        },
+        "page": {
+          "n": 1,
+          "recall@5": 1.0,
+          "recall@5_sum": 1.0,
+          "mrr@10": 1.0,
+          "ndcg@10": 1.0
+        },
+        "paraphrase": {
+          "n": 5,
+          "recall@5": 0.6667,
+          "recall@5_sum": 3.3333,
+          "mrr@10": 0.7,
+          "ndcg@10": 0.6592
+        },
+        "phase_exit": {
+          "n": 6,
+          "recall@5": 0.5,
+          "recall@5_sum": 3.0,
+          "mrr@10": 0.3056,
+          "ndcg@10": 0.3552
+        },
+        "table": {
+          "n": 3,
+          "recall@5": 0.6667,
+          "recall@5_sum": 2.0,
+          "mrr@10": 0.5,
+          "ndcg@10": 0.5436
+        },
+        "typo": {
+          "n": 4,
+          "recall@5": 1.0,
+          "recall@5_sum": 4.0,
+          "mrr@10": 1.0,
+          "ndcg@10": 1.0
+        }
+      },
+      "counts": {
+        "questions": 45,
+        "answerable": 41,
+        "unanswerable": 4
+      },
+      "degraded_questions": 0,
+      "questions": [
+        {
+          "id": "h-stage6",
+          "category": "paraphrase"
+        },
+        {
+          "id": "h-tax-stage",
+          "category": "paraphrase"
+        },
+        {
+          "id": "h-replay",
+          "category": "paraphrase"
+        },
+        {
+          "id": "h-monitoring-stage",
+          "category": "paraphrase"
+        },
+        {
+          "id": "h-floats",
+          "category": "paraphrase"
+        },
+        {
+          "id": "h-typo-reminder",
+          "category": "typo"
+        },
+        {
+          "id": "h-typo-unmatched",
+          "category": "typo"
+        },
+        {
+          "id": "h-typo-backup",
+          "category": "typo"
+        },
+        {
+          "id": "h-typo-trial",
+          "category": "typo"
+        },
+        {
+          "id": "h-hi-loadtest",
+          "category": "hinglish"
+        },
+        {
+          "id": "h-hi-backup",
+          "category": "hinglish"
+        },
+        {
+          "id": "h-hi-signature",
+          "category": "hinglish"
+        },
+        {
+          "id": "h-hi-refund",
+          "category": "hinglish"
+        },
+        {
+          "id": "h-body-rate",
+          "category": "body"
+        },
+        {
+          "id": "h-body-retention",
+          "category": "body"
+        },
+        {
+          "id": "h-body-invite",
+          "category": "body"
+        },
+        {
+          "id": "h-body-escalation",
+          "category": "body"
+        },
+        {
+          "id": "h-body-hours",
+          "category": "body"
+        },
+        {
+          "id": "h-body-pagesize",
+          "category": "body"
+        },
+        {
+          "id": "h-body-errors",
+          "category": "body"
+        },
+        {
+          "id": "h-body-poll",
+          "category": "body"
+        },
+        {
+          "id": "h-body-sla",
+          "category": "body"
+        },
+        {
+          "id": "h-tbl-biggest",
+          "category": "table"
+        },
+        {
+          "id": "h-tbl-middle",
+          "category": "table"
+        },
+        {
+          "id": "h-tbl-cheapest",
+          "category": "table"
+        },
+        {
+          "id": "h-csv-refund",
+          "category": "csv"
+        },
+        {
+          "id": "h-csv-fabrikam",
+          "category": "csv"
+        },
+        {
+          "id": "h-pg-bank",
+          "category": "page"
+        },
+        {
+          "id": "h-mf-ceiling",
+          "category": "multi_file"
+        },
+        {
+          "id": "h-mf-retry-charges",
+          "category": "multi_file"
+        },
+        {
+          "id": "h-mf-contact",
+          "category": "multi_file"
+        },
+        {
+          "id": "h-mf-money-layers",
+          "category": "multi_file"
+        },
+        {
+          "id": "h-mf-late-payers",
+          "category": "multi_file"
+        },
+        {
+          "id": "h-mf-new-customer",
+          "category": "multi_file"
+        },
+        {
+          "id": "h-mf-paging",
+          "category": "multi_file"
+        },
+        {
+          "id": "h-pe-webhook",
+          "category": "phase_exit"
+        },
+        {
+          "id": "h-pe-tax",
+          "category": "phase_exit"
+        },
+        {
+          "id": "h-pe-admin",
+          "category": "phase_exit"
+        },
+        {
+          "id": "h-pe-loadtest",
+          "category": "phase_exit"
+        },
+        {
+          "id": "h-pe-dunning",
+          "category": "phase_exit"
+        },
+        {
+          "id": "h-pe-schema",
+          "category": "phase_exit"
+        },
+        {
+          "id": "h-na-region",
+          "category": "unanswerable"
+        },
+        {
+          "id": "h-na-ceo",
+          "category": "unanswerable"
+        },
+        {
+          "id": "h-na-password",
+          "category": "unanswerable"
+        },
+        {
+          "id": "h-na-logo",
+          "category": "unanswerable"
+        }
+      ]
+    },
+    "g1/k8/main": {
+      "overrides": {},
+      "top_k": 8,
+      "metrics": {
+        "recall@5": 0.875,
+        "recall@8": 0.8889,
+        "recall@10": 0.8889,
+        "mrr@10": 0.7836,
+        "ndcg@10": 0.8009,
+        "identifier_exact_recall@5": 1.0,
+        "page_attribution_accuracy": 0.75,
+        "page_given_retrieved": 0.75,
+        "multi_file_coverage": 0.875,
+        "no_answer_precision": null,
+        "no_answer_recall": 0.0
+      },
+      "fractions": {
+        "recall@5": [
+          63.0,
+          72
+        ],
+        "recall@8": [
+          64.0,
+          72
+        ],
+        "recall@10": [
+          64.0,
+          72
+        ],
+        "mrr@10": [
+          56.4167,
+          72
+        ],
+        "ndcg@10": [
+          57.6683,
+          72
+        ],
+        "identifier_exact_recall@5": [
+          8.0,
+          8
+        ],
+        "page_attribution_accuracy": [
+          12.0,
+          16
+        ],
+        "page_given_retrieved": [
+          12.0,
+          16
+        ],
+        "multi_file_coverage": [
+          7.0,
+          8
+        ],
+        "no_answer_precision": [
+          0,
+          0
+        ],
+        "no_answer_recall": [
+          0.0,
+          8
+        ]
+      },
+      "by_category": {
+        "csv": {
+          "n": 8,
+          "recall@5": 0.875,
+          "recall@5_sum": 7.0,
+          "mrr@10": 0.3125,
+          "ndcg@10": 0.4529
+        },
+        "hinglish": {
+          "n": 8,
+          "recall@5": 0.75,
+          "recall@5_sum": 6.0,
+          "mrr@10": 0.7708,
+          "ndcg@10": 0.7945
+        },
+        "identifier": {
+          "n": 8,
+          "recall@5": 1.0,
+          "recall@5_sum": 8.0,
+          "mrr@10": 1.0,
+          "ndcg@10": 1.0
+        },
+        "multi_file": {
+          "n": 8,
+          "recall@5": 0.875,
+          "recall@5_sum": 7.0,
+          "mrr@10": 1.0,
+          "ndcg@10": 0.8879
+        },
+        "page": {
+          "n": 8,
+          "recall@5": 1.0,
+          "recall@5_sum": 8.0,
+          "mrr@10": 0.875,
+          "ndcg@10": 0.9077
+        },
+        "phase": {
+          "n": 8,
+          "recall@5": 1.0,
+          "recall@5_sum": 8.0,
+          "mrr@10": 1.0,
+          "ndcg@10": 1.0
+        },
+        "phase_exit": {
+          "n": 8,
+          "recall@5": 0.375,
+          "recall@5_sum": 3.0,
+          "mrr@10": 0.1562,
+          "ndcg@10": 0.2116
+        },
+        "phase_title": {
+          "n": 8,
+          "recall@5": 1.0,
+          "recall@5_sum": 8.0,
+          "mrr@10": 1.0,
+          "ndcg@10": 1.0
+        },
+        "table": {
+          "n": 8,
+          "recall@5": 1.0,
+          "recall@5_sum": 8.0,
+          "mrr@10": 0.9375,
+          "ndcg@10": 0.9539
+        }
+      },
+      "counts": {
+        "questions": 80,
+        "answerable": 72,
+        "unanswerable": 8
+      },
+      "degraded_questions": 0,
+      "questions": [
+        {
+          "id": "p6-about",
+          "category": "phase",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p3-about",
+          "category": "phase",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p11-about",
+          "category": "phase",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p1-about",
+          "category": "phase",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p2-about",
+          "category": "phase",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p4-about",
+          "category": "phase",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p7-about",
+          "category": "phase",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p12-about",
+          "category": "phase",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p6-title",
+          "category": "phase_title",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p8-title",
+          "category": "phase_title",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p1-title",
+          "category": "phase_title",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p4-title",
+          "category": "phase_title",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p9-title",
+          "category": "phase_title",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p10-title",
+          "category": "phase_title",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p12-title",
+          "category": "phase_title",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p5-title",
+          "category": "phase_title",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p6-exit",
+          "category": "phase_exit",
+          "status": "OK",
+          "first_relevant_rank": null,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p10-exit",
+          "category": "phase_exit",
+          "status": "OK",
+          "first_relevant_rank": null,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p1-exit",
+          "category": "phase_exit",
+          "status": "OK",
+          "first_relevant_rank": 2,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p4-exit",
+          "category": "phase_exit",
+          "status": "OK",
+          "first_relevant_rank": 2,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p7-exit",
+          "category": "phase_exit",
+          "status": "OK",
+          "first_relevant_rank": null,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p12-exit",
+          "category": "phase_exit",
+          "status": "OK",
+          "first_relevant_rank": null,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p3-exit",
+          "category": "phase_exit",
+          "status": "OK",
+          "first_relevant_rank": 4,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p8-exit",
+          "category": "phase_exit",
+          "status": "OK",
+          "first_relevant_rank": null,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p6-hinglish",
+          "category": "hinglish",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p9-hinglish-exit",
+          "category": "hinglish",
+          "status": "OK",
+          "first_relevant_rank": null,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p4-hinglish",
+          "category": "hinglish",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p11-hinglish",
+          "category": "hinglish",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p8-hinglish",
+          "category": "hinglish",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p2-hinglish-exit",
+          "category": "hinglish",
+          "status": "OK",
+          "first_relevant_rank": 6,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "retry-hinglish",
+          "category": "hinglish",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "enterprise-hinglish",
+          "category": "hinglish",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "mf-idempotency",
+          "category": "multi_file",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "mf-webhook",
+          "category": "multi_file",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "mf-phases",
+          "category": "multi_file",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "mf-retry",
+          "category": "multi_file",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "mf-money",
+          "category": "multi_file",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "mf-dunning",
+          "category": "multi_file",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "mf-retry-limit",
+          "category": "multi_file",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "mf-support",
+          "category": "multi_file",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "id-retry",
+          "category": "identifier",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "id-retry-default",
+          "category": "identifier",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "id-txn",
+          "category": "identifier",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "id-path",
+          "category": "identifier",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "id-alert",
+          "category": "identifier",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "id-ratelimit",
+          "category": "identifier",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "id-currency",
+          "category": "identifier",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "id-table",
+          "category": "identifier",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "tbl-storage",
+          "category": "table",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "tbl-seats",
+          "category": "table",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "tbl-starter-price",
+          "category": "table",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "tbl-starter-storage",
+          "category": "table",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "tbl-enterprise-seats",
+          "category": "table",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "tbl-team-price",
+          "category": "table",
+          "status": "OK",
+          "first_relevant_rank": 2,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "tbl-team-storage",
+          "category": "table",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "tbl-enterprise-price",
+          "category": "table",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "csv-invoice",
+          "category": "csv",
+          "status": "OK",
+          "first_relevant_rank": 2,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "csv-2003",
+          "category": "csv",
+          "status": "OK",
+          "first_relevant_rank": 3,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "csv-2017",
+          "category": "csv",
+          "status": "OK",
+          "first_relevant_rank": 3,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "csv-2033",
+          "category": "csv",
+          "status": "OK",
+          "first_relevant_rank": 4,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "csv-2041",
+          "category": "csv",
+          "status": "OK",
+          "first_relevant_rank": 2,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "csv-2052",
+          "category": "csv",
+          "status": "OK",
+          "first_relevant_rank": null,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "csv-2058",
+          "category": "csv",
+          "status": "OK",
+          "first_relevant_rank": 3,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "csv-2007",
+          "category": "csv",
+          "status": "OK",
+          "first_relevant_rank": 4,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "pg-escalate",
+          "category": "page",
+          "status": "OK",
+          "first_relevant_rank": 2,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "pg-step2",
+          "category": "page",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "pg-step1",
+          "category": "page",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "pg-step3",
+          "category": "page",
+          "status": "OK",
+          "first_relevant_rank": 2,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "pg-archive",
+          "category": "page",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "pg-settle",
+          "category": "page",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "pg-audience",
+          "category": "page",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "pg-plans",
+          "category": "page",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "na-colour",
+          "category": "unanswerable",
+          "status": "OK",
+          "first_relevant_rank": null,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "na-k8s",
+          "category": "unanswerable",
+          "status": "OK",
+          "first_relevant_rank": null,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "na-crypto",
+          "category": "unanswerable",
+          "status": "OK",
+          "first_relevant_rank": null,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "na-football",
+          "category": "unanswerable",
+          "status": "OK",
+          "first_relevant_rank": null,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "na-encryption",
+          "category": "unanswerable",
+          "status": "OK",
+          "first_relevant_rank": null,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "na-upload",
+          "category": "unanswerable",
+          "status": "OK",
+          "first_relevant_rank": null,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "na-vendor",
+          "category": "unanswerable",
+          "status": "OK",
+          "first_relevant_rank": null,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "na-employees",
+          "category": "unanswerable",
+          "status": "OK",
+          "first_relevant_rank": null,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        }
+      ]
+    },
+    "g1/k8/heldout": {
+      "overrides": {},
+      "top_k": 8,
+      "metrics": {
+        "recall@5": 0.813,
+        "recall@8": 0.8252,
+        "recall@10": 0.8252,
+        "mrr@10": 0.7199,
+        "ndcg@10": 0.7278,
+        "identifier_exact_recall@5": null,
+        "page_attribution_accuracy": 0.6,
+        "page_given_retrieved": 0.75,
+        "multi_file_coverage": 0.6429,
+        "no_answer_precision": null,
+        "no_answer_recall": 0.0
+      },
+      "fractions": {
+        "recall@5": [
+          33.3333,
+          41
+        ],
+        "recall@8": [
+          33.8333,
+          41
+        ],
+        "recall@10": [
+          33.8333,
+          41
+        ],
+        "mrr@10": [
+          29.5167,
+          41
+        ],
+        "ndcg@10": [
+          29.8402,
+          41
+        ],
+        "identifier_exact_recall@5": [
+          0,
+          0
+        ],
+        "page_attribution_accuracy": [
+          3.0,
+          5
+        ],
+        "page_given_retrieved": [
+          3.0,
+          4
+        ],
+        "multi_file_coverage": [
+          4.5,
+          7
+        ],
+        "no_answer_precision": [
+          0,
+          0
+        ],
+        "no_answer_recall": [
+          0.0,
+          4
+        ]
+      },
+      "by_category": {
+        "body": {
+          "n": 9,
+          "recall@5": 1.0,
+          "recall@5_sum": 9.0,
+          "mrr@10": 1.0,
+          "ndcg@10": 1.0
+        },
+        "csv": {
+          "n": 2,
+          "recall@5": 1.0,
+          "recall@5_sum": 2.0,
+          "mrr@10": 0.225,
+          "ndcg@10": 0.4088
+        },
+        "hinglish": {
+          "n": 4,
+          "recall@5": 1.0,
+          "recall@5_sum": 4.0,
+          "mrr@10": 1.0,
+          "ndcg@10": 0.9693
+        },
+        "multi_file": {
+          "n": 7,
+          "recall@5": 0.5714,
+          "recall@5_sum": 4.0,
+          "mrr@10": 0.5571,
+          "ndcg@10": 0.5125
+        },
+        "page": {
+          "n": 1,
+          "recall@5": 1.0,
+          "recall@5_sum": 1.0,
+          "mrr@10": 1.0,
+          "ndcg@10": 1.0
+        },
+        "paraphrase": {
+          "n": 5,
+          "recall@5": 0.6667,
+          "recall@5_sum": 3.3333,
+          "mrr@10": 0.7,
+          "ndcg@10": 0.6592
+        },
+        "phase_exit": {
+          "n": 6,
+          "recall@5": 0.6667,
+          "recall@5_sum": 4.0,
+          "mrr@10": 0.3611,
+          "ndcg@10": 0.4385
+        },
+        "table": {
+          "n": 3,
+          "recall@5": 0.6667,
+          "recall@5_sum": 2.0,
+          "mrr@10": 0.5,
+          "ndcg@10": 0.5436
+        },
+        "typo": {
+          "n": 4,
+          "recall@5": 1.0,
+          "recall@5_sum": 4.0,
+          "mrr@10": 1.0,
+          "ndcg@10": 1.0
+        }
+      },
+      "counts": {
+        "questions": 45,
+        "answerable": 41,
+        "unanswerable": 4
+      },
+      "degraded_questions": 0,
+      "questions": [
+        {
+          "id": "h-stage6",
+          "category": "paraphrase"
+        },
+        {
+          "id": "h-tax-stage",
+          "category": "paraphrase"
+        },
+        {
+          "id": "h-replay",
+          "category": "paraphrase"
+        },
+        {
+          "id": "h-monitoring-stage",
+          "category": "paraphrase"
+        },
+        {
+          "id": "h-floats",
+          "category": "paraphrase"
+        },
+        {
+          "id": "h-typo-reminder",
+          "category": "typo"
+        },
+        {
+          "id": "h-typo-unmatched",
+          "category": "typo"
+        },
+        {
+          "id": "h-typo-backup",
+          "category": "typo"
+        },
+        {
+          "id": "h-typo-trial",
+          "category": "typo"
+        },
+        {
+          "id": "h-hi-loadtest",
+          "category": "hinglish"
+        },
+        {
+          "id": "h-hi-backup",
+          "category": "hinglish"
+        },
+        {
+          "id": "h-hi-signature",
+          "category": "hinglish"
+        },
+        {
+          "id": "h-hi-refund",
+          "category": "hinglish"
+        },
+        {
+          "id": "h-body-rate",
+          "category": "body"
+        },
+        {
+          "id": "h-body-retention",
+          "category": "body"
+        },
+        {
+          "id": "h-body-invite",
+          "category": "body"
+        },
+        {
+          "id": "h-body-escalation",
+          "category": "body"
+        },
+        {
+          "id": "h-body-hours",
+          "category": "body"
+        },
+        {
+          "id": "h-body-pagesize",
+          "category": "body"
+        },
+        {
+          "id": "h-body-errors",
+          "category": "body"
+        },
+        {
+          "id": "h-body-poll",
+          "category": "body"
+        },
+        {
+          "id": "h-body-sla",
+          "category": "body"
+        },
+        {
+          "id": "h-tbl-biggest",
+          "category": "table"
+        },
+        {
+          "id": "h-tbl-middle",
+          "category": "table"
+        },
+        {
+          "id": "h-tbl-cheapest",
+          "category": "table"
+        },
+        {
+          "id": "h-csv-refund",
+          "category": "csv"
+        },
+        {
+          "id": "h-csv-fabrikam",
+          "category": "csv"
+        },
+        {
+          "id": "h-pg-bank",
+          "category": "page"
+        },
+        {
+          "id": "h-mf-ceiling",
+          "category": "multi_file"
+        },
+        {
+          "id": "h-mf-retry-charges",
+          "category": "multi_file"
+        },
+        {
+          "id": "h-mf-contact",
+          "category": "multi_file"
+        },
+        {
+          "id": "h-mf-money-layers",
+          "category": "multi_file"
+        },
+        {
+          "id": "h-mf-late-payers",
+          "category": "multi_file"
+        },
+        {
+          "id": "h-mf-new-customer",
+          "category": "multi_file"
+        },
+        {
+          "id": "h-mf-paging",
+          "category": "multi_file"
+        },
+        {
+          "id": "h-pe-webhook",
+          "category": "phase_exit"
+        },
+        {
+          "id": "h-pe-tax",
+          "category": "phase_exit"
+        },
+        {
+          "id": "h-pe-admin",
+          "category": "phase_exit"
+        },
+        {
+          "id": "h-pe-loadtest",
+          "category": "phase_exit"
+        },
+        {
+          "id": "h-pe-dunning",
+          "category": "phase_exit"
+        },
+        {
+          "id": "h-pe-schema",
+          "category": "phase_exit"
+        },
+        {
+          "id": "h-na-region",
+          "category": "unanswerable"
+        },
+        {
+          "id": "h-na-ceo",
+          "category": "unanswerable"
+        },
+        {
+          "id": "h-na-password",
+          "category": "unanswerable"
+        },
+        {
+          "id": "h-na-logo",
+          "category": "unanswerable"
+        }
+      ]
+    },
+    "g2/default/main": {
+      "overrides": {},
+      "top_k": 10,
+      "metrics": {
+        "recall@5": 0.9931,
+        "recall@8": 0.9931,
+        "recall@10": 0.9931,
+        "mrr@10": 0.8748,
+        "ndcg@10": 0.9005,
+        "identifier_exact_recall@5": 1.0,
+        "page_attribution_accuracy": 1.0,
+        "page_given_retrieved": 1.0,
+        "multi_file_coverage": 0.9375,
+        "no_answer_precision": null,
+        "no_answer_recall": 0.0
+      },
+      "fractions": {
+        "recall@5": [
+          71.5,
+          72
+        ],
+        "recall@8": [
+          71.5,
+          72
+        ],
+        "recall@10": [
+          71.5,
+          72
+        ],
+        "mrr@10": [
+          62.9833,
+          72
+        ],
+        "ndcg@10": [
+          64.8335,
+          72
+        ],
+        "identifier_exact_recall@5": [
+          8.0,
+          8
+        ],
+        "page_attribution_accuracy": [
+          16.0,
+          16
+        ],
+        "page_given_retrieved": [
+          16.0,
+          16
+        ],
+        "multi_file_coverage": [
+          7.5,
+          8
+        ],
+        "no_answer_precision": [
+          0,
+          0
+        ],
+        "no_answer_recall": [
+          0.0,
+          8
+        ]
+      },
+      "by_category": {
+        "csv": {
+          "n": 8,
+          "recall@5": 1.0,
+          "recall@5_sum": 8.0,
+          "mrr@10": 0.4979,
+          "ndcg@10": 0.6208
+        },
+        "hinglish": {
+          "n": 8,
+          "recall@5": 1.0,
+          "recall@5_sum": 8.0,
+          "mrr@10": 0.9167,
+          "ndcg@10": 0.9375
+        },
+        "identifier": {
+          "n": 8,
+          "recall@5": 1.0,
+          "recall@5_sum": 8.0,
+          "mrr@10": 1.0,
+          "ndcg@10": 1.0
+        },
+        "multi_file": {
+          "n": 8,
+          "recall@5": 0.9375,
+          "recall@5_sum": 7.5,
+          "mrr@10": 1.0,
+          "ndcg@10": 0.9516
+        },
+        "page": {
+          "n": 8,
+          "recall@5": 1.0,
+          "recall@5_sum": 8.0,
+          "mrr@10": 0.9375,
+          "ndcg@10": 0.9539
+        },
+        "phase": {
+          "n": 8,
+          "recall@5": 1.0,
+          "recall@5_sum": 8.0,
+          "mrr@10": 1.0,
+          "ndcg@10": 1.0
+        },
+        "phase_exit": {
+          "n": 8,
+          "recall@5": 1.0,
+          "recall@5_sum": 8.0,
+          "mrr@10": 0.5208,
+          "ndcg@10": 0.6404
+        },
+        "phase_title": {
+          "n": 8,
+          "recall@5": 1.0,
+          "recall@5_sum": 8.0,
+          "mrr@10": 1.0,
+          "ndcg@10": 1.0
+        },
+        "table": {
+          "n": 8,
+          "recall@5": 1.0,
+          "recall@5_sum": 8.0,
+          "mrr@10": 1.0,
+          "ndcg@10": 1.0
+        }
+      },
+      "counts": {
+        "questions": 80,
+        "answerable": 72,
+        "unanswerable": 8
+      },
+      "degraded_questions": 0,
+      "questions": [
+        {
+          "id": "p6-about",
+          "category": "phase",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p3-about",
+          "category": "phase",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p11-about",
+          "category": "phase",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p1-about",
+          "category": "phase",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p2-about",
+          "category": "phase",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p4-about",
+          "category": "phase",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p7-about",
+          "category": "phase",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p12-about",
+          "category": "phase",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p6-title",
+          "category": "phase_title",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p8-title",
+          "category": "phase_title",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p1-title",
+          "category": "phase_title",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p4-title",
+          "category": "phase_title",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p9-title",
+          "category": "phase_title",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p10-title",
+          "category": "phase_title",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p12-title",
+          "category": "phase_title",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p5-title",
+          "category": "phase_title",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p6-exit",
+          "category": "phase_exit",
+          "status": "OK",
+          "first_relevant_rank": 3,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p10-exit",
+          "category": "phase_exit",
+          "status": "OK",
+          "first_relevant_rank": 2,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p1-exit",
+          "category": "phase_exit",
+          "status": "OK",
+          "first_relevant_rank": 4,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p4-exit",
+          "category": "phase_exit",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p7-exit",
+          "category": "phase_exit",
+          "status": "OK",
+          "first_relevant_rank": 4,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p12-exit",
+          "category": "phase_exit",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p3-exit",
+          "category": "phase_exit",
+          "status": "OK",
+          "first_relevant_rank": 3,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p8-exit",
+          "category": "phase_exit",
+          "status": "OK",
+          "first_relevant_rank": 2,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p6-hinglish",
+          "category": "hinglish",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p9-hinglish-exit",
+          "category": "hinglish",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p4-hinglish",
+          "category": "hinglish",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p11-hinglish",
+          "category": "hinglish",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p8-hinglish",
+          "category": "hinglish",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p2-hinglish-exit",
+          "category": "hinglish",
+          "status": "OK",
+          "first_relevant_rank": 3,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "retry-hinglish",
+          "category": "hinglish",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "enterprise-hinglish",
+          "category": "hinglish",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "mf-idempotency",
+          "category": "multi_file",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "mf-webhook",
+          "category": "multi_file",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "mf-phases",
+          "category": "multi_file",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "mf-retry",
+          "category": "multi_file",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "mf-money",
+          "category": "multi_file",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "mf-dunning",
+          "category": "multi_file",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "mf-retry-limit",
+          "category": "multi_file",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "mf-support",
+          "category": "multi_file",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "id-retry",
+          "category": "identifier",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "id-retry-default",
+          "category": "identifier",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "id-txn",
+          "category": "identifier",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "id-path",
+          "category": "identifier",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "id-alert",
+          "category": "identifier",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "id-ratelimit",
+          "category": "identifier",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "id-currency",
+          "category": "identifier",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "id-table",
+          "category": "identifier",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "tbl-storage",
+          "category": "table",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "tbl-seats",
+          "category": "table",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "tbl-starter-price",
+          "category": "table",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "tbl-starter-storage",
+          "category": "table",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "tbl-enterprise-seats",
+          "category": "table",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "tbl-team-price",
+          "category": "table",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "tbl-team-storage",
+          "category": "table",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "tbl-enterprise-price",
+          "category": "table",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "csv-invoice",
+          "category": "csv",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "csv-2003",
+          "category": "csv",
+          "status": "OK",
+          "first_relevant_rank": 2,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "csv-2017",
+          "category": "csv",
+          "status": "OK",
+          "first_relevant_rank": 3,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "csv-2033",
+          "category": "csv",
+          "status": "OK",
+          "first_relevant_rank": 4,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "csv-2041",
+          "category": "csv",
+          "status": "OK",
+          "first_relevant_rank": 2,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "csv-2052",
+          "category": "csv",
+          "status": "OK",
+          "first_relevant_rank": 5,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "csv-2058",
+          "category": "csv",
+          "status": "OK",
+          "first_relevant_rank": 5,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "csv-2007",
+          "category": "csv",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "pg-escalate",
+          "category": "page",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "pg-step2",
+          "category": "page",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "pg-step1",
+          "category": "page",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "pg-step3",
+          "category": "page",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "pg-archive",
+          "category": "page",
+          "status": "OK",
+          "first_relevant_rank": 2,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "pg-settle",
+          "category": "page",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "pg-audience",
+          "category": "page",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "pg-plans",
+          "category": "page",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "na-colour",
+          "category": "unanswerable",
+          "status": "OK",
+          "first_relevant_rank": null,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "na-k8s",
+          "category": "unanswerable",
+          "status": "OK",
+          "first_relevant_rank": null,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "na-crypto",
+          "category": "unanswerable",
+          "status": "OK",
+          "first_relevant_rank": null,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "na-football",
+          "category": "unanswerable",
+          "status": "OK",
+          "first_relevant_rank": null,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "na-encryption",
+          "category": "unanswerable",
+          "status": "OK",
+          "first_relevant_rank": null,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "na-upload",
+          "category": "unanswerable",
+          "status": "OK",
+          "first_relevant_rank": null,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "na-vendor",
+          "category": "unanswerable",
+          "status": "OK",
+          "first_relevant_rank": null,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "na-employees",
+          "category": "unanswerable",
+          "status": "OK",
+          "first_relevant_rank": null,
+          "returned": 10,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        }
+      ]
+    },
+    "g2/default/heldout": {
+      "overrides": {},
+      "top_k": 10,
+      "metrics": {
+        "recall@5": 0.9146,
+        "recall@8": 0.9512,
+        "recall@10": 0.9512,
+        "mrr@10": 0.7378,
+        "ndcg@10": 0.7791,
+        "identifier_exact_recall@5": null,
+        "page_attribution_accuracy": 0.8,
+        "page_given_retrieved": 1.0,
+        "multi_file_coverage": 1.0,
+        "no_answer_precision": null,
+        "no_answer_recall": 0.0
+      },
+      "fractions": {
+        "recall@5": [
+          37.5,
+          41
+        ],
+        "recall@8": [
+          39.0,
+          41
+        ],
+        "recall@10": [
+          39.0,
+          41
+        ],
+        "mrr@10": [
+          30.25,
+          41
+        ],
+        "ndcg@10": [
+          31.9414,
+          41
+        ],
+        "identifier_exact_recall@5": [
+          0,
+          0
+        ],
+        "page_attribution_accuracy": [
+          4.0,
+          5
+        ],
+        "page_given_retrieved": [
+          4.0,
+          4
+        ],
+        "multi_file_coverage": [
+          7.0,
+          7
+        ],
+        "no_answer_precision": [
+          0,
+          0
+        ],
+        "no_answer_recall": [
+          0.0,
+          4
+        ]
+      },
+      "by_category": {
+        "body": {
+          "n": 9,
+          "recall@5": 1.0,
+          "recall@5_sum": 9.0,
+          "mrr@10": 0.9444,
+          "ndcg@10": 0.959
+        },
+        "csv": {
+          "n": 2,
+          "recall@5": 1.0,
+          "recall@5_sum": 2.0,
+          "mrr@10": 0.2917,
+          "ndcg@10": 0.4653
+        },
+        "hinglish": {
+          "n": 4,
+          "recall@5": 1.0,
+          "recall@5_sum": 4.0,
+          "mrr@10": 0.75,
+          "ndcg@10": 0.8205
+        },
+        "multi_file": {
+          "n": 7,
+          "recall@5": 0.7857,
+          "recall@5_sum": 5.5,
+          "mrr@10": 0.7262,
+          "ndcg@10": 0.7321
+        },
+        "page": {
+          "n": 1,
+          "recall@5": 1.0,
+          "recall@5_sum": 1.0,
+          "mrr@10": 1.0,
+          "ndcg@10": 1.0
+        },
+        "paraphrase": {
+          "n": 5,
+          "recall@5": 0.8,
+          "recall@5_sum": 4.0,
+          "mrr@10": 0.7,
+          "ndcg@10": 0.7425
+        },
+        "phase_exit": {
+          "n": 6,
+          "recall@5": 1.0,
+          "recall@5_sum": 6.0,
+          "mrr@10": 0.5139,
+          "ndcg@10": 0.605
+        },
+        "table": {
+          "n": 3,
+          "recall@5": 0.6667,
+          "recall@5_sum": 2.0,
+          "mrr@10": 0.5,
+          "ndcg@10": 0.5436
+        },
+        "typo": {
+          "n": 4,
+          "recall@5": 1.0,
+          "recall@5_sum": 4.0,
+          "mrr@10": 1.0,
+          "ndcg@10": 1.0
+        }
+      },
+      "counts": {
+        "questions": 45,
+        "answerable": 41,
+        "unanswerable": 4
+      },
+      "degraded_questions": 0,
+      "questions": [
+        {
+          "id": "h-stage6",
+          "category": "paraphrase"
+        },
+        {
+          "id": "h-tax-stage",
+          "category": "paraphrase"
+        },
+        {
+          "id": "h-replay",
+          "category": "paraphrase"
+        },
+        {
+          "id": "h-monitoring-stage",
+          "category": "paraphrase"
+        },
+        {
+          "id": "h-floats",
+          "category": "paraphrase"
+        },
+        {
+          "id": "h-typo-reminder",
+          "category": "typo"
+        },
+        {
+          "id": "h-typo-unmatched",
+          "category": "typo"
+        },
+        {
+          "id": "h-typo-backup",
+          "category": "typo"
+        },
+        {
+          "id": "h-typo-trial",
+          "category": "typo"
+        },
+        {
+          "id": "h-hi-loadtest",
+          "category": "hinglish"
+        },
+        {
+          "id": "h-hi-backup",
+          "category": "hinglish"
+        },
+        {
+          "id": "h-hi-signature",
+          "category": "hinglish"
+        },
+        {
+          "id": "h-hi-refund",
+          "category": "hinglish"
+        },
+        {
+          "id": "h-body-rate",
+          "category": "body"
+        },
+        {
+          "id": "h-body-retention",
+          "category": "body"
+        },
+        {
+          "id": "h-body-invite",
+          "category": "body"
+        },
+        {
+          "id": "h-body-escalation",
+          "category": "body"
+        },
+        {
+          "id": "h-body-hours",
+          "category": "body"
+        },
+        {
+          "id": "h-body-pagesize",
+          "category": "body"
+        },
+        {
+          "id": "h-body-errors",
+          "category": "body"
+        },
+        {
+          "id": "h-body-poll",
+          "category": "body"
+        },
+        {
+          "id": "h-body-sla",
+          "category": "body"
+        },
+        {
+          "id": "h-tbl-biggest",
+          "category": "table"
+        },
+        {
+          "id": "h-tbl-middle",
+          "category": "table"
+        },
+        {
+          "id": "h-tbl-cheapest",
+          "category": "table"
+        },
+        {
+          "id": "h-csv-refund",
+          "category": "csv"
+        },
+        {
+          "id": "h-csv-fabrikam",
+          "category": "csv"
+        },
+        {
+          "id": "h-pg-bank",
+          "category": "page"
+        },
+        {
+          "id": "h-mf-ceiling",
+          "category": "multi_file"
+        },
+        {
+          "id": "h-mf-retry-charges",
+          "category": "multi_file"
+        },
+        {
+          "id": "h-mf-contact",
+          "category": "multi_file"
+        },
+        {
+          "id": "h-mf-money-layers",
+          "category": "multi_file"
+        },
+        {
+          "id": "h-mf-late-payers",
+          "category": "multi_file"
+        },
+        {
+          "id": "h-mf-new-customer",
+          "category": "multi_file"
+        },
+        {
+          "id": "h-mf-paging",
+          "category": "multi_file"
+        },
+        {
+          "id": "h-pe-webhook",
+          "category": "phase_exit"
+        },
+        {
+          "id": "h-pe-tax",
+          "category": "phase_exit"
+        },
+        {
+          "id": "h-pe-admin",
+          "category": "phase_exit"
+        },
+        {
+          "id": "h-pe-loadtest",
+          "category": "phase_exit"
+        },
+        {
+          "id": "h-pe-dunning",
+          "category": "phase_exit"
+        },
+        {
+          "id": "h-pe-schema",
+          "category": "phase_exit"
+        },
+        {
+          "id": "h-na-region",
+          "category": "unanswerable"
+        },
+        {
+          "id": "h-na-ceo",
+          "category": "unanswerable"
+        },
+        {
+          "id": "h-na-password",
+          "category": "unanswerable"
+        },
+        {
+          "id": "h-na-logo",
+          "category": "unanswerable"
+        }
+      ]
+    },
+    "g2/k5/main": {
+      "overrides": {},
+      "top_k": 5,
+      "metrics": {
+        "recall@5": 0.9792,
+        "recall@8": 0.9792,
+        "recall@10": 0.9792,
+        "mrr@10": 0.8715,
+        "ndcg@10": 0.8948,
+        "identifier_exact_recall@5": 1.0,
+        "page_attribution_accuracy": 0.9375,
+        "page_given_retrieved": 1.0,
+        "multi_file_coverage": 0.9375,
+        "no_answer_precision": null,
+        "no_answer_recall": 0.0
+      },
+      "fractions": {
+        "recall@5": [
+          70.5,
+          72
+        ],
+        "recall@8": [
+          70.5,
+          72
+        ],
+        "recall@10": [
+          70.5,
+          72
+        ],
+        "mrr@10": [
+          62.75,
+          72
+        ],
+        "ndcg@10": [
+          64.4289,
+          72
+        ],
+        "identifier_exact_recall@5": [
+          8.0,
+          8
+        ],
+        "page_attribution_accuracy": [
+          15.0,
+          16
+        ],
+        "page_given_retrieved": [
+          15.0,
+          15
+        ],
+        "multi_file_coverage": [
+          7.5,
+          8
+        ],
+        "no_answer_precision": [
+          0,
+          0
+        ],
+        "no_answer_recall": [
+          0.0,
+          8
+        ]
+      },
+      "by_category": {
+        "csv": {
+          "n": 8,
+          "recall@5": 1.0,
+          "recall@5_sum": 8.0,
+          "mrr@10": 0.5312,
+          "ndcg@10": 0.6491
+        },
+        "hinglish": {
+          "n": 8,
+          "recall@5": 1.0,
+          "recall@5_sum": 8.0,
+          "mrr@10": 0.9167,
+          "ndcg@10": 0.9375
+        },
+        "identifier": {
+          "n": 8,
+          "recall@5": 1.0,
+          "recall@5_sum": 8.0,
+          "mrr@10": 1.0,
+          "ndcg@10": 1.0
+        },
+        "multi_file": {
+          "n": 8,
+          "recall@5": 0.9375,
+          "recall@5_sum": 7.5,
+          "mrr@10": 1.0,
+          "ndcg@10": 0.9516
+        },
+        "page": {
+          "n": 8,
+          "recall@5": 0.875,
+          "recall@5_sum": 7.0,
+          "mrr@10": 0.875,
+          "ndcg@10": 0.875
+        },
+        "phase": {
+          "n": 8,
+          "recall@5": 1.0,
+          "recall@5_sum": 8.0,
+          "mrr@10": 1.0,
+          "ndcg@10": 1.0
+        },
+        "phase_exit": {
+          "n": 8,
+          "recall@5": 1.0,
+          "recall@5_sum": 8.0,
+          "mrr@10": 0.5208,
+          "ndcg@10": 0.6404
+        },
+        "phase_title": {
+          "n": 8,
+          "recall@5": 1.0,
+          "recall@5_sum": 8.0,
+          "mrr@10": 1.0,
+          "ndcg@10": 1.0
+        },
+        "table": {
+          "n": 8,
+          "recall@5": 1.0,
+          "recall@5_sum": 8.0,
+          "mrr@10": 1.0,
+          "ndcg@10": 1.0
+        }
+      },
+      "counts": {
+        "questions": 80,
+        "answerable": 72,
+        "unanswerable": 8
+      },
+      "degraded_questions": 0,
+      "questions": [
+        {
+          "id": "p6-about",
+          "category": "phase",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p3-about",
+          "category": "phase",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p11-about",
+          "category": "phase",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p1-about",
+          "category": "phase",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p2-about",
+          "category": "phase",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p4-about",
+          "category": "phase",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p7-about",
+          "category": "phase",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p12-about",
+          "category": "phase",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p6-title",
+          "category": "phase_title",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p8-title",
+          "category": "phase_title",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p1-title",
+          "category": "phase_title",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p4-title",
+          "category": "phase_title",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p9-title",
+          "category": "phase_title",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p10-title",
+          "category": "phase_title",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p12-title",
+          "category": "phase_title",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p5-title",
+          "category": "phase_title",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p6-exit",
+          "category": "phase_exit",
+          "status": "OK",
+          "first_relevant_rank": 3,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p10-exit",
+          "category": "phase_exit",
+          "status": "OK",
+          "first_relevant_rank": 2,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p1-exit",
+          "category": "phase_exit",
+          "status": "OK",
+          "first_relevant_rank": 4,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p4-exit",
+          "category": "phase_exit",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p7-exit",
+          "category": "phase_exit",
+          "status": "OK",
+          "first_relevant_rank": 4,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p12-exit",
+          "category": "phase_exit",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p3-exit",
+          "category": "phase_exit",
+          "status": "OK",
+          "first_relevant_rank": 3,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p8-exit",
+          "category": "phase_exit",
+          "status": "OK",
+          "first_relevant_rank": 2,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p6-hinglish",
+          "category": "hinglish",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p9-hinglish-exit",
+          "category": "hinglish",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p4-hinglish",
+          "category": "hinglish",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p11-hinglish",
+          "category": "hinglish",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p8-hinglish",
+          "category": "hinglish",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p2-hinglish-exit",
+          "category": "hinglish",
+          "status": "OK",
+          "first_relevant_rank": 3,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "retry-hinglish",
+          "category": "hinglish",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "enterprise-hinglish",
+          "category": "hinglish",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "mf-idempotency",
+          "category": "multi_file",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "mf-webhook",
+          "category": "multi_file",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "mf-phases",
+          "category": "multi_file",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "mf-retry",
+          "category": "multi_file",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "mf-money",
+          "category": "multi_file",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "mf-dunning",
+          "category": "multi_file",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "mf-retry-limit",
+          "category": "multi_file",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "mf-support",
+          "category": "multi_file",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "id-retry",
+          "category": "identifier",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "id-retry-default",
+          "category": "identifier",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "id-txn",
+          "category": "identifier",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "id-path",
+          "category": "identifier",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "id-alert",
+          "category": "identifier",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "id-ratelimit",
+          "category": "identifier",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "id-currency",
+          "category": "identifier",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "id-table",
+          "category": "identifier",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "tbl-storage",
+          "category": "table",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "tbl-seats",
+          "category": "table",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "tbl-starter-price",
+          "category": "table",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "tbl-starter-storage",
+          "category": "table",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "tbl-enterprise-seats",
+          "category": "table",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "tbl-team-price",
+          "category": "table",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "tbl-team-storage",
+          "category": "table",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "tbl-enterprise-price",
+          "category": "table",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "csv-invoice",
+          "category": "csv",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "csv-2003",
+          "category": "csv",
+          "status": "OK",
+          "first_relevant_rank": 2,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "csv-2017",
+          "category": "csv",
+          "status": "OK",
+          "first_relevant_rank": 3,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "csv-2033",
+          "category": "csv",
+          "status": "OK",
+          "first_relevant_rank": 3,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "csv-2041",
+          "category": "csv",
+          "status": "OK",
+          "first_relevant_rank": 2,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "csv-2052",
+          "category": "csv",
+          "status": "OK",
+          "first_relevant_rank": 3,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "csv-2058",
+          "category": "csv",
+          "status": "OK",
+          "first_relevant_rank": 4,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "csv-2007",
+          "category": "csv",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "pg-escalate",
+          "category": "page",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "pg-step2",
+          "category": "page",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "pg-step1",
+          "category": "page",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "pg-step3",
+          "category": "page",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "pg-archive",
+          "category": "page",
+          "status": "OK",
+          "first_relevant_rank": null,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "pg-settle",
+          "category": "page",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "pg-audience",
+          "category": "page",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "pg-plans",
+          "category": "page",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "na-colour",
+          "category": "unanswerable",
+          "status": "OK",
+          "first_relevant_rank": null,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "na-k8s",
+          "category": "unanswerable",
+          "status": "OK",
+          "first_relevant_rank": null,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "na-crypto",
+          "category": "unanswerable",
+          "status": "OK",
+          "first_relevant_rank": null,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "na-football",
+          "category": "unanswerable",
+          "status": "OK",
+          "first_relevant_rank": null,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "na-encryption",
+          "category": "unanswerable",
+          "status": "OK",
+          "first_relevant_rank": null,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "na-upload",
+          "category": "unanswerable",
+          "status": "OK",
+          "first_relevant_rank": null,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "na-vendor",
+          "category": "unanswerable",
+          "status": "OK",
+          "first_relevant_rank": null,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "na-employees",
+          "category": "unanswerable",
+          "status": "OK",
+          "first_relevant_rank": null,
+          "returned": 5,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        }
+      ]
+    },
+    "g2/k5/heldout": {
+      "overrides": {},
+      "top_k": 5,
+      "metrics": {
+        "recall@5": 0.7724,
+        "recall@8": 0.7724,
+        "recall@10": 0.7724,
+        "mrr@10": 0.7073,
+        "ndcg@10": 0.6975,
+        "identifier_exact_recall@5": null,
+        "page_attribution_accuracy": 0.8,
+        "page_given_retrieved": 1.0,
+        "multi_file_coverage": 0.6429,
+        "no_answer_precision": null,
+        "no_answer_recall": 0.0
+      },
+      "fractions": {
+        "recall@5": [
+          31.6667,
+          41
+        ],
+        "recall@8": [
+          31.6667,
+          41
+        ],
+        "recall@10": [
+          31.6667,
+          41
+        ],
+        "mrr@10": [
+          29.0,
+          41
+        ],
+        "ndcg@10": [
+          28.5955,
+          41
+        ],
+        "identifier_exact_recall@5": [
+          0,
+          0
+        ],
+        "page_attribution_accuracy": [
+          4.0,
+          5
+        ],
+        "page_given_retrieved": [
+          4.0,
+          4
+        ],
+        "multi_file_coverage": [
+          4.5,
+          7
+        ],
+        "no_answer_precision": [
+          0,
+          0
+        ],
+        "no_answer_recall": [
+          0.0,
+          4
+        ]
+      },
+      "by_category": {
+        "body": {
+          "n": 9,
+          "recall@5": 0.8889,
+          "recall@5_sum": 8.0,
+          "mrr@10": 0.8889,
+          "ndcg@10": 0.8889
+        },
+        "csv": {
+          "n": 2,
+          "recall@5": 1.0,
+          "recall@5_sum": 2.0,
+          "mrr@10": 0.4167,
+          "ndcg@10": 0.5655
+        },
+        "hinglish": {
+          "n": 4,
+          "recall@5": 1.0,
+          "recall@5_sum": 4.0,
+          "mrr@10": 0.75,
+          "ndcg@10": 0.8311
+        },
+        "multi_file": {
+          "n": 7,
+          "recall@5": 0.6429,
+          "recall@5_sum": 4.5,
+          "mrr@10": 0.7381,
+          "ndcg@10": 0.5862
+        },
+        "page": {
+          "n": 1,
+          "recall@5": 1.0,
+          "recall@5_sum": 1.0,
+          "mrr@10": 1.0,
+          "ndcg@10": 1.0
+        },
+        "paraphrase": {
+          "n": 5,
+          "recall@5": 0.7333,
+          "recall@5_sum": 3.6667,
+          "mrr@10": 0.7,
+          "ndcg@10": 0.7061
+        },
+        "phase_exit": {
+          "n": 6,
+          "recall@5": 0.5,
+          "recall@5_sum": 3.0,
+          "mrr@10": 0.3333,
+          "ndcg@10": 0.377
+        },
+        "table": {
+          "n": 3,
+          "recall@5": 0.6667,
+          "recall@5_sum": 2.0,
+          "mrr@10": 0.5,
+          "ndcg@10": 0.5436
+        },
+        "typo": {
+          "n": 4,
+          "recall@5": 0.875,
+          "recall@5_sum": 3.5,
+          "mrr@10": 1.0,
+          "ndcg@10": 0.9033
+        }
+      },
+      "counts": {
+        "questions": 45,
+        "answerable": 41,
+        "unanswerable": 4
+      },
+      "degraded_questions": 0,
+      "questions": [
+        {
+          "id": "h-stage6",
+          "category": "paraphrase"
+        },
+        {
+          "id": "h-tax-stage",
+          "category": "paraphrase"
+        },
+        {
+          "id": "h-replay",
+          "category": "paraphrase"
+        },
+        {
+          "id": "h-monitoring-stage",
+          "category": "paraphrase"
+        },
+        {
+          "id": "h-floats",
+          "category": "paraphrase"
+        },
+        {
+          "id": "h-typo-reminder",
+          "category": "typo"
+        },
+        {
+          "id": "h-typo-unmatched",
+          "category": "typo"
+        },
+        {
+          "id": "h-typo-backup",
+          "category": "typo"
+        },
+        {
+          "id": "h-typo-trial",
+          "category": "typo"
+        },
+        {
+          "id": "h-hi-loadtest",
+          "category": "hinglish"
+        },
+        {
+          "id": "h-hi-backup",
+          "category": "hinglish"
+        },
+        {
+          "id": "h-hi-signature",
+          "category": "hinglish"
+        },
+        {
+          "id": "h-hi-refund",
+          "category": "hinglish"
+        },
+        {
+          "id": "h-body-rate",
+          "category": "body"
+        },
+        {
+          "id": "h-body-retention",
+          "category": "body"
+        },
+        {
+          "id": "h-body-invite",
+          "category": "body"
+        },
+        {
+          "id": "h-body-escalation",
+          "category": "body"
+        },
+        {
+          "id": "h-body-hours",
+          "category": "body"
+        },
+        {
+          "id": "h-body-pagesize",
+          "category": "body"
+        },
+        {
+          "id": "h-body-errors",
+          "category": "body"
+        },
+        {
+          "id": "h-body-poll",
+          "category": "body"
+        },
+        {
+          "id": "h-body-sla",
+          "category": "body"
+        },
+        {
+          "id": "h-tbl-biggest",
+          "category": "table"
+        },
+        {
+          "id": "h-tbl-middle",
+          "category": "table"
+        },
+        {
+          "id": "h-tbl-cheapest",
+          "category": "table"
+        },
+        {
+          "id": "h-csv-refund",
+          "category": "csv"
+        },
+        {
+          "id": "h-csv-fabrikam",
+          "category": "csv"
+        },
+        {
+          "id": "h-pg-bank",
+          "category": "page"
+        },
+        {
+          "id": "h-mf-ceiling",
+          "category": "multi_file"
+        },
+        {
+          "id": "h-mf-retry-charges",
+          "category": "multi_file"
+        },
+        {
+          "id": "h-mf-contact",
+          "category": "multi_file"
+        },
+        {
+          "id": "h-mf-money-layers",
+          "category": "multi_file"
+        },
+        {
+          "id": "h-mf-late-payers",
+          "category": "multi_file"
+        },
+        {
+          "id": "h-mf-new-customer",
+          "category": "multi_file"
+        },
+        {
+          "id": "h-mf-paging",
+          "category": "multi_file"
+        },
+        {
+          "id": "h-pe-webhook",
+          "category": "phase_exit"
+        },
+        {
+          "id": "h-pe-tax",
+          "category": "phase_exit"
+        },
+        {
+          "id": "h-pe-admin",
+          "category": "phase_exit"
+        },
+        {
+          "id": "h-pe-loadtest",
+          "category": "phase_exit"
+        },
+        {
+          "id": "h-pe-dunning",
+          "category": "phase_exit"
+        },
+        {
+          "id": "h-pe-schema",
+          "category": "phase_exit"
+        },
+        {
+          "id": "h-na-region",
+          "category": "unanswerable"
+        },
+        {
+          "id": "h-na-ceo",
+          "category": "unanswerable"
+        },
+        {
+          "id": "h-na-password",
+          "category": "unanswerable"
+        },
+        {
+          "id": "h-na-logo",
+          "category": "unanswerable"
+        }
+      ]
+    },
+    "g2/k8/main": {
+      "overrides": {},
+      "top_k": 8,
+      "metrics": {
+        "recall@5": 0.9792,
+        "recall@8": 0.9792,
+        "recall@10": 0.9792,
+        "mrr@10": 0.8678,
+        "ndcg@10": 0.8917,
+        "identifier_exact_recall@5": 1.0,
+        "page_attribution_accuracy": 0.9375,
+        "page_given_retrieved": 1.0,
+        "multi_file_coverage": 0.9375,
+        "no_answer_precision": null,
+        "no_answer_recall": 0.0
+      },
+      "fractions": {
+        "recall@5": [
+          70.5,
+          72
+        ],
+        "recall@8": [
+          70.5,
+          72
+        ],
+        "recall@10": [
+          70.5,
+          72
+        ],
+        "mrr@10": [
+          62.4833,
+          72
+        ],
+        "ndcg@10": [
+          64.2026,
+          72
+        ],
+        "identifier_exact_recall@5": [
+          8.0,
+          8
+        ],
+        "page_attribution_accuracy": [
+          15.0,
+          16
+        ],
+        "page_given_retrieved": [
+          15.0,
+          15
+        ],
+        "multi_file_coverage": [
+          7.5,
+          8
+        ],
+        "no_answer_precision": [
+          0,
+          0
+        ],
+        "no_answer_recall": [
+          0.0,
+          8
+        ]
+      },
+      "by_category": {
+        "csv": {
+          "n": 8,
+          "recall@5": 1.0,
+          "recall@5_sum": 8.0,
+          "mrr@10": 0.4979,
+          "ndcg@10": 0.6208
+        },
+        "hinglish": {
+          "n": 8,
+          "recall@5": 1.0,
+          "recall@5_sum": 8.0,
+          "mrr@10": 0.9167,
+          "ndcg@10": 0.9375
+        },
+        "identifier": {
+          "n": 8,
+          "recall@5": 1.0,
+          "recall@5_sum": 8.0,
+          "mrr@10": 1.0,
+          "ndcg@10": 1.0
+        },
+        "multi_file": {
+          "n": 8,
+          "recall@5": 0.9375,
+          "recall@5_sum": 7.5,
+          "mrr@10": 1.0,
+          "ndcg@10": 0.9516
+        },
+        "page": {
+          "n": 8,
+          "recall@5": 0.875,
+          "recall@5_sum": 7.0,
+          "mrr@10": 0.875,
+          "ndcg@10": 0.875
+        },
+        "phase": {
+          "n": 8,
+          "recall@5": 1.0,
+          "recall@5_sum": 8.0,
+          "mrr@10": 1.0,
+          "ndcg@10": 1.0
+        },
+        "phase_exit": {
+          "n": 8,
+          "recall@5": 1.0,
+          "recall@5_sum": 8.0,
+          "mrr@10": 0.5208,
+          "ndcg@10": 0.6404
+        },
+        "phase_title": {
+          "n": 8,
+          "recall@5": 1.0,
+          "recall@5_sum": 8.0,
+          "mrr@10": 1.0,
+          "ndcg@10": 1.0
+        },
+        "table": {
+          "n": 8,
+          "recall@5": 1.0,
+          "recall@5_sum": 8.0,
+          "mrr@10": 1.0,
+          "ndcg@10": 1.0
+        }
+      },
+      "counts": {
+        "questions": 80,
+        "answerable": 72,
+        "unanswerable": 8
+      },
+      "degraded_questions": 0,
+      "questions": [
+        {
+          "id": "p6-about",
+          "category": "phase",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p3-about",
+          "category": "phase",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p11-about",
+          "category": "phase",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p1-about",
+          "category": "phase",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p2-about",
+          "category": "phase",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p4-about",
+          "category": "phase",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p7-about",
+          "category": "phase",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p12-about",
+          "category": "phase",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p6-title",
+          "category": "phase_title",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p8-title",
+          "category": "phase_title",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p1-title",
+          "category": "phase_title",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p4-title",
+          "category": "phase_title",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p9-title",
+          "category": "phase_title",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p10-title",
+          "category": "phase_title",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p12-title",
+          "category": "phase_title",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p5-title",
+          "category": "phase_title",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p6-exit",
+          "category": "phase_exit",
+          "status": "OK",
+          "first_relevant_rank": 3,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p10-exit",
+          "category": "phase_exit",
+          "status": "OK",
+          "first_relevant_rank": 2,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p1-exit",
+          "category": "phase_exit",
+          "status": "OK",
+          "first_relevant_rank": 4,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p4-exit",
+          "category": "phase_exit",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p7-exit",
+          "category": "phase_exit",
+          "status": "OK",
+          "first_relevant_rank": 4,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p12-exit",
+          "category": "phase_exit",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p3-exit",
+          "category": "phase_exit",
+          "status": "OK",
+          "first_relevant_rank": 3,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p8-exit",
+          "category": "phase_exit",
+          "status": "OK",
+          "first_relevant_rank": 2,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p6-hinglish",
+          "category": "hinglish",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p9-hinglish-exit",
+          "category": "hinglish",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p4-hinglish",
+          "category": "hinglish",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p11-hinglish",
+          "category": "hinglish",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p8-hinglish",
+          "category": "hinglish",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "p2-hinglish-exit",
+          "category": "hinglish",
+          "status": "OK",
+          "first_relevant_rank": 3,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "retry-hinglish",
+          "category": "hinglish",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "enterprise-hinglish",
+          "category": "hinglish",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "mf-idempotency",
+          "category": "multi_file",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "mf-webhook",
+          "category": "multi_file",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "mf-phases",
+          "category": "multi_file",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "mf-retry",
+          "category": "multi_file",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "mf-money",
+          "category": "multi_file",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "mf-dunning",
+          "category": "multi_file",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "mf-retry-limit",
+          "category": "multi_file",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "mf-support",
+          "category": "multi_file",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "id-retry",
+          "category": "identifier",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "id-retry-default",
+          "category": "identifier",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "id-txn",
+          "category": "identifier",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "id-path",
+          "category": "identifier",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "id-alert",
+          "category": "identifier",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "id-ratelimit",
+          "category": "identifier",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "id-currency",
+          "category": "identifier",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "id-table",
+          "category": "identifier",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "tbl-storage",
+          "category": "table",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "tbl-seats",
+          "category": "table",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "tbl-starter-price",
+          "category": "table",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "tbl-starter-storage",
+          "category": "table",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "tbl-enterprise-seats",
+          "category": "table",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "tbl-team-price",
+          "category": "table",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "tbl-team-storage",
+          "category": "table",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "tbl-enterprise-price",
+          "category": "table",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "csv-invoice",
+          "category": "csv",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "csv-2003",
+          "category": "csv",
+          "status": "OK",
+          "first_relevant_rank": 2,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "csv-2017",
+          "category": "csv",
+          "status": "OK",
+          "first_relevant_rank": 3,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "csv-2033",
+          "category": "csv",
+          "status": "OK",
+          "first_relevant_rank": 4,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "csv-2041",
+          "category": "csv",
+          "status": "OK",
+          "first_relevant_rank": 2,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "csv-2052",
+          "category": "csv",
+          "status": "OK",
+          "first_relevant_rank": 5,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "csv-2058",
+          "category": "csv",
+          "status": "OK",
+          "first_relevant_rank": 5,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "csv-2007",
+          "category": "csv",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "pg-escalate",
+          "category": "page",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "pg-step2",
+          "category": "page",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "pg-step1",
+          "category": "page",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "pg-step3",
+          "category": "page",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "pg-archive",
+          "category": "page",
+          "status": "OK",
+          "first_relevant_rank": null,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "pg-settle",
+          "category": "page",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "pg-audience",
+          "category": "page",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "pg-plans",
+          "category": "page",
+          "status": "OK",
+          "first_relevant_rank": 1,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "na-colour",
+          "category": "unanswerable",
+          "status": "OK",
+          "first_relevant_rank": null,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "na-k8s",
+          "category": "unanswerable",
+          "status": "OK",
+          "first_relevant_rank": null,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "na-crypto",
+          "category": "unanswerable",
+          "status": "OK",
+          "first_relevant_rank": null,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "na-football",
+          "category": "unanswerable",
+          "status": "OK",
+          "first_relevant_rank": null,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "na-encryption",
+          "category": "unanswerable",
+          "status": "OK",
+          "first_relevant_rank": null,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "na-upload",
+          "category": "unanswerable",
+          "status": "OK",
+          "first_relevant_rank": null,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "na-vendor",
+          "category": "unanswerable",
+          "status": "OK",
+          "first_relevant_rank": null,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        },
+        {
+          "id": "na-employees",
+          "category": "unanswerable",
+          "status": "OK",
+          "first_relevant_rank": null,
+          "returned": 8,
+          "coverage": "COVERAGE_UNSPECIFIED"
+        }
+      ]
+    },
+    "g2/k8/heldout": {
+      "overrides": {},
+      "top_k": 8,
+      "metrics": {
+        "recall@5": 0.8943,
+        "recall@8": 0.9187,
+        "recall@10": 0.9187,
+        "mrr@10": 0.7419,
+        "ndcg@10": 0.7673,
+        "identifier_exact_recall@5": null,
+        "page_attribution_accuracy": 0.8,
+        "page_given_retrieved": 1.0,
+        "multi_file_coverage": 0.8571,
+        "no_answer_precision": null,
+        "no_answer_recall": 0.0
+      },
+      "fractions": {
+        "recall@5": [
+          36.6667,
+          41
+        ],
+        "recall@8": [
+          37.6667,
+          41
+        ],
+        "recall@10": [
+          37.6667,
+          41
+        ],
+        "mrr@10": [
+          30.4167,
+          41
+        ],
+        "ndcg@10": [
+          31.4604,
+          41
+        ],
+        "identifier_exact_recall@5": [
+          0,
+          0
+        ],
+        "page_attribution_accuracy": [
+          4.0,
+          5
+        ],
+        "page_given_retrieved": [
+          4.0,
+          4
+        ],
+        "multi_file_coverage": [
+          6.0,
+          7
+        ],
+        "no_answer_precision": [
+          0,
+          0
+        ],
+        "no_answer_recall": [
+          0.0,
+          4
+        ]
+      },
+      "by_category": {
+        "body": {
+          "n": 9,
+          "recall@5": 1.0,
+          "recall@5_sum": 9.0,
+          "mrr@10": 0.9444,
+          "ndcg@10": 0.959
+        },
+        "csv": {
+          "n": 2,
+          "recall@5": 1.0,
+          "recall@5_sum": 2.0,
+          "mrr@10": 0.3333,
+          "ndcg@10": 0.5
+        },
+        "hinglish": {
+          "n": 4,
+          "recall@5": 1.0,
+          "recall@5_sum": 4.0,
+          "mrr@10": 0.75,
+          "ndcg@10": 0.8205
+        },
+        "multi_file": {
+          "n": 7,
+          "recall@5": 0.7143,
+          "recall@5_sum": 5.0,
+          "mrr@10": 0.7143,
+          "ndcg@10": 0.6726
+        },
+        "page": {
+          "n": 1,
+          "recall@5": 1.0,
+          "recall@5_sum": 1.0,
+          "mrr@10": 1.0,
+          "ndcg@10": 1.0
+        },
+        "paraphrase": {
+          "n": 5,
+          "recall@5": 0.7333,
+          "recall@5_sum": 3.6667,
+          "mrr@10": 0.7,
+          "ndcg@10": 0.6996
+        },
+        "phase_exit": {
+          "n": 6,
+          "recall@5": 1.0,
+          "recall@5_sum": 6.0,
+          "mrr@10": 0.5417,
+          "ndcg@10": 0.6184
+        },
+        "table": {
+          "n": 3,
+          "recall@5": 0.6667,
+          "recall@5_sum": 2.0,
+          "mrr@10": 0.5,
+          "ndcg@10": 0.5436
+        },
+        "typo": {
+          "n": 4,
+          "recall@5": 1.0,
+          "recall@5_sum": 4.0,
+          "mrr@10": 1.0,
+          "ndcg@10": 1.0
+        }
+      },
+      "counts": {
+        "questions": 45,
+        "answerable": 41,
+        "unanswerable": 4
+      },
+      "degraded_questions": 0,
+      "questions": [
+        {
+          "id": "h-stage6",
+          "category": "paraphrase"
+        },
+        {
+          "id": "h-tax-stage",
+          "category": "paraphrase"
+        },
+        {
+          "id": "h-replay",
+          "category": "paraphrase"
+        },
+        {
+          "id": "h-monitoring-stage",
+          "category": "paraphrase"
+        },
+        {
+          "id": "h-floats",
+          "category": "paraphrase"
+        },
+        {
+          "id": "h-typo-reminder",
+          "category": "typo"
+        },
+        {
+          "id": "h-typo-unmatched",
+          "category": "typo"
+        },
+        {
+          "id": "h-typo-backup",
+          "category": "typo"
+        },
+        {
+          "id": "h-typo-trial",
+          "category": "typo"
+        },
+        {
+          "id": "h-hi-loadtest",
+          "category": "hinglish"
+        },
+        {
+          "id": "h-hi-backup",
+          "category": "hinglish"
+        },
+        {
+          "id": "h-hi-signature",
+          "category": "hinglish"
+        },
+        {
+          "id": "h-hi-refund",
+          "category": "hinglish"
+        },
+        {
+          "id": "h-body-rate",
+          "category": "body"
+        },
+        {
+          "id": "h-body-retention",
+          "category": "body"
+        },
+        {
+          "id": "h-body-invite",
+          "category": "body"
+        },
+        {
+          "id": "h-body-escalation",
+          "category": "body"
+        },
+        {
+          "id": "h-body-hours",
+          "category": "body"
+        },
+        {
+          "id": "h-body-pagesize",
+          "category": "body"
+        },
+        {
+          "id": "h-body-errors",
+          "category": "body"
+        },
+        {
+          "id": "h-body-poll",
+          "category": "body"
+        },
+        {
+          "id": "h-body-sla",
+          "category": "body"
+        },
+        {
+          "id": "h-tbl-biggest",
+          "category": "table"
+        },
+        {
+          "id": "h-tbl-middle",
+          "category": "table"
+        },
+        {
+          "id": "h-tbl-cheapest",
+          "category": "table"
+        },
+        {
+          "id": "h-csv-refund",
+          "category": "csv"
+        },
+        {
+          "id": "h-csv-fabrikam",
+          "category": "csv"
+        },
+        {
+          "id": "h-pg-bank",
+          "category": "page"
+        },
+        {
+          "id": "h-mf-ceiling",
+          "category": "multi_file"
+        },
+        {
+          "id": "h-mf-retry-charges",
+          "category": "multi_file"
+        },
+        {
+          "id": "h-mf-contact",
+          "category": "multi_file"
+        },
+        {
+          "id": "h-mf-money-layers",
+          "category": "multi_file"
+        },
+        {
+          "id": "h-mf-late-payers",
+          "category": "multi_file"
+        },
+        {
+          "id": "h-mf-new-customer",
+          "category": "multi_file"
+        },
+        {
+          "id": "h-mf-paging",
+          "category": "multi_file"
+        },
+        {
+          "id": "h-pe-webhook",
+          "category": "phase_exit"
+        },
+        {
+          "id": "h-pe-tax",
+          "category": "phase_exit"
+        },
+        {
+          "id": "h-pe-admin",
+          "category": "phase_exit"
+        },
+        {
+          "id": "h-pe-loadtest",
+          "category": "phase_exit"
+        },
+        {
+          "id": "h-pe-dunning",
+          "category": "phase_exit"
+        },
+        {
+          "id": "h-pe-schema",
+          "category": "phase_exit"
+        },
+        {
+          "id": "h-na-region",
+          "category": "unanswerable"
+        },
+        {
+          "id": "h-na-ceo",
+          "category": "unanswerable"
+        },
+        {
+          "id": "h-na-password",
+          "category": "unanswerable"
+        },
+        {
+          "id": "h-na-logo",
+          "category": "unanswerable"
+        }
+      ]
+    }
+  }
+}
