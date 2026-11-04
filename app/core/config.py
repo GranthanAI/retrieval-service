@@ -96,6 +96,32 @@ class Settings(BaseSettings):
     # A candidate whose section heading contains a word pair from the query verbatim ("phase 6") gets one extra rank-1 RRF vote
     # (1 / (FUSION_RRF_K + 1)) times this factor. 0 disables it.
     HEADING_MATCH_BOOST: float = 1.0
+    # --- Phase 3: reranker (embedding-service Rerank RPC) ---
+    # Order when on: dense + BM25 (RERANK_LEG_TOP_N each) -> dedupe -> RRF -> top RERANK_TOP_N -> rerank -> per-file balance -> MMR
+    # (reranker scores as relevance) -> top_k -> max_tokens. On timeout or error the Phase 1 path runs and a metric is emitted.
+    RERANK_ENABLED: bool = False
+    RERANK_TIMEOUT_SECONDS: float = 0.8
+    RERANK_TOP_N: int = 30
+    RERANK_LEG_TOP_N: int = 50
+    # Neighbour expansion: attach the previous/next chunk of the same section to each selected chunk while max_tokens allows.
+    EXPAND_NEIGHBOURS: bool = False
+    # Weak-retrieval signal (response.top_score / response.coverage). With reranking: thresholds on the reranker score (sigmoid of the
+    # model logit, 0-1). Without it: thresholds on a rank-derived score (the best candidate's RRF score divided by the maximum possible,
+    # i.e. rank 1 in both legs = 1.0). Calibrated on the main set's unanswerable questions: see docs/retrieval-quality.md.
+    COVERAGE_ENABLED: bool = False   # flipped on after calibration on the benchmark (see docs); uncalibrated thresholds must not reach the prompt
+    COVERAGE_RANK_STRONG_MIN: float = 0.55
+    COVERAGE_RANK_WEAK_MIN: float = 0.30
+    COVERAGE_RERANK_STRONG_MIN: float = 0.50
+    COVERAGE_RERANK_WEAK_MIN: float = 0.10
+    # --- Phase 5 (retrieval side) ---
+    # Chunk ids from the previous assistant turn become extra candidates (after the authorisation and current-version checks).
+    PREVIOUS_CHUNKS_ENABLED: bool = True
+    PREVIOUS_CHUNKS_MAX: int = 10
+    PREVIOUS_CHUNKS_WEIGHT: float = 1.0       # their RRF vote relative to a normal rank vote
+    # One `retrieval.feedback` log line per query. The query text is included only when this is true (off by default); a hash always is.
+    LOG_QUERY_TEXT: bool = False
+    # GetDocumentChunks: safety cap on chunks returned per call.
+    DOCUMENT_CHUNKS_MAX: int = 5000
     # Candidates whose text overlaps an already-kept, higher-ranked candidate by more than this (Jaccard over word 3-shingles)
     # are dropped before MMR. 1.0 disables the filter.
     DEDUPE_JACCARD_THRESHOLD: float = 0.9

@@ -164,6 +164,35 @@ class MilvusRepository:
 
         return await asyncio.to_thread(_search)
 
+    async def get_chunks_by_ids(self, chunk_ids: list[str]) -> list[tuple[DenseSearchHit, int]]:
+        """Chunks by primary key with their content_version, for previous-turn candidates. The caller checks authorisation and that the
+        version is the document's current one; this method does no access control."""
+        if not chunk_ids:
+            return []
+        info = generations.current()
+        quoted = ", ".join(f'"{cid}"' for cid in chunk_ids)
+        fields = ["chunk_id", "content_version"] + [f for f in milvus_output_fields(info.schema_version) if f != "chunk_id"]
+
+        def _query() -> list[tuple[DenseSearchHit, int]]:
+            rows = _get_client().query(collection_name=info.milvus_collection, filter=f"chunk_id in [{quoted}]", output_fields=fields,
+                                       timeout=settings.MILVUS_QUERY_TIMEOUT_SECONDS, consistency_level="Strong")
+            by_id = {r["chunk_id"]: r for r in rows}
+            v2 = info.schema_version != SCHEMA_V1
+            out = []
+            for cid in chunk_ids:                       # keep the caller's order (most relevant in the previous turn first)
+                e = by_id.get(cid)
+                if e is None:
+                    continue
+                out.append((DenseSearchHit(
+                    chunk_id=e["chunk_id"], score=0.0, document_id=e["document_id"], filename=e["filename"], content=e["content"],
+                    page_number=_page(e["page_number"]), section=(e["section"] or None), chunk_index=e["chunk_index"],
+                    heading_path=(e.get("heading_path") or None) if v2 else None, page_start=_page(e.get("page_start")) if v2 else None,
+                    page_end=_page(e.get("page_end")) if v2 else None, block_type=(e.get("block_type") or None) if v2 else None,
+                    location=(e.get("location") or None) if v2 else None), e["content_version"]))
+            return out
+
+        return await asyncio.to_thread(_query)
+
     async def get_by_chunk_ids(self, chunk_ids: list[str]) -> dict[str, list[float]]:
         """HLD §18.1 — a primary-key `get` by chunk_id, NOT a fresh ANN
         search; fetches candidate embeddings for MMR's pairwise similarity.

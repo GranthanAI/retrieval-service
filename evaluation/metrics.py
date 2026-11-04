@@ -22,7 +22,8 @@ class QuestionResult:
     question: Question
     chunks: list[RankedChunk]
     status: str = "OK"
-    coverage: str | None = None  # WEAK/NONE/STRONG once Phase 3 adds the field; None before then
+    coverage: str | None = None  # STRONG/WEAK/NONE from the response (COVERAGE_UNSPECIFIED when the server sends no signal)
+    top_score: float | None = None
     latency_ms: float = 0.0
     note: str = ""
 

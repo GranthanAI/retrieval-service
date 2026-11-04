@@ -18,9 +18,11 @@ def normalise_relevance(pool: list[FusedCandidate]) -> None:
     term MMR subtracts is 0-1, so on raw scores diversity always wins. A pool whose scores are all equal is all-relevant (1.0)."""
     if not pool:
         return
-    lo, hi = min(c.rrf_score for c in pool), max(c.rrf_score for c in pool)
-    for c in pool:
-        c.norm_relevance = 1.0 if hi == lo else (c.rrf_score - lo) / (hi - lo)
+    # When the cross-encoder scored the whole pool its score is the relevance; otherwise the RRF score is.
+    scores = [c.rerank_score if all(x.rerank_score is not None for x in pool) else c.rrf_score for c in pool]
+    lo, hi = min(scores), max(scores)
+    for c, s in zip(pool, scores):
+        c.norm_relevance = 1.0 if hi == lo else (s - lo) / (hi - lo)
 
 
 def select(

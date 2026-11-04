@@ -23,6 +23,14 @@ def _get_client() -> OpenSearch:
     return _client
 
 
+def _hit(hit: dict) -> BM25SearchHit:
+    src = hit["_source"]
+    return BM25SearchHit(
+        chunk_id=hit["_id"], score=hit.get("_score") or 0.0, document_id=src["document_id"], filename=src["filename"], content=src["content"],
+        page_number=src["page_number"], section=src["section"], chunk_index=src["chunk_index"], heading_path=src.get("heading_path"),
+        page_start=src.get("page_start"), page_end=src.get("page_end"), block_type=src.get("block_type"), location=src.get("location"))
+
+
 def _document(r: ChunkRecord, schema_version: str) -> dict:
     """The indexed document of a generation-2+ chunk. `content` is exactly the text that was embedded (heading path + body)."""
     return {
@@ -128,24 +136,39 @@ class OpenSearchRepository:
                 body=body,
                 request_timeout=settings.OPENSEARCH_QUERY_TIMEOUT_SECONDS,
             )
-            return [
-                BM25SearchHit(
-                    chunk_id=hit["_id"],
-                    score=hit["_score"],
-                    document_id=hit["_source"]["document_id"],
-                    filename=hit["_source"]["filename"],
-                    content=hit["_source"]["content"],
-                    page_number=hit["_source"]["page_number"],
-                    section=hit["_source"]["section"],
-                    chunk_index=hit["_source"]["chunk_index"],
-                    heading_path=hit["_source"].get("heading_path"),
-                    page_start=hit["_source"].get("page_start"),
-                    page_end=hit["_source"].get("page_end"),
-                    block_type=hit["_source"].get("block_type"),
-                    location=hit["_source"].get("location"),
-                )
-                for hit in response["hits"]["hits"]
-            ]
+            return [_hit(hit) for hit in response["hits"]["hits"]]
+
+        return await asyncio.to_thread(_search)
+
+    async def document_chunks(self, document_id: str, content_version: int, limit: int) -> list[BM25SearchHit]:
+        """Every chunk of ONE document version in document order (chunk_index ascending), up to `limit`. Exact filter on both fields; the
+        caller has already established that the user may read the document and that this is its current version."""
+        info = generations.current()
+        body = {
+            "size": limit,
+            "sort": [{"chunk_index": "asc"}],
+            "query": {"bool": {"filter": [{"term": {"document_id": document_id}}, {"term": {"content_version": content_version}}]}},
+        }
+
+        def _search() -> list[BM25SearchHit]:
+            response = _get_client().search(index=info.opensearch_read_target, body=body, request_timeout=settings.OPENSEARCH_QUERY_TIMEOUT_SECONDS * 4)
+            return [_hit(h) for h in response["hits"]["hits"]]
+
+        return await asyncio.to_thread(_search)
+
+    async def neighbours(self, document_id: str, content_version: int, chunk_index: int, section: str | None) -> list[BM25SearchHit]:
+        """The chunks immediately before and after `chunk_index` in the same document version, kept only if they are in the same
+        section (never across a section boundary)."""
+        info = generations.current()
+        body = {
+            "size": 2, "sort": [{"chunk_index": "asc"}],
+            "query": {"bool": {"filter": [{"term": {"document_id": document_id}}, {"term": {"content_version": content_version}},
+                                          {"terms": {"chunk_index": [chunk_index - 1, chunk_index + 1]}}]}},
+        }
+
+        def _search() -> list[BM25SearchHit]:
+            response = _get_client().search(index=info.opensearch_read_target, body=body, request_timeout=settings.OPENSEARCH_QUERY_TIMEOUT_SECONDS)
+            return [h for h in (_hit(x) for x in response["hits"]["hits"]) if h.section == section]
 
         return await asyncio.to_thread(_search)
 

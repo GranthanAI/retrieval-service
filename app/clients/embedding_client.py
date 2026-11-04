@@ -52,6 +52,15 @@ class EmbeddingClient:
         response = await stub.GetModelInfo(embedding_pb2.ModelInfoRequest(), timeout=settings.EMBEDDING_INGESTION_TIMEOUT_SECONDS)
         return ModelProfile(response.model, response.dimension, response.max_seq_length, response.tokenizer_id)
 
+    async def rerank(self, query: str, passages: list[str], timeout: float) -> list[float]:
+        """Cross-encoder scores, one per passage in order (embedding-service Rerank). Raises on error, timeout or UNIMPLEMENTED; the
+        pipeline's fallback to the non-reranked path lives in the caller."""
+        stub = embedding_pb2_grpc.EmbeddingServiceStub(self._get_channel())
+        response = await stub.Rerank(embedding_pb2.RerankRequest(query=query, passages=passages), timeout=timeout)
+        if len(response.scores) != len(passages):
+            raise ValueError(f"reranker returned {len(response.scores)} scores for {len(passages)} passages")
+        return list(response.scores)
+
     async def embed_query(self, text: str) -> list[float]:
         """Single call, ON the query path — EMBEDDING_QUERY_TIMEOUT_SECONDS,
         retried up to EMBEDDING_RETRY_ATTEMPTS times (HLD §12/§17). Raises on

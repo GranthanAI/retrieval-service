@@ -22,7 +22,8 @@ def _new_candidate(chunk_id: str, hit: DenseSearchHit | BM25SearchHit) -> FusedC
 
 
 def reciprocal_rank_fusion(
-    dense_hits: list[DenseSearchHit], bm25_hits: list[BM25SearchHit], k: int
+    dense_hits: list[DenseSearchHit], bm25_hits: list[BM25SearchHit], k: int,
+    previous_hits: list[DenseSearchHit] | None = None, previous_weight: float = 1.0,
 ) -> list[FusedCandidate]:
     """LLD §7.4 — standard Reciprocal Rank Fusion. A candidate present in
     only one input list still accumulates an `rrf_score` from that list
@@ -40,6 +41,13 @@ def reciprocal_rank_fusion(
         c = scores.setdefault(hit.chunk_id, _new_candidate(hit.chunk_id, hit))
         c.bm25_rank, c.bm25_score = rank, hit.score
         c.rrf_score += 1.0 / (k + rank)
+
+    # Chunks shown in the previous assistant turn: a third ranked list ("check again", "explain point 3"), already authorised and
+    # version-checked by the caller.
+    for rank, hit in enumerate(previous_hits or [], start=1):
+        c = scores.setdefault(hit.chunk_id, _new_candidate(hit.chunk_id, hit))
+        c.from_previous_turn = True
+        c.rrf_score += previous_weight / (k + rank)
 
     return sorted(scores.values(), key=lambda c: c.rrf_score, reverse=True)
 

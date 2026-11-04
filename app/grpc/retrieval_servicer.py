@@ -9,7 +9,8 @@ from app.core.config import settings
 from app.core.logging import get_logger
 from app.grpc import retrieval_pb2_grpc
 from app.grpc.retrieval_pb2 import GetRelevantChunksRequest, GetRelevantChunksResponse, RetrievalStatus
-from app.query import pipeline, response_mapper
+from app.grpc.retrieval_pb2 import GetDocumentChunksRequest, GetDocumentChunksResponse
+from app.query import document_chunks, pipeline, response_mapper
 from app.stores.milvus_repository import MilvusRepository
 from app.stores.opensearch_repository import OpenSearchRepository
 
@@ -69,3 +70,23 @@ class RetrievalServicer(retrieval_pb2_grpc.RetrievalServiceServicer):
                     "the retrieval query exceeded its deadline",
                     requested_count=len(set(request.file_ids)),
                 )
+
+    async def GetDocumentChunks(self, request: GetDocumentChunksRequest, context) -> GetDocumentChunksResponse:
+        """Whole text of the authorised, current versions of the requested files, in document order (see query/document_chunks.py).
+        Like GetRelevantChunks it degrades instead of raising: a deadline miss is a TIMEOUT status."""
+        try:
+            return await asyncio.wait_for(
+                document_chunks.run(
+                    request,
+                    session_factory=self._session_factory,
+                    file_service_client=self._file_service_client,
+                    opensearch_repository=self._opensearch_repository,
+                ),
+                timeout=settings.QUERY_PIPELINE_DEADLINE_SECONDS * 2,
+            )
+        except TimeoutError:
+            metrics.query_timeout_counter.inc()
+            logger.warning("retrieval_servicer.document_chunks_deadline_exceeded", trace_id=request.trace_id)
+            return GetDocumentChunksResponse(request_id=request.trace_id, status=RetrievalStatus.TIMEOUT,
+                                             status_detail="the document read exceeded its deadline",
+                                             requested_count=len(set(request.file_ids)))

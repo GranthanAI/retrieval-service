@@ -30,6 +30,8 @@ def empty_response(
     requested_count: int = 0,
     authorized_count: int = 0,
     ready_count: int = 0,
+    top_score: float | None = None,
+    coverage: int = 0,
 ) -> GetRelevantChunksResponse:
     """HLD §17's "empty is not an error" posture — the single code path
     every short-circuit and degrade path in `pipeline.py` returns through.
@@ -48,6 +50,8 @@ def empty_response(
         requested_count=requested_count,
         authorized_count=authorized_count,
         ready_count=ready_count,
+        coverage=coverage,
+        **({"top_score": top_score} if top_score is not None else {}),
     )
 
 
@@ -58,6 +62,9 @@ def to_proto(
     requested_count: int = 0,
     authorized_count: int = 0,
     ready_count: int = 0,
+    top_score: float | None = None,
+    coverage: int = 0,
+    score_of=None,
 ) -> GetRelevantChunksResponse:
     """HLD §18.2 — `relevance_score` is always `rrf_score`, never
     `mmr_score` (selection-order-dependent, not a fit for a field read as
@@ -74,6 +81,8 @@ def to_proto(
             requested_count=requested_count,
             authorized_count=authorized_count,
             ready_count=ready_count,
+            top_score=top_score,
+            coverage=coverage,
         )
     metrics.query_status_total.labels(status="OK").inc()
     return GetRelevantChunksResponse(
@@ -83,7 +92,7 @@ def to_proto(
                 content=c.content,
                 source_file_id=c.document_id,
                 source_name=c.filename,
-                relevance_score=c.rrf_score,
+                relevance_score=score_of(c) if score_of else c.rrf_score,
                 metadata=_metadata(c),
             )
             for c in chunks
@@ -94,4 +103,6 @@ def to_proto(
         requested_count=requested_count,
         authorized_count=authorized_count,
         ready_count=ready_count,
+        coverage=coverage,
+        **({"top_score": top_score} if top_score is not None else {}),
     )

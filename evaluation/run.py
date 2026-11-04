@@ -135,7 +135,8 @@ def main(argv: list[str] | None = None) -> int:
             for r in results:
                 rank = metrics.first_relevant_rank(r)
                 detail.append({"id": r.question.id, "category": r.question.category, "status": r.status, "first_relevant_rank": rank,
-                               "returned": len(r.chunks), "coverage": r.coverage})
+                               "returned": len(r.chunks), "coverage": r.coverage, "top_score": r.top_score,
+                               "answerable": r.question.answerable})
                 if args.verbose and set_name == "main":
                     print(f"  {r.question.id:<22} first_rel_rank={rank} returned={len(r.chunks)} status={r.status}")
             record[f"g{g}/{cfg.name}/{set_name}"] = {

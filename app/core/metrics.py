@@ -69,3 +69,10 @@ ingestion_stage_duration_seconds = Histogram(
     "Ingestion pipeline stage duration (LLD §10)",
     ["stage"],
 )
+
+
+rerank_fallback_total = Counter(
+    "retrieval_rerank_fallback_total",
+    "Queries that skipped the cross-encoder reranker (timeout, error, UNIMPLEMENTED) and used the RRF/MMR path",
+    ["reason"],
+)

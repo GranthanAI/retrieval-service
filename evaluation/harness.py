@@ -232,7 +232,7 @@ async def ask(q: Question, embedder, milvus, opensearch, top_k: int = 10) -> met
         from app.grpc.retrieval_pb2 import Coverage  # noqa: PLC0415
 
         coverage = Coverage.Name(resp.coverage)
-    return metrics.QuestionResult(q, _to_ranked(resp), status=RetrievalStatus.Name(resp.status), coverage=coverage, latency_ms=ms,
+    return metrics.QuestionResult(q, _to_ranked(resp), status=RetrievalStatus.Name(resp.status), coverage=coverage, latency_ms=ms, top_score=(resp.top_score if resp.HasField("top_score") else None),
                                   note="degraded" if degraded() > before else "")
 
 
