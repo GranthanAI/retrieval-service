@@ -14,10 +14,10 @@ new index generation, behaviour changes behind a flag with a documented default,
 | 0 | Offline benchmark (`evaluation/`, `make eval`) | main (`65bb38f`, pushed) | **Done** |
 | 1 | Query-time fixes (MMR, request fields, HNSW `ef`, embed fallback, phrase boosts, dedupe, per-file balance) | main (pushed) | **Done** |
 | 2 | Index generations, tokenizer-aware chunking, heading paths, provenance, tables, analyzers | main (pushed) | **Done; generation 2 built and measured, NOT activated** |
-| 3 | Reranker, neighbour expansion, weak-retrieval signal | | Not started |
-| 4 | embedding-service performance under load | | Not started |
-| 5 | llm-service / memory-service: query rewrite, previous chunks, full-text for small docs, anchors, feedback logging | | Not started |
-| 6 | Selective OCR, contextual chunk text, embedding model evaluation | | Not started |
+| 3 | Reranker, neighbour expansion, weak-retrieval signal | main (pushed) | **Built and measured; reranker, expansion and coverage all OFF by default; coverage target not met** |
+| 4 | embedding-service performance under load | main (pushed, embedding-service) | **Done; priority lanes ship off; 0.4 s target still missed under load** |
+| 5 | llm-service / memory-service: query rewrite, previous chunks, full-text for small docs, anchors, feedback logging | main (pushed, three repos) | **Done with fakes; rewrite cases not in the benchmark yet; end-to-end not run** |
+| 6 | Selective OCR, contextual chunk text, embedding model evaluation | main | **OCR and contextual text built and tested with fakes; model comparison and generation 3 not run** |
 
 ## Findings
 
@@ -340,3 +340,80 @@ On generation 2, 8 versus 5 is worth 6 held-out questions (31.67 to 37.67 of 41)
   running dev embedding-service does not yet serve `GetModelInfo`; to be done at final integration after it is restarted.
 * The Docling heading-level logic is covered by the benchmark PDF only (all its headings are the same size, so it exercises one level).
 * The Docling table-caption and slide-location paths have no test document in the fixtures.
+
+## Phases 3 to 6 and configurability: what was measured
+
+Everything here is real mode (MiniLM, live Milvus and OpenSearch, throwaway indexes created from generation 2's schema, 0 degraded queries) on
+the 80-question main set and the 45-question held-out set (41 answerable). Held-out results are reported, never tuned against.
+Raw: `evaluation/results/p3-norerank-real.json`, `p3-ms-real.json`, `p3-ms-cal-real.json`. How to choose models and parsing: `docs/configuration.md`.
+
+### Heading boost and neighbour expansion (no reranker), generation 2, top_k=10
+
+| | Main R@5 | Main MRR | Main nDCG | Held-out R@5 | Held-out MRR | Held-out nDCG |
+|---|---|---|---|---|---|---|
+| `HEADING_MATCH_BOOST=1.0` (default) | 0.993 (71.5/72) | 0.875 | 0.900 | 0.915 (37.5/41) | 0.738 | 0.779 |
+| `HEADING_MATCH_BOOST=0` | 0.979 (70.5/72) | 0.813 | 0.854 | 0.915 (37.5/41) | 0.738 | 0.779 |
+| `EXPAND_NEIGHBOURS=true` | 0.993 (71.5/72) | 0.875 | 0.900 | 0.939 (38.5/41) | 0.743 | 0.788 |
+
+* The boost still helps on main (`phase` MRR 0.76 to 1.00, `hinglish` MRR 0.78 to 0.92) and changes nothing on held-out in any category, so it stays on.
+* Neighbour expansion gains one held-out question at no cost on main. The extra prompt tokens (up to two neighbours per chunk, median chunk
+  46 tokens) were not measured. It stays off by default; this is the owner's call.
+
+### Reranker (`cross-encoder/ms-marco-MiniLM-L-6-v2`, English), 30 passages reranked
+
+| | Main R@5 | Main R@8 | Main MRR | Main nDCG | Held-out R@5 | Held-out R@8 | Held-out MRR | Held-out nDCG |
+|---|---|---|---|---|---|---|---|---|
+| no reranker | 0.993 (71.5/72) | 0.993 | 0.875 | 0.900 | 0.915 (37.5/41) | 0.951 (39/41) | 0.738 | 0.779 |
+| with reranker | 1.000 (72/72) | 1.000 (72/72) | 0.975 | 0.979 | 0.890 (36.5/41) | 0.963 (39.5/41) | 0.811 | 0.838 |
+
+* Ranking improves on both sets (MRR +0.10 main, +0.07 held-out). Held-out Recall@5 drops by one question (36.5 vs 37.5 of 41, minus 2.4 points,
+  just over the 2-point budget the plan set), while Recall@8 rises. Held-out categories that dropped: `body` R@5 1.00 to 0.89, `multi_file`
+  0.79 to 0.64, `phase_exit` MRR 0.51 to 0.35; gains: `paraphrase` R@5 0.80 to 1.00, `csv`, `hinglish`, `table` MRR up.
+* With the reranker on, `HEADING_MATCH_BOOST` on and off give identical results in every category on both sets (the reranker makes it redundant).
+  Re-evaluate again if the reranker changes.
+* Cost: the whole query takes 2.0 to 2.4 s median (3.0 to 4.6 s p95) against 0.4 to 0.6 s without. That exceeds `RERANK_TIMEOUT_SECONDS` (0.8 s) and the
+  query deadline (1.8 s), so with the defaults every reranked query falls back. It stays **off by default**.
+* **`BAAI/bge-reranker-v2-m3` (multilingual): timing only, quality not measured.** 34.6 s median, 43.4 s p95 per 30 passages of 200 tokens (20 calls, idle
+  machine), 12 s to load, 2.8 GB. A full quality run needs 252 queries at that speed, about 2.4 hours; the one attempt was killed by a session end
+  without a result. It cannot serve interactive queries on this CPU. No recommendation can be made for a multilingual reranker from this data.
+
+### Weak-retrieval signal (coverage): not safe to enable
+
+* Rank-derived signal (no reranker): the best candidate is rank 1 in at least one engine whether or not the question is answerable
+  (answerable top scores 0.90 to 1.00, unanswerable 0.87 to 1.00), so it labels everything STRONG. Off (`COVERAGE_RANK_SIGNAL_ENABLED=false`).
+* Reranker signal: thresholds for ms-marco picked on the main set (`weak_min` -9, `strong_min` -4.5):
+
+| Set | Answerable: STRONG / WEAK / NONE | Unanswerable: STRONG / WEAK / NONE |
+|---|---|---|
+| Main (tuned on) | 67 / 5 / 0 | 1 / 1 / 6 |
+| Held-out (not tuned on) | 29 / 5 / **7** | 0 / 0 / 4 |
+
+  On main, no-answer recall is 7/8 and precision 7/12. On held-out, 12 of 41 answerable questions would be told "the documents do not cover this"
+  (7 as none-found), and only 4 of the 16 flagged questions are truly unanswerable. The main-set calibration did not generalise, so the thresholds
+  are **not shipped** (`RERANK_COVERAGE_THRESHOLDS` is empty and `COVERAGE_ENABLED=false`). The earlier figure of 7/8 no-answer recall from the first
+  reranker run used placeholder thresholds that did not fit that model's score scale, and should be ignored.
+* **The Phase 3 target (no-answer recall well above 0 without lowering answerable Recall@5 by more than 2 points) is not met safely.** What would help:
+  a stronger multilingual reranker (unmeasured, too slow on CPU) or many more unanswerable examples to calibrate on.
+
+### Phase 4 (embedding-service under load): see `embedding-service/docs/performance.md`
+Query p50 behind a 128-text ingestion batch: 8.9 s before (3 samples), 0.10 to 0.21 s with priority lanes (52 to 96 samples), p95 0.49 to 0.73 s.
+The 0.4 s query target is still missed under load on this shared machine. Priority lanes ship off (`PRIORITY_LANES_ENABLED=false`). Redis cache untested against a real server.
+
+### Phase 5, retrieval side
+Delivered and tested with fakes: `dense_query` (embedded for the dense leg; the keyword leg keeps `query`), `previous_chunk_ids` (added as candidates only
+after the authorisation and current-version check), `GetDocumentChunks`, one `retrieval.feedback` log line per query (hash, never the text unless
+`LOG_QUERY_TEXT`). **Not done:** the follow-up and Hinglish rewrite cases from `llm-service/docs/retrieval-rewrite-cases.md` are not in the benchmark yet.
+
+### Phase 6
+* Selective OCR (`app/ingestion/ocr.py`): detection, page-ordered merge with real page numbers, quality and cost metrics, never fails ingestion. Tested with a
+  fake engine and a real generated PDF whose middle page has no text. **No OCR model is installed, so recognition itself, its cost and its time per page are unmeasured.**
+* Contextual chunk text (`app/ingestion/contextual.py`, generation 3 = `--contextual`): tested with mock HTTP only. **Generation 3 was not built or benchmarked**
+  (it needs an LLM endpoint, and sends document text to it).
+* Embedding-model comparison: the benchmark can run any cached sentence-transformers model with prefixes (`--embedding-model`, `--query-prefix`, `--passage-prefix`).
+  **Not run.** Cached: `paraphrase-multilingual-mpnet-base-v2`, `multilingual-e5-large`. `bge-m3` and `multilingual-e5-base` are not cached and were not downloaded.
+
+### Configuration (this change)
+Reranker on/off and choice, embedding model (prefixes, sequence cap, path guard, model taken from the active generation), Docling (enable, table options,
+device, threads, timeout, converter reuse) and the optional features are settings; `docs/configuration.md` lists them, what each needs (restart or new generation) and the
+timings above. Changed tests: `test_reranker_scores_decide_the_order...` now supplies coverage thresholds for its fake model (a reranker without them gives a score but no verdict).
+Docling parse time for a 6-page PDF was measured per setting: none of the settings changes it much (15 to 20 s warm).
