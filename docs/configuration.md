@@ -41,7 +41,7 @@ back to the non-reranked path and `retrieval_rerank_fallback_total` counts it.
 | `cross-encoder/ms-marco-MiniLM-L-6-v2` (English) | 2.59 s median, 4.35 s p95 (passages of 200 tokens, shared machine). In the full pipeline with real chunks: 2.0 to 2.4 s median, 3.0 to 4.6 s p95 | 610 MB | embedding-service `docs/reranker-benchmark.md`; `p3-ms-real.json` |
 | `BAAI/bge-reranker-v2-m3` (multilingual) | **34.6 s median, 43.4 s p95** (20 calls, idle machine, passages of 200 tokens) | 2.8 GB peak, 12 s to load | `scripts/bench_rerank.py` run on 2026-11-07 |
 
-The defaults are `RERANK_TIMEOUT_SECONDS=0.8` and `QUERY_PIPELINE_DEADLINE_SECONDS=1.8`. **Neither reranker fits them on CPU**: with
+The defaults are `RERANK_TIMEOUT_SECONDS=0.8`, `MILVUS_QUERY_TIMEOUT_SECONDS=1.0` (raised from 0.5) and `QUERY_PIPELINE_DEADLINE_SECONDS=1.8`. **Neither reranker fits them on CPU**: with
 `RERANK_ENABLED=true` and the defaults every query would time out and fall back. That is why it ships off. To use one you must raise those
 timeouts (and llm-service's retrieval timeout) or reduce the work (`RERANK_TOP_N`, a GPU). bge at 35 s per query is not usable
 interactively on this CPU. With real (shorter) chunks it would be faster than 35 s, but I did not measure that.

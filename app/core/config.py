@@ -106,7 +106,9 @@ class Settings(BaseSettings):
     MILVUS_HNSW_EF: int = 64
     MILVUS_INDEX_METRIC_TYPE: str = "COSINE"
     MILVUS_CONNECT_TIMEOUT_SECONDS: float = 5.0
-    MILVUS_QUERY_TIMEOUT_SECONDS: float = 0.5
+    # Raised from 0.5 to 1.0 s: at 0.5 s the slowest search of a normal benchmark run used 84% of the budget and a busier machine timed out
+    # about 0.5% of searches, each silently degrading that query to keyword-only (docs/retrieval-quality.md). Still inside QUERY_PIPELINE_DEADLINE_SECONDS.
+    MILVUS_QUERY_TIMEOUT_SECONDS: float = 1.0
 
     # --- OpenSearch ---
     OPENSEARCH_HOSTS: str = "localhost:9200"

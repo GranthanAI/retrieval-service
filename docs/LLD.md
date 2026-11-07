@@ -201,7 +201,7 @@ class Settings(BaseSettings):
     MILVUS_SEARCH_NPROBE: int = 16
     MILVUS_INDEX_METRIC_TYPE: str = "COSINE"
     MILVUS_CONNECT_TIMEOUT_SECONDS: float = 5.0            # connection setup, at startup — not per-query
-    MILVUS_QUERY_TIMEOUT_SECONDS: float = 0.5               # per-search, ON the query path — see §7.7
+    MILVUS_QUERY_TIMEOUT_SECONDS: float = 0.5               # per-search, ON the query path — see §7.7 (default is now 1.0: docs/retrieval-quality.md)
 
     # --- OpenSearch (HLD §14) ---
     OPENSEARCH_HOSTS: str  # comma-separated

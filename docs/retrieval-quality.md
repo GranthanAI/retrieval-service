@@ -248,11 +248,12 @@ Working mode from here: everything is committed to `main` in each repo (no featu
   `tests/integration/test_opensearch_scope_live.py::test_an_index_created_by_a_first_write_is_detected`.
   Operational hardening for any OpenSearch cluster: set `action.auto_create_index` so that application indexes are not auto-created,
   e.g. `PUT _cluster/settings {"persistent": {"action.auto_create_index": "-retrieval_*,+*"}}`.
-* **Milvus timeout (`MILVUS_QUERY_TIMEOUT_SECONDS`, default 0.5 s, unchanged).** Benchmark run with the default timeouts
+* **Milvus timeout (`MILVUS_QUERY_TIMEOUT_SECONDS`): default RAISED from 0.5 s to 1.0 s on 2026-11-07 (owner's decision).** Measurement at 0.5 s: benchmark run with the default timeouts
   (`python -m evaluation.run --real --sets main,heldout --default-timeouts`): 119 dense searches, 0 failed (0.0%); latency p50 229 ms,
   p95 337 ms, p99 353 ms, max 418 ms. The slowest search used 84% of the budget. In an earlier sweep on a busier machine 3 of about 560
-  searches timed out (about 0.5%), and each silently degraded that query to keyword-only. Recommendation: raise it to 1.0 s. The
-  query pipeline deadline is 1.8 s; embedding (0.4 s) and the search legs overlap only partly, so 1.0 s still fits. Not changed.
+  searches timed out (about 0.5%), and each silently degraded that query to keyword-only. That is why it is now 1.0 s. The
+  query pipeline deadline is 1.8 s; embedding (0.4 s) and the search legs overlap only partly, so 1.0 s still fits. The embedding retries (up to 3 x 0.4 s)
+  plus a full 1.0 s search can exceed the 1.8 s deadline in the worst case, in which case the query returns TIMEOUT as before.
   `get_by_chunk_ids` (candidate embeddings for MMR) has no timeout of its own and should get one when the default is revisited.
   The flaky Milvus roundtrip test was fixed: store tests now raise the timeouts (they check correctness, not latency) and carry a
   `live_milvus` marker (about 20 s per test; deselect with `-m "not live_milvus"`).
