@@ -148,8 +148,22 @@ class _SectionChunker:
             self._emit(whole, page_start=block.page, page_end=block.page, block_type="table",
                        location=loc_for(0, len(rows)) if rows else (block.location or self.section.location))
             return
+        # The caption and header row are repeated on every row group so each chunk is understandable alone. They may take at most a third of
+        # a chunk: a table whose header alone fills the chunk (seen in a real 84-page PDF) would otherwise leave no room for rows, and the row
+        # splitting below degenerated into one-token fragments, each re-emitted with the full header (182 chunks became 3,495, 3,080 of them
+        # exact duplicates). Only the START of an over-long header is repeated.
+        head_cap = max(1, self.room // 3)
+        if self.counter.count(head) > head_cap:
+            head = self.counter.split(head, head_cap)[0]
         head_tokens = self.counter.count(head) + 1
         budget = self.room - head_tokens
+        seen: set[str] = set()                                    # a table never emits the same chunk text twice
+
+        def emit(body: str, a: int, b: int) -> None:
+            if body not in seen:
+                seen.add(body)
+                self._emit(body, page_start=block.page, page_end=block.page, block_type="table", location=loc_for(a, b))
+
         i = 0
         while i < len(rows):
             j, used = i, 0
@@ -162,9 +176,9 @@ class _SectionChunker:
             group = rows[i:j]
             if len(group) == 1 and used > budget:           # one row longer than the room: split the row itself, header repeated
                 for part in self.counter.split(group[0], max(1, budget)):
-                    self._emit(head + "\n" + part, page_start=block.page, page_end=block.page, block_type="table", location=loc_for(i, j))
+                    emit(head + "\n" + part, i, j)
             else:
-                self._emit(head + "\n" + "\n".join(group), page_start=block.page, page_end=block.page, block_type="table", location=loc_for(i, j))
+                emit(head + "\n" + "\n".join(group), i, j)
             i = j
 
     def run(self) -> None:

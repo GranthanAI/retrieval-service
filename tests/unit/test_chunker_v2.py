@@ -188,3 +188,32 @@ def test_csv_sections_are_table_blocks_with_row_offsets():
 def test_plain_text_gets_a_line_range_location_and_no_page():
     s = text_parsers.parse_text(("line\n" * 300).encode(), "notes.txt").sections
     assert s[0].location == "Lines 1-120" and s[0].page_number is None
+
+
+# ---- regression: a table whose caption + header fill the whole chunk budget (found in a real 84-page PDF: 182 chunks became 3,495) ----
+def _giant_header_table(n_rows: int = 40):
+    cols = [f"column{i} " + words(8, f"h{i}x") for i in range(20)]                 # a header far longer than one chunk
+    header = "| " + " | ".join(cols) + " |\n| " + " | ".join("---" for _ in cols) + " |"
+    rows = [f"| r{i}start " + words(30, f"c{i}x") + " |" for i in range(n_rows)]
+    return ParsedBlock("\n".join([header] + rows), page=9, kind="table", header=header, rows=rows,
+                       caption="Table 3: " + words(30, "cap"), row_offset=1)
+
+
+def test_a_table_whose_header_fills_the_chunk_does_not_explode_into_duplicate_chunks():
+    table = _giant_header_table()
+    chunks = run(doc(ParsedSection("Results", 9, "x", heading_path=["Results"], blocks=[table])), filename="big.pdf")
+    bodies = [c.content.split("\n", 1)[1] for c in chunks]
+    assert len(set(bodies)) == len(bodies)                                          # no chunk repeats another
+    assert len(chunks) <= 2 * len(table.rows)                                       # bounded by the rows, not by header size x row size
+    assert all(WordCounter().count(c.content) <= MAX_SEQ - 16 for c in chunks)
+    for i in range(len(table.rows)):                                                # every row is still present
+        assert any(f"r{i}start" in b for b in bodies), i
+    assert all(c.block_type == "table" and (c.page_start, c.page_end) == (9, 9) for c in chunks)
+
+
+def test_the_repeated_table_header_is_shortened_not_the_rows():
+    table = _giant_header_table(8)
+    chunks = run(doc(ParsedSection("Results", 9, "x", heading_path=["Results"], blocks=[table])), filename="big.pdf")
+    full_rows = [r for r in table.rows if any(r in c.content for c in chunks)]
+    assert len(full_rows) == len(table.rows)                                        # each row appears whole in some chunk
+    assert all("column0" in c.content or "Table 3" in c.content for c in chunks)    # the start of caption/header is repeated for context
