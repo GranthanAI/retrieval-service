@@ -17,7 +17,7 @@ new index generation, behaviour changes behind a flag with a documented default,
 | 3 | Reranker, neighbour expansion, weak-retrieval signal | main (pushed) | **Built and measured; reranker, expansion and coverage all OFF by default; coverage target not met** |
 | 4 | embedding-service performance under load | main (pushed, embedding-service) | **Done; priority lanes ship off; 0.4 s target still missed under load** |
 | 5 | llm-service / memory-service: query rewrite, previous chunks, full-text for small docs, anchors, feedback logging | main (pushed, three repos) | **Done with fakes; rewrite cases not in the benchmark yet; end-to-end not run** |
-| 6 | Selective OCR, contextual chunk text, embedding model evaluation | main | **OCR and contextual text built and tested with fakes; model comparison and generation 3 not run** |
+| 6 | Selective OCR, contextual chunk text, embedding model evaluation | main | **OCR and contextual text built and tested with fakes; embedding-model comparison done (recommendation only); generation 3 not built** |
 
 ## Findings
 
@@ -409,11 +409,46 @@ after the authorisation and current-version check), `GetDocumentChunks`, one `re
   fake engine and a real generated PDF whose middle page has no text. **No OCR model is installed, so recognition itself, its cost and its time per page are unmeasured.**
 * Contextual chunk text (`app/ingestion/contextual.py`, generation 3 = `--contextual`): tested with mock HTTP only. **Generation 3 was not built or benchmarked**
   (it needs an LLM endpoint, and sends document text to it).
-* Embedding-model comparison: the benchmark can run any cached sentence-transformers model with prefixes (`--embedding-model`, `--query-prefix`, `--passage-prefix`).
-  **Not run.** Cached: `paraphrase-multilingual-mpnet-base-v2`, `multilingual-e5-large`. `bge-m3` and `multilingual-e5-base` are not cached and were not downloaded.
+* Embedding-model comparison: run for the two cached multilingual models, see the next section. `bge-m3` and `multilingual-e5-base` are not cached and were not downloaded.
 
 ### Configuration (this change)
 Reranker on/off and choice, embedding model (prefixes, sequence cap, path guard, model taken from the active generation), Docling (enable, table options,
 device, threads, timeout, converter reuse) and the optional features are settings; `docs/configuration.md` lists them, what each needs (restart or new generation) and the
 timings above. Changed tests: `test_reranker_scores_decide_the_order...` now supplies coverage thresholds for its fake model (a reranker without them gives a score but no verdict).
 Docling parse time for a 6-page PDF was measured per setting: none of the settings changes it much (15 to 20 s warm).
+
+### Embedding-model comparison (recommendation only; nothing was switched)
+
+Generation 2 chunking, no reranker, live Milvus and OpenSearch, models run in-process on CPU from the local cache (no downloads), top_k=10, 0 degraded
+queries. Each model gets the chunk sizes its own `max_seq_length` allows (MiniLM 256, e5-large 512, multilingual mpnet 128), so the comparison includes that
+effect. Raw: `evaluation/results/emb-e5large-real.json`, `emb-mpnet-real.json`, `p3-norerank-real.json` (MiniLM).
+
+| | MiniLM-L6-v2 (current) | multilingual-e5-large (`query:` / `passage:`) | paraphrase-multilingual-mpnet-base-v2 |
+|---|---|---|---|
+| Size on disk / vector size | 263 MB / 384 | 2.2 GB / 1024 | 1.1 GB / 768 |
+| Chunks / max chunk tokens | 80 / 224 | 79 / 467 | 105 / 103 |
+| Main R@5 / R@8 | 0.993 (71.5/72) / 0.993 | 0.993 (71.5/72) / 1.000 (72/72) | 0.979 (70.5/72) / 0.986 |
+| Main MRR / nDCG | 0.875 / 0.900 | **0.925 / 0.939** | 0.896 / 0.916 |
+| Held-out R@5 / R@8 | 0.915 (37.5/41) / 0.951 | **0.931 (38.2/41) / 0.963** | 0.833 (34.2/41) / 0.846 |
+| Held-out MRR / nDCG | 0.738 / 0.779 | **0.787 / 0.817** | 0.739 / 0.749 |
+| Query latency (whole pipeline, median) | 0.4 to 0.6 s | 1.3 s | 0.9 s |
+| Ingest of the 7 fixtures | about 64 s | 80 s | 65 s |
+
+Per category (R@5 / MRR@10):
+
+| Category | MiniLM | e5-large | mpnet |
+|---|---|---|---|
+| main hinglish (8) | 1.00 / 0.92 | **1.00 / 1.00** | 1.00 / 1.00 |
+| held-out hinglish (4) | 1.00 / 0.75 | **1.00 / 1.00** | 1.00 / 1.00 |
+| main phase_exit (8) | 1.00 / 0.52 | **1.00 / 0.85** | 0.88 / 0.48 |
+| held-out paraphrase (5) | 0.80 / 0.70 | **0.93 / 0.75** | 0.73 / 0.70 |
+| held-out multi_file (7) | 0.79 / 0.73 | 0.79 / 0.72 | 0.64 / 0.64 |
+| held-out body (9) | 1.00 / 0.94 | 1.00 / 0.89 | 0.89 / 0.83 |
+
+* **multilingual-e5-large is the better candidate**: higher MRR and nDCG on both sets, better Recall@8, and Hinglish MRR 1.00 on both sets (MiniLM 0.92 and 0.75).
+  Not better everywhere: held-out `body` MRR is lower (0.89 vs 0.94). No category's Recall@5 got worse.
+* **paraphrase-multilingual-mpnet is not recommended**: held-out Recall@5 drops to 0.833 (34.2/41) from 0.915, and `multi_file` and `phase_exit` get worse.
+* Costs of e5-large: 8 times the model size, vectors 2.7 times larger (more Milvus storage), roughly 3 times the query time in this in-process setup (0.9 s more
+  per query; through embedding-service it was not measured), and slower ingestion. Switching needs a new index generation (`docs/configuration.md`).
+* Limits of this evidence: 80 and 45 questions, and a single run each; the e5 chunks are larger (up to 467 tokens), so model and chunk size are mixed together.
+  `bge-m3` and `multilingual-e5-base` were not evaluated (not in the local cache, and nothing was downloaded).
