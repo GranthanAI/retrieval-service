@@ -128,6 +128,13 @@ async def cmd_reindex(args) -> int:
             return 1
         info = to_info(row)
         jobs = await _ready_current_versions(db)
+    if args.document:                                  # re-do only these documents (e.g. after a chunker fix)
+        wanted = set(args.document)
+        jobs = [j for j in jobs if str(j.document_id) in wanted]
+        missing = wanted - {str(j.document_id) for j in jobs}
+        if missing:
+            print(f"REFUSED: not a READY current document version: {sorted(missing)}")
+            return 1
     now = docling_config.parser_mismatch(info.parser_version)
     if now is not None and not args.allow_parser_mismatch:
         print(f"REFUSED: generation {n} was created with parser_version {info.parser_version!r} but the current DOCLING_* settings give {now!r}. "
@@ -161,6 +168,10 @@ async def cmd_reindex(args) -> int:
                                              conversation_id=str(job.conversation_id) if job.conversation_id else None,
                                              filename=job.filename, info=info)
                 with generations.use(info):                          # writes go to generation N only; the active one is not touched
+                    # Replace, don't merge: chunk ids come from the chunk number, so a re-run that yields fewer chunks would otherwise
+                    # leave the old extra chunks behind. (Under `use`, delete_by_document_id reaches generation N only.)
+                    await milvus.delete_by_document_id(doc)
+                    await opensearch.delete_by_document_id(doc)
                     await milvus.upsert_chunks(records)
                     await opensearch.upsert_chunks(records)
                 async with session_factory() as db:
@@ -300,6 +311,7 @@ def main(argv: list[str] | None = None) -> int:
             p.add_argument("--contextual", action="store_true", help="contextual generation: an LLM-written description per chunk (needs CONTEXT_LLM_*)")
         if name == "reindex":
             p.add_argument("--concurrency", type=int, default=4)
+            p.add_argument("--document", action="append", help="only (re-)index this document id; repeatable")
             p.add_argument("--allow-parser-mismatch", action="store_true", help="build even though the DOCLING_* parse options differ from the generation's parser_version")
         if name == "activate":
             p.add_argument("--dry-run", action="store_true", help="run every check but do not switch")
