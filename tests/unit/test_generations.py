@@ -135,3 +135,18 @@ def test_response_metadata_exposes_the_new_provenance_only_when_present():
                          block_type="table", location="Rows 1-40")
     md = response_mapper._metadata(new)
     assert (md["heading_path"], md["page_start"], md["page_end"], md["block_type"], md["location"]) == ("A › B", "3", "5", "table", "Rows 1-40")
+
+
+def test_a_deleted_file_still_reaches_the_legacy_index_while_only_a_building_generation_is_registered():
+    """Before `generation-bootstrap` the active generation is the implicit legacy one (no registry row). Registering a building generation 2 must
+    not make deletes skip it: the file would stay retrievable from the index queries actually read."""
+    generations.set_registered([G2])
+    live = generations.all_live()
+    assert [g.generation for g in live] == [1, 2]
+    assert live[0].milvus_collection == settings.MILVUS_COLLECTION_NAME and live[0].opensearch_index == settings.OPENSEARCH_INDEX_NAME
+    assert generations.current().generation == 1                       # queries still read the legacy index
+
+
+def test_the_legacy_generation_is_not_added_twice_once_a_generation_is_active():
+    generations.set_registered([GenerationInfo(1, "c1", "i1", status=ACTIVE), G2])
+    assert [g.generation for g in generations.all_live()] == [1, 2]

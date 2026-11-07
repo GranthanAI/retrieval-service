@@ -65,7 +65,10 @@ def all_live() -> list[GenerationInfo]:
     them, or rolling back to a retired generation would resurrect it."""
     if _override.get():
         return [_override.get()]
-    return list(_registered) or [legacy()]
+    live = list(_registered)
+    if not any(g.status == ACTIVE for g in live):
+        live.insert(0, legacy())          # no active row yet: the implicit legacy index IS the active generation, and deletes must reach it
+    return live
 
 
 def expected_embedding() -> tuple[str, int]:
