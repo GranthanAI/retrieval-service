@@ -8,8 +8,9 @@ benchmark all go through here."""
 from dataclasses import dataclass
 
 from app.clients.embedding_client import EmbeddingClient
+from app.core.config import settings
 from app.core.logging import get_logger
-from app.ingestion import chunk_identity, chunker, chunker_v2
+from app.ingestion import chunk_identity, chunker, chunker_v2, contextual
 from app.ingestion.chunker import Chunk
 from app.ingestion.parsed import ParsedDocument
 from app.ingestion.tokenization import ModelProfile, TokenCounter, load_counter, validate_profile
@@ -53,7 +54,35 @@ def chunk_parsed(parsed: ParsedDocument, filename: str, info: GenerationInfo) ->
             f"generation {info.generation} uses chunker v{info.chunker_version}, which needs the embedding model profile; "
             "call build.ensure_model_profile() at startup"
         )
-    return chunker_v2.chunk_v2(parsed, filename, runtime.counter, runtime.profile.max_seq_length)
+    # A contextual generation reserves room in every chunk for the description written afterwards (contextualize()).
+    return chunker_v2.chunk_v2(parsed, filename, runtime.counter, runtime.profile.max_seq_length - contextual.reserve_tokens(info))
+
+
+_writer: contextual.ContextWriter | None = None
+
+
+def set_context_writer(writer: contextual.ContextWriter | None) -> None:
+    global _writer
+    _writer = writer
+
+
+async def contextualize(chunks: list[Chunk], filename: str, parsed: ParsedDocument | None, info: GenerationInfo) -> int:
+    """For a contextual generation (chunker_version "2+ctx"), writes each chunk's 1-2 sentence description in place. A no-op for every
+    other generation, for transcripts (parsed is None) and when the writer cannot be built. Returns how many chunks got one."""
+    if not contextual.is_contextual(info) or parsed is None or runtime.profile is None or runtime.counter is None:
+        return 0
+    if not settings.CONTEXTUAL_CHUNKS_ENABLED:
+        # Master switch: this feature sends document text to a model, so a contextual generation alone never triggers it.
+        logger.warning("build.contextual_disabled", generation=info.generation, hint="set CONTEXTUAL_CHUNKS_ENABLED=true to write descriptions")
+        return 0
+    writer = _writer
+    if writer is None:
+        try:
+            writer = contextual.HttpContextWriter()
+        except RuntimeError as exc:
+            logger.warning("build.contextual_writer_unavailable", error=str(exc))
+            return 0
+    return await contextual.add_context(chunks, filename, parsed, writer, runtime.counter, runtime.profile.max_seq_length)
 
 
 def make_records(

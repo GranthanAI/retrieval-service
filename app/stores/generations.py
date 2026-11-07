@@ -68,6 +68,14 @@ def all_live() -> list[GenerationInfo]:
     return list(_registered) or [legacy()]
 
 
+def expected_embedding() -> tuple[str, int]:
+    """(model, dimension) the embedding-service must be serving for the generation in effect. Generation 1 without a registry row uses
+    EMBEDDING_MODEL_EXPECTED / EMBEDDING_DIMENSION_EXPECTED; a registered generation carries the model it was built with, so vectors from two
+    models can never meet in one search space."""
+    info = current()
+    return info.embedding_model or settings.EMBEDDING_MODEL_EXPECTED, info.embedding_dimension or settings.EMBEDDING_DIMENSION_EXPECTED
+
+
 def set_registered(infos: list[GenerationInfo]) -> None:
     _registered[:] = sorted(infos, key=lambda g: (g.status != ACTIVE, g.generation))
 

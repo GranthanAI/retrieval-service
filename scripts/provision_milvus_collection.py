@@ -43,7 +43,7 @@ from app.stores import generations
 from app.stores.index_schema import SCHEMA_V1, milvus_fields
 
 
-def _build_schema(client: MilvusClient, schema_version: str = SCHEMA_V1):
+def _build_schema(client: MilvusClient, schema_version: str = SCHEMA_V1, dimension: int | None = None):
     """LLD §4's exact field list (schema 1), except `conversation_id`/`page_number`/`section` are NOT declared nullable (see this module's
     docstring). Schema 2 (index generation 2+) adds heading_path, page_start, page_end, block_type, location and generation. The field
     lists live in app/stores/index_schema.py so the application and this script cannot disagree.
@@ -53,12 +53,12 @@ def _build_schema(client: MilvusClient, schema_version: str = SCHEMA_V1):
     same id) work without a secondary lookup index.
     """
     schema = client.create_schema(auto_id=False, enable_dynamic_field=False)
-    for name, dtype, kwargs in milvus_fields(schema_version, settings.EMBEDDING_DIMENSION_EXPECTED):
+    for name, dtype, kwargs in milvus_fields(schema_version, dimension or settings.EMBEDDING_DIMENSION_EXPECTED):
         schema.add_field(field_name=name, datatype=getattr(DataType, dtype), **kwargs)
     return schema
 
 
-def create_collection(client: MilvusClient, name: str, schema_version: str = SCHEMA_V1) -> bool:
+def create_collection(client: MilvusClient, name: str, schema_version: str = SCHEMA_V1, dimension: int | None = None) -> bool:
     """Creates collection `name` explicitly (HNSW index on `embedding`, scalar indexes on document_id and content_version) and loads it.
     Returns False if it already exists."""
     if client.has_collection(name):
@@ -71,7 +71,7 @@ def create_collection(client: MilvusClient, name: str, schema_version: str = SCH
     # (HLD §13.3's current-version-only fix), not just document_id alone.
     index_params.add_index(field_name="document_id")
     index_params.add_index(field_name="content_version")
-    client.create_collection(collection_name=name, schema=_build_schema(client, schema_version), index_params=index_params)
+    client.create_collection(collection_name=name, schema=_build_schema(client, schema_version, dimension), index_params=index_params)
     client.load_collection(name)
     return True
 

@@ -171,11 +171,12 @@ class IngestStats:
     tokens_per_chunk: list[int] | None = None
 
 
-def profile_info(generation: int, milvus_collection: str = "", opensearch_index: str = "") -> GenerationInfo:
+def profile_info(generation: int, milvus_collection: str = "", opensearch_index: str = "", model: str = "all-MiniLM-L6-v2", dimension: int = 384) -> GenerationInfo:
     """What each benchmarked generation is: 1 = parser/chunker/analyzer v1 (the index as it was before Phase 2), 2 = v2 of all three."""
     v = "1" if generation == 1 else "2"
-    return GenerationInfo(generation, milvus_collection, opensearch_index, parser_version=v, chunker_version=v, analyzer_version=v,
-                          embedding_model="all-MiniLM-L6-v2", embedding_dimension=384, status="building")
+    chunker_version = "2+ctx" if generation == 3 else v          # generation 3 = generation 2 plus contextual chunk text
+    return GenerationInfo(generation, milvus_collection, opensearch_index, parser_version=v, chunker_version=chunker_version, analyzer_version=v,
+                          embedding_model=model, embedding_dimension=dimension, status="building")
 
 
 async def ingest(corpus: dict[str, bytes], embedder, milvus: MilvusRepository, opensearch: OpenSearchRepository) -> IngestStats:
@@ -186,6 +187,7 @@ async def ingest(corpus: dict[str, bytes], embedder, milvus: MilvusRepository, o
         info = generations.current()
         parsed = _parse(raw, filename)
         chunks = build.chunk_parsed(parsed, filename, info)
+        await build.contextualize(chunks, filename, parsed, info)
         vectors = await embedder.embed_chunks([c.content for c in chunks])      # exactly the text that is indexed
         records = build.make_records(chunks, vectors, document_id=doc_id(filename), content_version=CONTENT_VERSION, owner_id=OWNER,
                                      conversation_id=None, filename=filename, info=info)
@@ -220,7 +222,9 @@ async def ask(q: Question, embedder, milvus, opensearch, top_k: int = 10) -> met
     from app.core import metrics as service_metrics  # noqa: PLC0415
 
     def degraded() -> float:
-        return sum(service_metrics.search_degraded_total.labels(engine=e)._value.get() for e in ("dense_only", "bm25_only"))
+        fallbacks = sum(sample.value for metric in service_metrics.rerank_fallback_total.collect() for sample in metric.samples
+                        if sample.name.endswith("_total"))
+        return fallbacks + sum(service_metrics.search_degraded_total.labels(engine=e)._value.get() for e in ("dense_only", "bm25_only"))
 
     before = degraded()
     t0 = time.perf_counter()
@@ -282,7 +286,13 @@ async def run_benchmark(embedder, stores: str, sets: dict[str, list[Question]], 
     corpus = {n: b for n, b in fixture_files().items() if files is None or n in files}
     all_questions = [q for qs in sets.values() for q in qs]
     out: dict[str, dict[str, list[metrics.QuestionResult]]] = {}
-    info = profile_info(generation)
+    info = profile_info(generation, model=embedder.name, dimension=embedder.dimension)
+    # The collection's vector dimension follows the embedder (a model comparison uses models of other sizes).
+    with mock.patch.object(settings, "EMBEDDING_DIMENSION_EXPECTED", embedder.dimension):
+        return await _run(embedder, stores, sets, configs, corpus, all_questions, out, info, default_timeouts)
+
+
+async def _run(embedder, stores, sets, configs, corpus, all_questions, out, info, default_timeouts):
     if info.chunker_version != "1":
         # chunker v2 sizes chunks with the embedding model's own tokenizer and max_seq_length (from GetModelInfo in production)
         build.runtime.profile = ModelProfile(embedder.name, embedder.dimension, embedder.max_seq_length, embedder.tokenizer_id)

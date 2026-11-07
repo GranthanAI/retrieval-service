@@ -63,6 +63,10 @@ def main(argv: list[str] | None = None) -> int:
     mode.add_argument("--real", action="store_true", help="all-MiniLM-L6-v2 via sentence-transformers; live stores when reachable")
     ap.add_argument("--stores", choices=["auto", "fake", "real"], default="auto", help="--real only: force the store backend")
     ap.add_argument("--generation", default="1", help="comma list of index generations to build and evaluate: 1 (v1 parser/chunker/analyzer), 2 (v2)")
+    ap.add_argument("--embedding-model", help="--real: a sentence-transformers model id to embed with instead of all-MiniLM-L6-v2 (must already be in the local cache)")
+    ap.add_argument("--query-prefix", default="", help="prefix the model expects on queries, e.g. 'query: ' for e5")
+    ap.add_argument("--passage-prefix", default="", help="prefix the model expects on passages, e.g. 'passage: ' for e5")
+    ap.add_argument("--max-seq-length", type=int, help="cap the model's max_seq_length (CPU time)")
     ap.add_argument("--reranker", help="attach an in-process cross-encoder (a Hugging Face model id, or `fake`) so configs can set RERANK_ENABLED=true")
     ap.add_argument("--sets", default="main", help="comma list of: main, heldout")
     ap.add_argument("--config", action="append", default=[], help="name:KEY=VALUE[,KEY=VALUE]  (repeatable; default: the current settings)")
@@ -88,7 +92,8 @@ def main(argv: list[str] | None = None) -> int:
     else:
         from evaluation.embedders import RealEmbedder
 
-        embedder, mode_name = RealEmbedder(), "real"
+        embedder, mode_name = RealEmbedder(args.embedding_model or "sentence-transformers/all-MiniLM-L6-v2", args.query_prefix,
+                                           args.passage_prefix, args.max_seq_length), "real"
         if args.reranker:
             embedder.enable_reranker(args.reranker)
         if args.stores == "auto":
@@ -133,6 +138,12 @@ def main(argv: list[str] | None = None) -> int:
             for cat, row in summary.by_category.items():
                 print(f"{cat:<14}{row['n']:>3}{row['recall@5']:>8.3f}{row['mrr@10']:>8.3f}{row['ndcg@10']:>9.3f}")
             lat = [r.latency_ms for r in results]
+            # Coverage verdicts split by whether the question is answerable (aggregate counts only, also for the held-out set).
+            cov = {"answerable": {}, "unanswerable": {}}
+            for r in results:
+                bucket = cov["answerable" if r.question.answerable else "unanswerable"]
+                bucket[r.coverage or "n/a"] = bucket.get(r.coverage or "n/a", 0) + 1
+            print(f"coverage verdicts  answerable: {cov['answerable']}   unanswerable: {cov['unanswerable']}")
             n_degraded = sum(r.note == "degraded" for r in results)
             print(f"questions that ran on one search engine only (timeout/failure; contaminates the numbers if > 0): {n_degraded}")
             print(f"latency (pipeline.run, ms): p50={_pct(lat, 50):.1f} p95={_pct(lat, 95):.1f}")
@@ -146,7 +157,7 @@ def main(argv: list[str] | None = None) -> int:
                     print(f"  {r.question.id:<22} first_rel_rank={rank} returned={len(r.chunks)} status={r.status}")
             record[f"g{g}/{cfg.name}/{set_name}"] = {
                 "overrides": cfg.overrides or {}, "top_k": cfg.top_k, "metrics": summary.metrics,
-                "fractions": {k: list(v) for k, v in summary.fractions.items()}, "by_category": summary.by_category, "counts": summary.counts, "degraded_questions": n_degraded,
+                "coverage_verdicts": cov, "fractions": {k: list(v) for k, v in summary.fractions.items()}, "by_category": summary.by_category, "counts": summary.counts, "degraded_questions": n_degraded,
                 "questions": detail if set_name == "main" else [{"id": d["id"], "category": d["category"]} for d in detail],  # no per-question outcomes for held-out
             }
 

@@ -99,10 +99,13 @@ def load_counter(tokenizer_id: str) -> TokenCounter:
 def validate_profile(profile: ModelProfile) -> None:
     """Refuse to chunk for a model other than the one this service is configured for (a silent embedding-service upgrade would
     otherwise index vectors from a different model into the same search space)."""
-    if profile.model != settings.EMBEDDING_MODEL_EXPECTED or profile.dimension != settings.EMBEDDING_DIMENSION_EXPECTED:
+    from app.stores import generations
+
+    expected_model, expected_dimension = generations.expected_embedding()
+    if profile.model != expected_model or profile.dimension != expected_dimension:
         raise EmbeddingModelMismatchError(
             f"embedding-service reports model={profile.model!r} dimension={profile.dimension}, expected "
-            f"model={settings.EMBEDDING_MODEL_EXPECTED!r} dimension={settings.EMBEDDING_DIMENSION_EXPECTED}"
+            f"model={expected_model!r} dimension={expected_dimension} (the model of generation {generations.current().generation})"
         )
 
 

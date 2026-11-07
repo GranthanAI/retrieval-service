@@ -1,10 +1,12 @@
 """The weak-retrieval signal: how well do the returned passages cover the question?
 
-With the cross-encoder on, `top_score` is the best reranker score (the model's own scale; embedding-service returns sentence-transformers'
-CrossEncoder output, which is a 0-1 probability for the default multilingual model) among the selected passages.
+With the cross-encoder on, `top_score` is the best reranker score among the selected passages, on that model's OWN scale (ms-marco returns raw
+logits; other models differ), so the thresholds are per model (RERANK_COVERAGE_THRESHOLDS) and a reranker without an entry gives no signal.
 With it off there is no relevance model, so the signal is derived from RANKS: the best selected candidate's RRF score divided by the
 largest possible (rank 1 in both legs), which is 1.0 when both engines put the same chunk first and falls as it slips down either
 list. Thresholds are settings, calibrated on the benchmark (docs/retrieval-quality.md)."""
+import json
+
 from app.core.config import settings
 from app.grpc.retrieval_pb2 import Coverage
 from app.query.scoring import FusedCandidate
@@ -15,15 +17,27 @@ def rank_score(c: FusedCandidate) -> float:
     return c.rrf_score / (2.0 / (settings.FUSION_RRF_K + 1))
 
 
+def rerank_thresholds() -> tuple[float, float] | None:
+    """(weak_min, strong_min) of the reranker in use, or None when it has no calibrated entry."""
+    table = json.loads(settings.RERANK_COVERAGE_THRESHOLDS or "{}")
+    entry = table.get(settings.RERANK_MODEL or "default")
+    return (float(entry["weak_min"]), float(entry["strong_min"])) if entry else None
+
+
 def signal(selected: list[FusedCandidate], reranked: bool) -> tuple[float | None, int]:
     """(top_score, coverage enum value). No candidates means NONE. Previous-turn candidates never raise the signal on their own."""
     if not settings.COVERAGE_ENABLED:
         return None, Coverage.COVERAGE_UNSPECIFIED
     if not selected:
         return 0.0, Coverage.NONE
+    if not reranked and not settings.COVERAGE_RANK_SIGNAL_ENABLED:
+        return None, Coverage.COVERAGE_UNSPECIFIED          # a rank-derived signal does not discriminate (see the setting's comment)
     if reranked and all(c.rerank_score is not None for c in selected):
         top = max(c.rerank_score for c in selected)
-        strong, weak = settings.COVERAGE_RERANK_STRONG_MIN, settings.COVERAGE_RERANK_WEAK_MIN
+        thresholds = rerank_thresholds()
+        if thresholds is None:
+            return top, Coverage.COVERAGE_UNSPECIFIED               # an uncalibrated reranker gives a score but no judgement
+        weak, strong = thresholds
     else:
         top = max(min(1.0, rank_score(c)) for c in selected if not c.from_previous_turn or c.dense_rank or c.bm25_rank) if any(
             (not c.from_previous_turn) or c.dense_rank or c.bm25_rank for c in selected) else 0.0

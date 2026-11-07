@@ -76,3 +76,18 @@ rerank_fallback_total = Counter(
     "Queries that skipped the cross-encoder reranker (timeout, error, UNIMPLEMENTED) and used the RRF/MMR path",
     ["reason"],
 )
+
+
+ocr_pages_total = Counter(
+    "retrieval_ocr_pages_total",
+    "PDF pages by selective-OCR outcome (seen, recognised, empty, failed, engine_unavailable)",
+    ["outcome"],
+)
+ocr_page_seconds = Histogram("retrieval_ocr_page_seconds", "Seconds of OCR per recognised page", buckets=(0.5, 1, 2, 5, 10, 20, 60))
+ocr_quality = Histogram(
+    "retrieval_ocr_quality", "Extraction-quality proxy per OCR'd page: share of tokens that look like words (0-1)",
+    buckets=(0.2, 0.4, 0.6, 0.7, 0.8, 0.9, 0.95, 1.0),
+)
+contextual_chunks_total = Counter(
+    "retrieval_contextual_chunks_total", "Chunks by contextual-text outcome (written, failed, skipped)", ["outcome"],
+)

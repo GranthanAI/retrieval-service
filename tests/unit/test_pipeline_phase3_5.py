@@ -104,6 +104,7 @@ def ready(monkeypatch):
     monkeypatch.setattr(IngestionJobRepository, "statuses_for", staticmethod(statuses_for))
     monkeypatch.setattr(settings, "DEDUPE_JACCARD_THRESHOLD", 1.0)
     monkeypatch.setattr(settings, "COVERAGE_ENABLED", True)
+    monkeypatch.setattr(settings, "COVERAGE_RANK_SIGNAL_ENABLED", True)     # the rank-derived tests below opt in; the shipped default is off
 
 
 async def ask(embed=None, milvus=None, search=None, files=None, file_ids=(D1,), **fields):
@@ -164,9 +165,11 @@ def by_tag(passages):
 
 async def test_reranker_scores_decide_the_order_and_are_returned_as_the_relevance(monkeypatch):
     monkeypatch.setattr(settings, "RERANK_ENABLED", True)
+    # Score scales differ per reranker, so coverage needs thresholds for the reranker in use (here: the server default, key "default").
+    monkeypatch.setattr(settings, "RERANK_COVERAGE_THRESHOLDS", '{"default": {"weak_min": 0.0, "strong_min": 2.0}}')
     resp = await ask(embed=Embed(rerank=by_tag), top_k=3)
     assert ids(resp)[:2] == ["c3", "c1"] and resp.chunks[0].relevance_score > resp.chunks[1].relevance_score > 0.5
-    assert resp.HasField("top_score") and resp.top_score > 0.99 and resp.coverage == Coverage.STRONG
+    assert resp.HasField("top_score") and resp.top_score == pytest.approx(5.0) and resp.coverage == Coverage.STRONG
 
 
 async def test_reranker_failure_falls_back_to_the_phase_1_path_with_a_metric(monkeypatch):
@@ -215,6 +218,14 @@ async def test_coverage_is_none_when_nothing_matched_and_strong_when_both_legs_a
 async def test_coverage_is_weak_when_the_two_engines_do_not_agree_on_any_chunk():
     resp = await ask(milvus=Milvus(hits=[dense(i) for i in range(1, 11)]), search=Search(hits=[bm25(i) for i in range(21, 31)]), top_k=2)
     assert resp.coverage == Coverage.WEAK and 0.3 <= resp.top_score < settings.COVERAGE_RANK_STRONG_MIN     # best vote: rank 1 in ONE leg only
+
+
+async def test_without_a_reranker_the_default_gives_no_coverage_signal_only_nothing_found(monkeypatch):
+    monkeypatch.setattr(settings, "COVERAGE_RANK_SIGNAL_ENABLED", False)
+    resp = await ask()
+    assert resp.coverage == Coverage.COVERAGE_UNSPECIFIED and not resp.HasField("top_score")
+    none = await ask(milvus=Milvus(hits=[]), search=Search(hits=[]))
+    assert none.coverage == Coverage.NONE                                  # "nothing found" is always certain
 
 
 async def test_coverage_can_be_disabled(monkeypatch):

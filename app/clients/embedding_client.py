@@ -5,6 +5,7 @@ from app.core.config import settings
 from app.core.exceptions import EmbeddingModelMismatchError
 from app.core.logging import get_logger
 from app.grpc import embedding_pb2, embedding_pb2_grpc
+from app.stores import generations
 from app.ingestion.tokenization import ModelProfile
 
 logger = get_logger(__name__)
@@ -16,12 +17,12 @@ def _assert_model_matches(model: str, dimension: int) -> None:
     and refuse to index/query on a mismatch, as a cheap runtime guard
     against a silent embedding-service model upgrade breaking the index.
     """
-    if model != settings.EMBEDDING_MODEL_EXPECTED or dimension != settings.EMBEDDING_DIMENSION_EXPECTED:
+    expected_model, expected_dimension = generations.expected_embedding()
+    if model != expected_model or dimension != expected_dimension:
         metrics.embedding_model_mismatch_total.inc()
         raise EmbeddingModelMismatchError(
-            f"embedding-service returned model={model!r} dimension={dimension}, "
-            f"expected model={settings.EMBEDDING_MODEL_EXPECTED!r} "
-            f"dimension={settings.EMBEDDING_DIMENSION_EXPECTED}"
+            f"embedding-service returned model={model!r} dimension={dimension}, expected model={expected_model!r} dimension={expected_dimension} "
+            "(the model of the active index generation: switching embedding models means building and activating a new generation)"
         )
 
 
@@ -52,11 +53,12 @@ class EmbeddingClient:
         response = await stub.GetModelInfo(embedding_pb2.ModelInfoRequest(), timeout=settings.EMBEDDING_INGESTION_TIMEOUT_SECONDS)
         return ModelProfile(response.model, response.dimension, response.max_seq_length, response.tokenizer_id)
 
-    async def rerank(self, query: str, passages: list[str], timeout: float) -> list[float]:
+    async def rerank(self, query: str, passages: list[str], timeout: float, model: str = "") -> list[float]:
         """Cross-encoder scores, one per passage in order (embedding-service Rerank). Raises on error, timeout or UNIMPLEMENTED; the
         pipeline's fallback to the non-reranked path lives in the caller."""
         stub = embedding_pb2_grpc.EmbeddingServiceStub(self._get_channel())
-        response = await stub.Rerank(embedding_pb2.RerankRequest(query=query, passages=passages), timeout=timeout)
+        request = embedding_pb2.RerankRequest(query=query, passages=passages, model=model) if model else embedding_pb2.RerankRequest(query=query, passages=passages)
+        response = await stub.Rerank(request, timeout=timeout)
         if len(response.scores) != len(passages):
             raise ValueError(f"reranker returned {len(response.scores)} scores for {len(passages)} passages")
         return list(response.scores)

@@ -48,6 +48,8 @@ message ModelInfoResponse {
 message RerankRequest {
   string query = 1;
   repeated string passages = 2;
+  // Optional. Which reranker to use; empty = the server default. Must be enabled on the server (RERANKER_ALLOWED_MODELS), else INVALID_ARGUMENT.
+  string model = 3;
 }
 
 message RerankResponse {

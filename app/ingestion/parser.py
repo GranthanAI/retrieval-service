@@ -1,33 +1,13 @@
-from io import BytesIO
+from app.core.config import settings
+from app.ingestion import archive, docling_config, formats, ocr, text_parsers
 
-from app.ingestion import archive, formats, text_parsers
-from docling.datamodel.base_models import InputFormat
-from docling.datamodel.pipeline_options import PdfPipelineOptions
-from docling.document_converter import DocumentConverter, PdfFormatOption
-from docling_core.types.doc import DocItemLabel, TableItem, TextItem
-from docling_core.types.io import DocumentStream
-
-# OCR is for scanned/image-only pages — File Service's uploads are
-# digitally-authored documents with a real text layer, so OCR only adds
-# cost (model downloads, CPU time) with nothing to recover. Table structure
-# detection stays on (HLD §9 requires table structure extraction).
-_PDF_PIPELINE_OPTIONS = PdfPipelineOptions(do_ocr=False, do_table_structure=True)
+# Docling (PDF, Word, PowerPoint, Excel, HTML) is configured in app/ingestion/docling_config.py and imported lazily, only when such a file is
+# parsed: a worker that handles text, Markdown and CSV (DOCLING_ENABLED=false) never loads it.
 
 
 # The data classes live in parsed.py (the text/archive parsers need them without importing this module); re-exported so existing
 # imports of ParsedDocument / ParsedSection / ParserError from here keep working.
 from app.ingestion.parsed import ParsedBlock, ParsedDocument, ParsedSection, ParserError  # noqa: E402,F401
-
-
-_HEADING_LABELS = {DocItemLabel.SECTION_HEADER, DocItemLabel.TITLE}
-_BODY_LABELS = {
-    DocItemLabel.TEXT,
-    DocItemLabel.PARAGRAPH,
-    DocItemLabel.LIST_ITEM,
-    DocItemLabel.CAPTION,
-    DocItemLabel.FOOTNOTE,
-    DocItemLabel.CODE,
-}
 
 
 def _parse_docling(raw_bytes: bytes, filename: str) -> ParsedDocument:
@@ -40,12 +20,13 @@ def _parse_docling(raw_bytes: bytes, filename: str) -> ParsedDocument:
     it until the next heading. A document with no heading before its first
     body content gets one implicit leading section (`heading=None`).
     """
+    docling_config.ensure_enabled()
+    from docling_core.types.doc import DocItemLabel, TableItem, TextItem
+
+    heading_labels = {DocItemLabel.SECTION_HEADER, DocItemLabel.TITLE}
+    body_labels = {DocItemLabel.TEXT, DocItemLabel.PARAGRAPH, DocItemLabel.LIST_ITEM, DocItemLabel.CAPTION, DocItemLabel.FOOTNOTE, DocItemLabel.CODE}
     try:
-        converter = DocumentConverter(
-            format_options={InputFormat.PDF: PdfFormatOption(pipeline_options=_PDF_PIPELINE_OPTIONS)}
-        )
-        result = converter.convert(DocumentStream(name=filename, stream=BytesIO(raw_bytes)))
-        document = result.document
+        document = docling_config.convert(raw_bytes, filename)
     except Exception as exc:
         raise ParserError(f"failed to parse {filename!r}: {exc}") from exc
 
@@ -79,7 +60,7 @@ def _parse_docling(raw_bytes: bytes, filename: str) -> ParsedDocument:
         page = page_no if paged else None
         loc = f"Slide {page_no}" if (slides and page_no is not None) else None
 
-        if item.label in _HEADING_LABELS:
+        if item.label in heading_labels:
             _flush()
             title = item.text if isinstance(item, TextItem) else None
             current_heading = title
@@ -101,12 +82,16 @@ def _parse_docling(raw_bytes: bytes, filename: str) -> ParsedDocument:
                 pass
             header = "\n".join(lines[:2]) if len(lines) >= 2 else md
             blocks.append(ParsedBlock(md, page=page, kind="table", caption=caption, header=header, rows=lines[2:], location=loc))
-        elif item.label in _BODY_LABELS and isinstance(item, TextItem):
+        elif item.label in body_labels and isinstance(item, TextItem):
             blocks.append(ParsedBlock(item.text, page=page, kind="code" if item.label == DocItemLabel.CODE else "text", location=loc))
 
     _flush()
 
-    return ParsedDocument(sections=sections)
+    parsed = ParsedDocument(sections=sections)
+    if paged and settings.OCR_ENABLED:
+        # Selective OCR (off by default): only pages with no usable text layer; never raises (see ocr.py).
+        ocr.run(raw_bytes, filename, parsed, sorted(getattr(document, "pages", {}) or {}))
+    return parsed
 
 
 def parse_one(raw_bytes: bytes, filename: str) -> ParsedDocument:

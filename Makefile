@@ -92,10 +92,10 @@ generation-bootstrap:
 	uv run python scripts/generation.py bootstrap
 
 generation-create:
-	uv run python scripts/generation.py create $(GENERATION)
+	uv run python scripts/generation.py create $(GENERATION) $(ARGS)
 
 reindex:
-	uv run python scripts/generation.py reindex $(GENERATION)
+	uv run python scripts/generation.py reindex $(GENERATION) $(ARGS)
 
 activate:
 	uv run --group eval python scripts/generation.py activate $(GENERATION) $(ARGS)

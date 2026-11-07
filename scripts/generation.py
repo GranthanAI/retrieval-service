@@ -22,7 +22,7 @@ from app.clients.embedding_client import EmbeddingClient
 from app.core.config import settings
 from app.core.enums import IngestionStatus
 from app.db.session import get_session_factory
-from app.ingestion import build, downloader
+from app.ingestion import build, docling_config, downloader
 from app.ingestion import parser as parser_module
 from app.ingestion import transcript as transcript_module
 from app.models.document_current_version import DocumentCurrentVersion
@@ -94,9 +94,13 @@ async def cmd_create(args) -> int:
         return 1
     milvus_name, os_name = generations.names_for(n)
     milvus_client, os_client = _clients()
-    made_m = _load("provision_milvus_collection").create_collection(milvus_client, milvus_name, "2")
+    model = args.embedding_model or settings.EMBEDDING_MODEL_EXPECTED
+    dimension = args.embedding_dimension or settings.EMBEDDING_DIMENSION_EXPECTED
+    made_m = _load("provision_milvus_collection").create_collection(milvus_client, milvus_name, "2", dimension)
     made_o = _load("provision_opensearch_index").create_index(os_client, os_name, "2")
-    info = GenerationInfo(n, milvus_name, os_name, "2", "2", "2", settings.EMBEDDING_MODEL_EXPECTED, settings.EMBEDDING_DIMENSION_EXPECTED, BUILDING)
+    chunker_version = "2+ctx" if args.contextual else "2"       # "2+ctx": chunker v2 plus an LLM-written description per chunk (Phase 6)
+    parser_version = "2" + docling_config.parser_options_suffix()      # records the Docling options that change what is extracted
+    info = GenerationInfo(n, milvus_name, os_name, parser_version, chunker_version, "2", model, dimension, BUILDING)
     async with get_session_factory()() as db:
         if not await GenerationRepository.get(db, n):
             await GenerationRepository.register(db, info, notes="created by scripts/generation.py create")
@@ -124,9 +128,17 @@ async def cmd_reindex(args) -> int:
             return 1
         info = to_info(row)
         jobs = await _ready_current_versions(db)
+    now = docling_config.parser_mismatch(info.parser_version)
+    if now is not None and not args.allow_parser_mismatch:
+        print(f"REFUSED: generation {n} was created with parser_version {info.parser_version!r} but the current DOCLING_* settings give {now!r}. "
+              "Restore the settings, or pass --allow-parser-mismatch to build it anyway.")
+        return 1
     embedding_client = EmbeddingClient()
-    if info.chunker_version != "1":
-        await build.ensure_model_profile(embedding_client)
+    # Expectations (model, dimension) are those of the generation being built, not of the active one: the embedding-service this process talks
+    # to must be serving THAT generation's model (point EMBEDDING_SERVICE_GRPC_TARGET at a second instance when it differs from production).
+    with generations.use(info):
+        if info.chunker_version != "1":
+            await build.ensure_model_profile(embedding_client)
     print(f"reindexing {len(jobs)} READY current document versions into generation {n}")
     sem = asyncio.Semaphore(args.concurrency)
     milvus, opensearch = MilvusRepository(), OpenSearchRepository()
@@ -141,6 +153,7 @@ async def cmd_reindex(args) -> int:
                 parsed = None if transcript_doc is not None else parser_module.parse(raw, job.filename)
                 chunks = (transcript_module.chunk_transcript(transcript_doc) if transcript_doc is not None
                           else build.chunk_parsed(parsed, job.filename, info))
+                await build.contextualize(chunks, job.filename, parsed, info)
                 if not chunks:
                     raise ValueError("no extractable text")
                 vectors = await embedding_client.embed_chunks([c.content for c in chunks])
@@ -158,7 +171,8 @@ async def cmd_reindex(args) -> int:
                 failures.append(f"{doc} v{job.content_version}: {type(exc).__name__}: {exc}")
                 print(f"  FAIL {doc} v{job.content_version}: {type(exc).__name__}")
 
-    await asyncio.gather(*(one(j) for j in jobs))
+    with generations.use(info):                       # every task below inherits it: embedding checks and writes both target generation N
+        await asyncio.gather(*(one(j) for j in jobs))
     await embedding_client.close()
     print(f"done: {len(jobs) - len(failures)} indexed, {len(failures)} failed")
     for f in failures:
@@ -166,8 +180,15 @@ async def cmd_reindex(args) -> int:
     return 1 if failures else 0
 
 
-async def _benchmark_gate(active: GenerationInfo, candidate: GenerationInfo) -> tuple[bool, list[str]]:
-    """The candidate must be at least as good as the active generation on BOTH sets for Recall@5, MRR@10 and nDCG@10."""
+def hf_model_id(recorded: str) -> str:
+    """A generation records the model name the embedding-service reports; sentence-transformers' own models are reported without their org."""
+    return recorded if "/" in recorded else f"sentence-transformers/{recorded}"
+
+
+async def _benchmark_gate(active: GenerationInfo, candidate: GenerationInfo, prefixes: dict[str, tuple[str, str]]) -> tuple[bool, list[str]]:
+    """The candidate must be at least as good as the active generation on BOTH sets for Recall@5, MRR@10 and nDCG@10. Each generation is
+    evaluated with ITS OWN embedding model (from the generation record) and its own query/passage prefixes (`prefixes[label]`, from the
+    command line: the embedding-service owns those settings, so the registry cannot know them)."""
     from evaluation import harness, metrics
     from evaluation.embedders import RealEmbedder
     from evaluation.heldout import HELDOUT
@@ -177,10 +198,12 @@ async def _benchmark_gate(active: GenerationInfo, candidate: GenerationInfo) -> 
     stores = "real" if ok_stores else "fake"
     if not ok_stores:
         print(f"note: live stores unreachable ({why}); benchmark runs on the in-memory stores")
-    embedder = RealEmbedder()
     results = {}
     for label, info in (("active", active), ("candidate", candidate)):
-        gen = 1 if info.chunker_version == "1" else 2
+        q_prefix, p_prefix = prefixes[label]
+        embedder = RealEmbedder(hf_model_id(info.embedding_model), q_prefix, p_prefix)
+        print(f"  {label}: generation {info.generation}, embedding model {info.embedding_model} (query prefix {q_prefix!r}, passage prefix {p_prefix!r})")
+        gen = 1 if info.chunker_version == "1" else (3 if info.chunker_version == "2+ctx" else 2)
         out, _, _ = await harness.run_benchmark(embedder, stores, {"main": QUESTIONS, "heldout": HELDOUT}, generation=gen)
         results[label] = {s: metrics.summarise(r).metrics for s, r in out["default"].items()}
     problems = []
@@ -212,7 +235,8 @@ async def cmd_activate(args) -> int:
         print(f"REFUSED: {len(missing)} READY current document version(s) are not in generation {n} (re-run `make reindex GENERATION={n}`), e.g. {sorted(missing)[:3]}")
         return 1
     print(f"coverage ok: all {len(expected)} READY current versions are in generation {n}. Benchmark gate (generation {n} vs active {current.generation}):")
-    passed, problems = await _benchmark_gate(to_info(current), to_info(row))
+    prefixes = {"active": (args.active_query_prefix, args.active_passage_prefix), "candidate": (args.candidate_query_prefix, args.candidate_passage_prefix)}
+    passed, problems = await _benchmark_gate(to_info(current), to_info(row), prefixes)
     if not passed:
         print("REFUSED: generation", n, "is worse than the active generation on:\n  " + "\n  ".join(problems))
         return 1
@@ -270,10 +294,18 @@ def main(argv: list[str] | None = None) -> int:
     for name in ("create", "reindex", "activate", "retire", "drop"):
         p = sub.add_parser(name)
         p.add_argument("generation", type=int)
+        if name == "create":
+            p.add_argument("--embedding-model", help="embedding model of this generation (default: EMBEDDING_MODEL_EXPECTED); the embedding-service used to reindex must serve it")
+            p.add_argument("--embedding-dimension", type=int, help="vector size of that model (default: EMBEDDING_DIMENSION_EXPECTED)")
+            p.add_argument("--contextual", action="store_true", help="contextual generation: an LLM-written description per chunk (needs CONTEXT_LLM_*)")
         if name == "reindex":
             p.add_argument("--concurrency", type=int, default=4)
+            p.add_argument("--allow-parser-mismatch", action="store_true", help="build even though the DOCLING_* parse options differ from the generation's parser_version")
         if name == "activate":
             p.add_argument("--dry-run", action="store_true", help="run every check but do not switch")
+            for who in ("active", "candidate"):
+                for kind in ("query", "passage"):
+                    p.add_argument(f"--{who}-{kind}-prefix", default="", help=f"{kind} prefix the {who} generation's embedding model expects (e5: '{kind}: ')")
         if name == "drop":
             p.add_argument("--yes", action="store_true")
     args = ap.parse_args(argv)

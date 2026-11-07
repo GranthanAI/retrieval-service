@@ -268,8 +268,9 @@ async def _rerank(embedding_client, query: str, candidates: list) -> bool:
     if not candidates:
         return False
     try:
+        extra = {"model": settings.RERANK_MODEL} if settings.RERANK_MODEL else {}       # only sent when chosen: older fakes/servers never see it
         scores = await asyncio.wait_for(
-            embedding_client.rerank(query, [c.content for c in candidates], settings.RERANK_TIMEOUT_SECONDS),
+            embedding_client.rerank(query, [c.content for c in candidates], settings.RERANK_TIMEOUT_SECONDS, **extra),
             timeout=settings.RERANK_TIMEOUT_SECONDS + 0.2)
     except Exception as exc:  # noqa: BLE001 - timeout, UNIMPLEMENTED, connection: all fall back to the Phase 1 path
         metrics.rerank_fallback_total.labels(reason=type(exc).__name__).inc()

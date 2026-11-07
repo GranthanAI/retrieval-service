@@ -135,6 +135,7 @@ async def _run(
         with metrics.ingestion_stage_duration_seconds.labels(stage="chunk").time():
             chunks = (transcript_module.chunk_transcript(transcript_doc) if transcript_doc is not None
                       else build.chunk_parsed(parsed, filename, info))
+        await build.contextualize(chunks, filename, parsed, info)       # no-op unless the active generation is contextual
     except Exception as exc:  # noqa: BLE001 - a chunker invariant (e.g. a chunk over the model's limit) must fail the file visibly
         logger.warning("orchestrator.chunking_failed", document_id=str(document_id), error=str(exc))
         await _fail(session_factory, document_id, content_version, error_code="CHUNKER_ERROR", error_message=str(exc))
@@ -287,6 +288,7 @@ async def _recover(
     try:
         chunks = (transcript_module.chunk_transcript(transcript_doc) if transcript_doc is not None
                   else build.chunk_parsed(parsed, filename, info))
+        await build.contextualize(chunks, filename, parsed, info)
     except Exception as exc:  # noqa: BLE001
         logger.warning("orchestrator.recovery_chunking_failed", document_id=str(document_id), error=str(exc))
         return
